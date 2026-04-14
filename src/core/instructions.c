@@ -1,5 +1,7 @@
+#include "core/instructions.h"
 #include "core/bus.h"
 #include "core/cpu.h"
+#include "util/bitwise.h"
 #include <stdint.h>
 
 // Load Instructions
@@ -349,7 +351,7 @@ void or_a_n8(CPU *cpu) {
   OR(cpu, operand);
 }
 
-void XOR(CPU *cpu, uint8_t operand) {
+void XOR(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
 
   const uint8_t result = A ^ operand;
@@ -376,6 +378,78 @@ void xor_a_n8(CPU *cpu) {
   const uint8_t operand = read_n8(cpu);
   XOR(cpu, operand);
 }
+
+void BIT(CPU *cpu, const uint8_t operand) {
+  const uint8_t bit_idx = op_y(cpu->opcode);
+
+  set_flag(cpu, FLAG_Z, get_bit(operand, bit_idx));
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, true);
+}
+
+void bit_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  BIT(cpu, operand);
+}
+
+void bit_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  BIT(cpu, operand);
+}
+
+void res_r8(CPU *cpu) {
+  uint8_t *operand = cpu->r8[op_z(cpu->opcode)];
+  set_bit(operand, op_y(cpu->opcode), false);
+}
+
+void res_mem_hl(CPU *cpu) {
+  uint8_t operand = read_hl(cpu);
+  set_bit(&operand, op_y(cpu->opcode), false);
+  write_hl(cpu, operand);
+}
+
+void set_r8(CPU *cpu) {
+  uint8_t *operand = cpu->r8[op_z(cpu->opcode)];
+  set_bit(operand, op_y(cpu->opcode), true);
+}
+
+void set_mem_hl(CPU *cpu) {
+  uint8_t operand = read_hl(cpu);
+  set_bit(&operand, op_y(cpu->opcode), true);
+  write_hl(cpu, operand);
+}
+
+uint8_t RL(CPU *cpu, uint8_t operand, Prefix prefix);
+
+void rl_r8(CPU *cpu);
+
+void rl_mem_hl(CPU *cpu);
+
+void rla(CPU *cpu);
+
+uint8_t RLC(CPU *cpu, uint8_t operand, Prefix prefix);
+
+void rlc_r8(CPU *cpu);
+
+void rlc_mem_hl(CPU *cpu);
+
+void rlca(CPU *cpu);
+
+uint8_t RR(CPU *cpu, uint8_t operand, Prefix prefix);
+
+void rr_r8(CPU *cpu);
+
+void rr_mem_hl(CPU *cpu);
+
+void rra(CPU *cpu);
+
+uint8_t RRC(CPU *cpu, uint8_t operand, Prefix prefix);
+
+void rrc_r8(CPU *cpu);
+
+void rrc_mem_hl(CPU *cpu);
+
+void rrca(CPU *cpu);
 
 // Interrupt-related instructions
 void halt(CPU *cpu) {}
