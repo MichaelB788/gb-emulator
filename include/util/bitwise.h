@@ -9,6 +9,6 @@ static inline void set_bit(uint8_t *byte, uint8_t bit_index, bool value) {
     *byte &= (uint8_t)~(1 << bit_index);
 }
 
-static inline uint8_t get_bit(uint8_t byte, uint8_t bit_index) {
+static inline bool get_bit(uint8_t byte, uint8_t bit_index) {
   return (byte >> bit_index) & 1;
 }
