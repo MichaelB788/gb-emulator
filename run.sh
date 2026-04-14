@@ -1,0 +1,16 @@
+#/usr/bin/env bash
+
+set -e
+
+PROJECT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+BUILD_DIR="$PROJECT_ROOT/build"
+BUILD_TYPE="${BUILD_TYPE:-Debug}"
+
+cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+  -G Ninja
+
+ninja -C "$BUILD_DIR"
+
+"$BUILD_DIR/bin/GameBoy"

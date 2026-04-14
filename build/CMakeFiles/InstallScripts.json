@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/migdez/repos/gameboy/build/cmake_install.cmake",
+		"/home/migdez/repos/gameboy/build/src/cmake_install.cmake",
+		"/home/migdez/repos/gameboy/build/src/core/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

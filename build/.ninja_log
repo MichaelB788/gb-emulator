@@ -1,0 +1,11 @@
+# ninja log v7
+2	31	1776116596836624854	src/core/CMakeFiles/GB_Core.dir/cpu.c.o	47db7c573d53d6b4
+1	40	1776117638503419648	src/CMakeFiles/GameBoy.dir/main.c.o	1e6b4c3bf017428c
+2	39	1776117447763766373	src/core/CMakeFiles/GB_Core.dir/bus.c.o	c5bf4627a7d0f2d6
+39	98	1776117447800766884	src/core/libGB_Core.a	baf4511505123e78
+90	124	1776116632892054117	src/GameBoy	30d6ec3845c6541f
+40	74	1776117638542420193	bin/GameBoy	e26a33da6bfdc91a
+1	30	1776117931020531375	src/core/CMakeFiles/GB_Core.dir/cpu.c.o	47db7c573d53d6b4
+2	45	1776117931021531389	src/CMakeFiles/GameBoy.dir/main.c.o	1e6b4c3bf017428c
+31	89	1776117931050531799	src/core/libGB_Core.a	baf4511505123e78
+89	121	1776117931108532618	bin/GameBoy	e26a33da6bfdc91a
