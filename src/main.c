@@ -3,7 +3,6 @@
 #include "core/gameboy.h"
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 int main(void) {
   GameBoy gameboy;
@@ -14,8 +13,9 @@ int main(void) {
 
   gameboy.cpu.bus->memory[0] = 0x41;
   gameboy.cpu.bus->memory[1] = 0x46;
+  gameboy.cpu.bus->memory[2] = 0x70;
+  gameboy.cpu.bus->memory[3] = 0x10;
 
-  for (size_t i = 0; i < 3; ++i) {
-    execute(&gameboy.cpu);
-  }
+  while (read_byte(&gameboy.bus, gameboy.cpu.PC) != 0x10)
+    step(&gameboy.cpu);
 }
