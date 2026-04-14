@@ -16,7 +16,7 @@ typedef union {
 typedef struct {
   RegisterPair BC, DE, HL;
 
-  uint8_t A, F, opcode;
+  uint8_t A, F, opcode, cycles_taken;
 
   uint16_t PC, SP;
 
@@ -27,7 +27,6 @@ typedef struct {
   uint16_t *r16[4];
 
   Bus *bus;
-
 } CPU;
 
 typedef struct {
@@ -40,7 +39,7 @@ typedef struct {
 void init_cpu(CPU *cpu, Bus *bus);
 
 // Parsing opcodes
-void step(CPU *cpu);
+uint8_t step(CPU *cpu);
 
 void log_ins(CPU *cpu, Instruction *ins);
 

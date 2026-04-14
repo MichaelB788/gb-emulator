@@ -25,11 +25,12 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[3] = &cpu->SP;
 }
 
-void step(CPU *cpu) {
+uint8_t step(CPU *cpu) {
   const uint8_t curr_op = read_n8(cpu);
   cpu->opcode = curr_op;
 
   Instruction ins = optable[curr_op];
+  cpu->cycles_taken = ins.cycles;
   ins.exec(cpu);
 
 #ifndef NDEBUG
@@ -40,6 +41,8 @@ void step(CPU *cpu) {
     ++entries;
   }
 #endif
+
+  return cpu->cycles_taken;
 }
 
 void log_ins(CPU *cpu, Instruction *ins) {
@@ -51,7 +54,7 @@ void log_ins(CPU *cpu, Instruction *ins) {
   fprintf(output_file,
           "%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
           cpu->opcode, cpu->A, cpu->F, cpu->BC.word, cpu->DE.word, cpu->HL.word,
-          cpu->PC, cpu->SP, ins->name);
+          cpu->PC - 1, cpu->SP, ins->name);
   fflush(output_file);
 }
 
