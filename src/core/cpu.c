@@ -22,7 +22,7 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[0] = &cpu->BC.word;
   cpu->r16[1] = &cpu->DE.word;
   cpu->r16[2] = &cpu->HL.word;
-  cpu->r16[3] = &cpu->PC;
+  cpu->r16[3] = &cpu->SP;
 }
 
 void step(CPU *cpu) {

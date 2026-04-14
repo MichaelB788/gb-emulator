@@ -16,6 +16,11 @@ static const Instruction optable[0x100] = {
     [0x22] = {"LD [HLI], A", 8, &ld_mem_hli_a},
     [0x32] = {"LD [HLD], A", 8, &ld_mem_hld_a},
 
+    [0x03] = {"INC BC", 8, &inc_r16},
+    [0x13] = {"INC DE", 8, &inc_r16},
+    [0x23] = {"INC HL", 8, &inc_r16},
+    [0x33] = {"INC SP", 8, &inc_r16},
+
     [0x04] = {"INC B", 4, &inc_r8},
     [0x14] = {"INC D", 4, &inc_r8},
     [0x24] = {"INC H", 4, &inc_r8},
@@ -31,10 +36,20 @@ static const Instruction optable[0x100] = {
     [0x26] = {"LD H, n8", 8, &ld_r8_n8},
     [0x36] = {"LD [HL], n8", 12, &ld_mem_hl_n8},
 
+    [0x09] = {"ADD HL, BC", 8, &add_hl_r16},
+    [0x19] = {"ADD HL, DE", 8, &add_hl_r16},
+    [0x29] = {"ADD HL, HL", 8, &add_hl_r16},
+    [0x39] = {"ADD HL, SP", 8, &add_hl_r16},
+
     [0x0A] = {"LD A, [BC]", 8, &ld_a_mem_r16},
     [0x1A] = {"LD A, [DE]", 8, &ld_a_mem_r16},
     [0x2A] = {"LD A, [HLI]", 8, &ld_a_mem_hli},
     [0x3A] = {"LD A, [HLD]", 8, &ld_a_mem_hld},
+
+    [0x0B] = {"DEC BC", 8, &dec_r16},
+    [0x1B] = {"DEC DE", 8, &dec_r16},
+    [0x2B] = {"DEC HL", 8, &dec_r16},
+    [0x3B] = {"DEC SP", 8, &dec_r16},
 
     [0x0C] = {"INC C", 4, &inc_r8},
     [0x1C] = {"INC E", 4, &inc_r8},
@@ -50,6 +65,8 @@ static const Instruction optable[0x100] = {
     [0x1E] = {"LD E, n8", 8, &ld_r8_n8},
     [0x2E] = {"LD L, n8", 8, &ld_r8_n8},
     [0x3E] = {"LD A, n8", 8, &ld_r8_n8},
+
+    [0x2F] = {"CPL", 4, &cpl},
 
     [0x40] = {"LD B, B", 4, &ld_r8_r8},
     [0x41] = {"LD B, C", 4, &ld_r8_r8},
@@ -159,6 +176,33 @@ static const Instruction optable[0x100] = {
     [0x9E] = {"SBC A, [HL]", 8, &sbc_a_mem_hl},
     [0x9F] = {"SBC A, A", 4, &sbc_a_r8},
 
+    [0xA0] = {"AND A, B", 4, &and_a_r8},
+    [0xA1] = {"AND A, C", 4, &and_a_r8},
+    [0xA2] = {"AND A, D", 4, &and_a_r8},
+    [0xA3] = {"AND A, E", 4, &and_a_r8},
+    [0xA4] = {"AND A, H", 4, &and_a_r8},
+    [0xA5] = {"AND A, L", 4, &and_a_r8},
+    [0xA6] = {"AND A, [HL]", 8, &and_a_mem_hl},
+    [0xA7] = {"AND A, A", 4, &and_a_r8},
+
+    [0xA8] = {"XOR A, B", 4, &xor_a_r8},
+    [0xA9] = {"XOR A, C", 4, &xor_a_r8},
+    [0xAA] = {"XOR A, D", 4, &xor_a_r8},
+    [0xAB] = {"XOR A, E", 4, &xor_a_r8},
+    [0xAC] = {"XOR A, H", 4, &xor_a_r8},
+    [0xAD] = {"XOR A, L", 4, &xor_a_r8},
+    [0xAE] = {"XOR A, [HL]", 8, &xor_a_mem_hl},
+    [0xAF] = {"XOR A, A", 4, &xor_a_r8},
+
+    [0xB0] = {"OR A, B", 4, &or_a_r8},
+    [0xB1] = {"OR A, C", 4, &or_a_r8},
+    [0xB2] = {"OR A, D", 4, &or_a_r8},
+    [0xB3] = {"OR A, E", 4, &or_a_r8},
+    [0xB4] = {"OR A, H", 4, &or_a_r8},
+    [0xB5] = {"OR A, L", 4, &or_a_r8},
+    [0xB6] = {"OR A, [HL]", 8, &or_a_mem_hl},
+    [0xB7] = {"OR A, A", 4, &or_a_r8},
+
     [0xB8] = {"CP A, B", 4, &cp_a_r8},
     [0xB9] = {"CP A, C", 4, &cp_a_r8},
     [0xBA] = {"CP A, D", 4, &cp_a_r8},
@@ -174,6 +218,16 @@ static const Instruction optable[0x100] = {
     [0xE2] = {"LDH [C], A", 8, &ldh_mem_c_a},
     [0xF2] = {"LDH A, [C]", 8, &ldh_a_mem_c},
 
+    [0xC6] = {"ADD A, n8", 8, &add_a_n8},
+    [0xD6] = {"SUB A, n8", 8, &sub_a_n8},
+    [0xE6] = {"AND A, n8", 8, &and_a_n8},
+    [0xF6] = {"OR A, n8", 8, &or_a_n8},
+
     [0xEA] = {"LD [n16], A", 16, &ld_mem_n16_a},
     [0xFA] = {"LD A, [n16]", 16, &ld_a_mem_n16},
+
+    [0xCE] = {"ADC A, n8", 8, &adc_a_n8},
+    [0xDE] = {"SBC A, n8", 8, &sbc_a_n8},
+    [0xEE] = {"XOR A, n8", 8, &xor_a_n8},
+    [0xFE] = {"CP A, n8", 8, &cp_a_n8},
 };

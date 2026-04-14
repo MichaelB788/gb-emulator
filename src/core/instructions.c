@@ -4,9 +4,9 @@
 
 // Load Instructions
 void ld_r8_r8(CPU *cpu) {
-  const uint8_t *src = cpu->r8[op_z(cpu->opcode)];
+  const uint8_t src = *cpu->r8[op_z(cpu->opcode)];
   uint8_t *dest = cpu->r8[op_y(cpu->opcode)];
-  *dest = *src;
+  *dest = src;
 }
 
 void ld_r8_n8(CPU *cpu) {
@@ -20,8 +20,8 @@ void ld_r16_n16(CPU *cpu) {
 }
 
 void ld_mem_hl_r8(CPU *cpu) {
-  const uint8_t *src = cpu->r8[op_z(cpu->opcode)];
-  write_hl(cpu, *src);
+  const uint8_t src = *cpu->r8[op_z(cpu->opcode)];
+  write_hl(cpu, src);
 }
 
 void ld_mem_hl_n8(CPU *cpu) { write_hl(cpu, read_n8(cpu)); }
@@ -272,6 +272,109 @@ void sub_a_mem_hl(CPU *cpu) {
 void sub_a_n8(CPU *cpu) {
   const uint8_t operand = read_n8(cpu);
   SUB(cpu, operand);
+}
+
+void add_hl_r16(CPU *cpu) {
+  const uint16_t HL = cpu->HL.word;
+  const uint16_t operand = *cpu->r16[op_y(cpu->opcode) >> 1];
+
+  const uint32_t sum = HL + operand;
+
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
+  set_flag(cpu, FLAG_C, sum > 0xFFFF);
+
+  cpu->HL.word = (uint16_t)sum;
+}
+
+void AND(CPU *cpu, const uint8_t operand) {
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A & operand;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, true);
+  set_flag(cpu, FLAG_C, false);
+
+  cpu->A = result;
+}
+
+void and_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  AND(cpu, operand);
+}
+
+void and_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  AND(cpu, operand);
+}
+
+void and_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  AND(cpu, operand);
+}
+
+void cpl(CPU *cpu) {
+  cpu->A = (uint8_t)~cpu->A;
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, true);
+}
+
+void OR(CPU *cpu, const uint8_t operand) {
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A | operand;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, false);
+
+  cpu->A = result;
+}
+
+void or_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  OR(cpu, operand);
+}
+
+void or_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  OR(cpu, operand);
+}
+
+void or_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  OR(cpu, operand);
+}
+
+void XOR(CPU *cpu, uint8_t operand) {
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A ^ operand;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, false);
+
+  cpu->A = result;
+}
+
+void xor_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  XOR(cpu, operand);
+}
+
+void xor_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  XOR(cpu, operand);
+}
+
+void xor_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  XOR(cpu, operand);
 }
 
 // Interrupt-related instructions

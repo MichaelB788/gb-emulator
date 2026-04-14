@@ -39,7 +39,7 @@ void ld_a_mem_hli(CPU *cpu);
 
 void ld_a_mem_hld(CPU *cpu);
 
-// 8-bit arithmetic
+// 8-bit arithmetic instructions
 void ADC(CPU *cpu, uint8_t operand);
 
 void adc_a_r8(CPU *cpu);
@@ -91,6 +91,40 @@ void sub_a_r8(CPU *cpu);
 void sub_a_mem_hl(CPU *cpu);
 
 void sub_a_n8(CPU *cpu);
+
+// 16-bit arithmetic instructions
+void add_hl_r16(CPU *cpu);
+
+static inline void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
+
+static inline void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
+
+// Bitwise logic instructions
+void AND(CPU *cpu, uint8_t operand);
+
+void and_a_r8(CPU *cpu);
+
+void and_a_mem_hl(CPU *cpu);
+
+void and_a_n8(CPU *cpu);
+
+void cpl(CPU *cpu);
+
+void OR(CPU *cpu, uint8_t operand);
+
+void or_a_r8(CPU *cpu);
+
+void or_a_mem_hl(CPU *cpu);
+
+void or_a_n8(CPU *cpu);
+
+void XOR(CPU *cpu, uint8_t operand);
+
+void xor_a_r8(CPU *cpu);
+
+void xor_a_mem_hl(CPU *cpu);
+
+void xor_a_n8(CPU *cpu);
 
 // Interrupt-related instructions
 void halt(CPU *cpu);
