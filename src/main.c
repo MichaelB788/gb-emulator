@@ -5,5 +5,5 @@
 int main(void) {
   Bus bus;
   CPU cpu = {.bus = &bus};
-  printf("%i", read(&bus, 0x10));
+  printf("%i", read_byte(&bus, 0x10));
 }
