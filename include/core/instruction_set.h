@@ -3,6 +3,9 @@
 #include "core/instructions.h"
 
 static const Instruction optable[0x100] = {
+    [0x00] = {"NOP", 4, &nop},
+    [0x10] = {"STOP", 4, &stop},
+
     [0x01] = {"LD BC, n16", 12, &ld_r16_n16},
     [0x11] = {"LD DE, n16", 12, &ld_r16_n16},
     [0x21] = {"LD HL, n16", 12, &ld_r16_n16},
@@ -13,6 +16,16 @@ static const Instruction optable[0x100] = {
     [0x22] = {"LD [HLI], A", 8, &ld_mem_hli_a},
     [0x32] = {"LD [HLD], A", 8, &ld_mem_hld_a},
 
+    [0x04] = {"INC B", 4, &inc_r8},
+    [0x14] = {"INC D", 4, &inc_r8},
+    [0x24] = {"INC H", 4, &inc_r8},
+    [0x34] = {"INC [HL]", 12, &inc_mem_hl},
+
+    [0x05] = {"DEC B", 4, &dec_r8},
+    [0x15] = {"DEC D", 4, &dec_r8},
+    [0x25] = {"DEC H", 4, &dec_r8},
+    [0x35] = {"DEC [HL]", 12, &dec_mem_hl},
+
     [0x06] = {"LD B, n8", 8, &ld_r8_n8},
     [0x16] = {"LD D, n8", 8, &ld_r8_n8},
     [0x26] = {"LD H, n8", 8, &ld_r8_n8},
@@ -22,6 +35,16 @@ static const Instruction optable[0x100] = {
     [0x1A] = {"LD A, [DE]", 8, &ld_a_mem_r16},
     [0x2A] = {"LD A, [HLI]", 8, &ld_a_mem_hli},
     [0x3A] = {"LD A, [HLD]", 8, &ld_a_mem_hld},
+
+    [0x0C] = {"INC C", 4, &inc_r8},
+    [0x1C] = {"INC E", 4, &inc_r8},
+    [0x2C] = {"INC L", 4, &inc_r8},
+    [0x3C] = {"INC A", 4, &inc_r8},
+
+    [0x0D] = {"DEC C", 4, &dec_r8},
+    [0x1D] = {"DEC E", 4, &dec_r8},
+    [0x2D] = {"DEC L", 4, &dec_r8},
+    [0x3D] = {"DEC A", 4, &dec_r8},
 
     [0x0E] = {"LD C, n8", 8, &ld_r8_n8},
     [0x1E] = {"LD E, n8", 8, &ld_r8_n8},
@@ -117,6 +140,33 @@ static const Instruction optable[0x100] = {
     [0x8D] = {"ADC A, L", 4, &adc_a_r8},
     [0x8E] = {"ADC A, [HL]", 8, &adc_a_mem_hl},
     [0x8F] = {"ADC A, A", 4, &adc_a_r8},
+
+    [0x90] = {"SUB A, B", 4, &sub_a_r8},
+    [0x91] = {"SUB A, C", 4, &sub_a_r8},
+    [0x92] = {"SUB A, D", 4, &sub_a_r8},
+    [0x93] = {"SUB A, E", 4, &sub_a_r8},
+    [0x94] = {"SUB A, H", 4, &sub_a_r8},
+    [0x95] = {"SUB A, L", 4, &sub_a_r8},
+    [0x96] = {"SUB A, [HL]", 8, &sub_a_mem_hl},
+    [0x97] = {"SUB A, A", 4, &sub_a_r8},
+
+    [0x98] = {"SBC A, B", 4, &sbc_a_r8},
+    [0x99] = {"SBC A, C", 4, &sbc_a_r8},
+    [0x9A] = {"SBC A, D", 4, &sbc_a_r8},
+    [0x9B] = {"SBC A, E", 4, &sbc_a_r8},
+    [0x9C] = {"SBC A, H", 4, &sbc_a_r8},
+    [0x9D] = {"SBC A, L", 4, &sbc_a_r8},
+    [0x9E] = {"SBC A, [HL]", 8, &sbc_a_mem_hl},
+    [0x9F] = {"SBC A, A", 4, &sbc_a_r8},
+
+    [0xB8] = {"CP A, B", 4, &cp_a_r8},
+    [0xB9] = {"CP A, C", 4, &cp_a_r8},
+    [0xBA] = {"CP A, D", 4, &cp_a_r8},
+    [0xBB] = {"CP A, E", 4, &cp_a_r8},
+    [0xBC] = {"CP A, H", 4, &cp_a_r8},
+    [0xBD] = {"CP A, L", 4, &cp_a_r8},
+    [0xBE] = {"CP A, [HL]", 8, &cp_a_mem_hl},
+    [0xBF] = {"CP A, A", 4, &cp_a_r8},
 
     [0xE0] = {"LDH [n8], A", 12, &ldh_mem_n8_a},
     [0xF0] = {"LDH A, [n8]", 12, &ldh_a_mem_n8},

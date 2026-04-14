@@ -56,5 +56,46 @@ void add_a_mem_hl(CPU *cpu);
 
 void add_a_n8(CPU *cpu);
 
+void CP(CPU *cpu, uint8_t operand);
+
+void cp_a_r8(CPU *cpu);
+
+void cp_a_mem_hl(CPU *cpu);
+
+void cp_a_n8(CPU *cpu);
+
+uint8_t DEC(CPU *cpu, uint8_t operand);
+
+void dec_r8(CPU *cpu);
+
+void dec_mem_hl(CPU *cpu);
+
+uint8_t INC(CPU *cpu, uint8_t operand);
+
+void inc_r8(CPU *cpu);
+
+void inc_mem_hl(CPU *cpu);
+
+void SBC(CPU *cpu, uint8_t operand);
+
+void sbc_a_r8(CPU *cpu);
+
+void sbc_a_mem_hl(CPU *cpu);
+
+void sbc_a_n8(CPU *cpu);
+
+void SUB(CPU *cpu, uint8_t operand);
+
+void sub_a_r8(CPU *cpu);
+
+void sub_a_mem_hl(CPU *cpu);
+
+void sub_a_n8(CPU *cpu);
+
 // Interrupt-related instructions
 void halt(CPU *cpu);
+
+// Misc.
+static inline void nop(CPU *cpu) {};
+
+static inline void stop(CPU *cpu) {};

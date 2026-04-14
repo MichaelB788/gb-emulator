@@ -151,5 +151,130 @@ void add_a_n8(CPU *cpu) {
   ADD(cpu, operand);
 }
 
+void CP(CPU *cpu, const uint8_t operand) {
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A - operand;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
+  set_flag(cpu, FLAG_C, A < operand);
+}
+
+void cp_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  CP(cpu, operand);
+}
+
+void cp_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  CP(cpu, operand);
+}
+
+void cp_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  CP(cpu, operand);
+}
+
+uint8_t DEC(CPU *cpu, const uint8_t operand) {
+  const uint8_t result = operand - 1;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (operand & 0xF) == 0x0);
+
+  return result;
+}
+
+void dec_r8(CPU *cpu) {
+  uint8_t *r8 = cpu->r8[op_y(cpu->opcode)];
+  *r8 = DEC(cpu, *r8);
+}
+
+void dec_mem_hl(CPU *cpu) {
+  uint8_t operand = read_hl(cpu);
+  write_hl(cpu, DEC(cpu, operand));
+}
+
+uint8_t INC(CPU *cpu, const uint8_t operand) {
+  const uint8_t result = operand + 1;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (operand & 0xF) == 0xF);
+
+  return result;
+}
+
+void inc_r8(CPU *cpu) {
+  uint8_t *r8 = cpu->r8[op_y(cpu->opcode)];
+  *r8 = INC(cpu, *r8);
+}
+
+void inc_mem_hl(CPU *cpu) {
+  const uint8_t hl_ind = read_hl(cpu);
+  write_hl(cpu, INC(cpu, hl_ind));
+}
+
+void SBC(CPU *cpu, const uint8_t operand) {
+  const uint8_t carry = get_flag(cpu, FLAG_C);
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A - operand - carry;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF) + carry);
+  set_flag(cpu, FLAG_C, A < operand + carry);
+
+  cpu->A = result;
+}
+
+void sbc_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  SBC(cpu, operand);
+}
+
+void sbc_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  SBC(cpu, operand);
+}
+
+void sbc_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  SBC(cpu, operand);
+}
+
+void SUB(CPU *cpu, uint8_t operand) {
+  const uint8_t A = cpu->A;
+
+  const uint8_t result = A - operand;
+
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
+  set_flag(cpu, FLAG_C, A < operand);
+
+  cpu->A = result;
+}
+
+void sub_a_r8(CPU *cpu) {
+  const uint8_t operand = *cpu->r8[op_z(cpu->opcode)];
+  SUB(cpu, operand);
+}
+
+void sub_a_mem_hl(CPU *cpu) {
+  const uint8_t operand = read_hl(cpu);
+  SUB(cpu, operand);
+}
+
+void sub_a_n8(CPU *cpu) {
+  const uint8_t operand = read_n8(cpu);
+  SUB(cpu, operand);
+}
+
 // Interrupt-related instructions
 void halt(CPU *cpu) {}
+
+// Misc.

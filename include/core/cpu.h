@@ -40,13 +40,11 @@ typedef struct {
 void init_cpu(CPU *cpu, Bus *bus);
 
 // Parsing opcodes
-void execute(CPU *cpu);
+void step(CPU *cpu);
 
 void log_ins(CPU *cpu, Instruction *ins);
 
 // Opcode decoding
-static inline uint8_t op_x(uint8_t op) { return (op >> 6) & 0x4; }
-
 static inline uint8_t op_y(uint8_t op) { return (op >> 3) & 0x7; }
 
 static inline uint8_t op_z(uint8_t op) { return op & 0x7; }
