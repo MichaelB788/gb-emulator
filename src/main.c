@@ -8,8 +8,8 @@ int main(void) {
   GameBoy gameboy;
   init_gameboy(&gameboy);
 
-  gameboy.cpu.BC.byte.hi = 0x10;
-  gameboy.cpu.BC.byte.lo = 0x20;
+  gameboy.cpu.B = 0x10;
+  gameboy.cpu.C = 0x20;
 
   gameboy.cpu.bus->memory[0] = 0x41;
   gameboy.cpu.bus->memory[1] = 0x46;
