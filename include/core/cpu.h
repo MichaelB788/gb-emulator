@@ -1,6 +1,7 @@
 #pragma once
 #include "core/bus.h"
 #include "util/bitwise.h"
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -20,6 +21,8 @@ typedef struct {
   uint8_t A, F, opcode, cycles_taken;
 
   uint16_t PC, SP;
+
+  bool IME;
 
   // B, C, D, E, H, L, F, A
   uint8_t *r8[8];
@@ -49,13 +52,23 @@ static inline uint8_t op_y(uint8_t op) { return (op >> 3) & 0x7; }
 
 static inline uint8_t op_z(uint8_t op) { return op & 0x7; }
 
-static inline uint8_t *r8(CPU *cpu) { return cpu->r8[op_z(cpu->opcode)]; }
+static inline uint8_t *r8(CPU *cpu) {
+  uint8_t i = op_z(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
 
-static inline uint8_t *r8_dest(CPU *cpu) { return cpu->r8[op_y(cpu->opcode)]; }
+static inline uint8_t *r8_dest(CPU *cpu) {
+  uint8_t i = op_y(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
 
 static inline uint16_t *r16(CPU *cpu) {
   return cpu->r16[op_y(cpu->opcode) >> 1];
 }
+
+bool check_cc(CPU *cpu);
 
 // Memory reads
 static inline uint8_t read_n8(CPU *cpu) {
