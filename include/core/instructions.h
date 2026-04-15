@@ -142,9 +142,7 @@ void set_r8(CPU *cpu);
 void set_mem_hl(CPU *cpu);
 
 // Bit shift instructions
-typedef enum { CB_PREFIX, NO_PREFIX } Prefix;
-
-uint8_t RL(CPU *cpu, uint8_t operand, Prefix prefix);
+uint8_t RL(CPU *cpu, uint8_t operand);
 
 void rl_r8(CPU *cpu);
 
@@ -152,7 +150,7 @@ void rl_mem_hl(CPU *cpu);
 
 void rla(CPU *cpu);
 
-uint8_t RLC(CPU *cpu, uint8_t operand, Prefix prefix);
+uint8_t RLC(CPU *cpu, uint8_t operand);
 
 void rlc_r8(CPU *cpu);
 
@@ -160,7 +158,7 @@ void rlc_mem_hl(CPU *cpu);
 
 void rlca(CPU *cpu);
 
-uint8_t RR(CPU *cpu, uint8_t operand, Prefix prefix);
+uint8_t RR(CPU *cpu, uint8_t operand);
 
 void rr_r8(CPU *cpu);
 
@@ -168,13 +166,37 @@ void rr_mem_hl(CPU *cpu);
 
 void rra(CPU *cpu);
 
-uint8_t RRC(CPU *cpu, uint8_t operand, Prefix prefix);
+uint8_t RRC(CPU *cpu, uint8_t operand);
 
 void rrc_r8(CPU *cpu);
 
 void rrc_mem_hl(CPU *cpu);
 
 void rrca(CPU *cpu);
+
+uint8_t SLA(CPU *cpu, uint8_t operand);
+
+void sla_r8(CPU *cpu);
+
+void sla_mem_hl(CPU *cpu);
+
+uint8_t SRA(CPU *cpu, uint8_t operand);
+
+void sra_r8(CPU *cpu);
+
+void sra_mem_hl(CPU *cpu);
+
+uint8_t SRL(CPU *cpu, uint8_t operand);
+
+void srl_r8(CPU *cpu);
+
+void srl_mem_hl(CPU *cpu);
+
+uint8_t SWAP(CPU *cpu, uint8_t operand);
+
+void swap_r8(CPU *cpu);
+
+void swap_mem_hl(CPU *cpu);
 
 // Interrupt-related instructions
 void halt(CPU *cpu);

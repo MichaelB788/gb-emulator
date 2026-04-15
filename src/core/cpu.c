@@ -1,6 +1,5 @@
 #include "core/cpu.h"
 #include "core/instruction_set.h"
-#include "util/bitwise.h"
 #include <endian.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -58,24 +57,8 @@ void log_ins(CPU *cpu, Instruction *ins) {
   fflush(output_file);
 }
 
-void step_through(CPU *cpu, uint8_t *mem, size_t mem_size) {}
-
-uint8_t read_n8(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
-
-uint8_t read_hl(CPU *cpu) { return read_byte(cpu->bus, cpu->HL.word); }
-
 uint16_t read_n16(CPU *cpu) {
   uint8_t lo = read_byte(cpu->bus, cpu->PC++);
   uint8_t hi = read_byte(cpu->bus, cpu->PC++);
   return (uint16_t)hi << 8 | lo;
 }
-
-void write_hl(CPU *cpu, uint8_t val) {
-  write_byte(cpu->bus, cpu->HL.word, val);
-}
-
-void set_flag(CPU *cpu, Flag flag, bool val) {
-  set_bit(&cpu->F, (uint8_t)flag, val);
-}
-
-uint8_t get_flag(CPU *cpu, Flag flag) { return get_bit(cpu->F, (uint8_t)flag); }

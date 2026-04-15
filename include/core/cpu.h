@@ -1,5 +1,6 @@
 #pragma once
 #include "core/bus.h"
+#include "util/bitwise.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -48,17 +49,35 @@ static inline uint8_t op_y(uint8_t op) { return (op >> 3) & 0x7; }
 
 static inline uint8_t op_z(uint8_t op) { return op & 0x7; }
 
-// Memory reads
-uint8_t read_n8(CPU *cpu);
+static inline uint8_t *r8(CPU *cpu) { return cpu->r8[op_z(cpu->opcode)]; }
 
-uint8_t read_hl(CPU *cpu);
+static inline uint8_t *r8_dest(CPU *cpu) { return cpu->r8[op_y(cpu->opcode)]; }
+
+static inline uint16_t *r16(CPU *cpu) {
+  return cpu->r16[op_y(cpu->opcode) >> 1];
+}
+
+// Memory reads
+static inline uint8_t read_n8(CPU *cpu) {
+  return read_byte(cpu->bus, cpu->PC++);
+}
+
+static inline uint8_t read_hl(CPU *cpu) {
+  return read_byte(cpu->bus, cpu->HL.word);
+}
 
 uint16_t read_n16(CPU *cpu);
 
 // Memory writes
-void write_hl(CPU *cpu, uint8_t val);
+static inline void write_hl(CPU *cpu, uint8_t val) {
+  write_byte(cpu->bus, cpu->HL.word, val);
+}
 
 // Flags operations
-void set_flag(CPU *cpu, Flag flag, bool val);
+static inline void set_flag(CPU *cpu, Flag flag, bool val) {
+  set_bit(&cpu->F, (uint8_t)flag, val);
+}
 
-uint8_t get_flag(CPU *cpu, Flag flag);
+static inline bool get_flag(CPU *cpu, Flag flag) {
+  return get_bit(cpu->F, (uint8_t)flag);
+}

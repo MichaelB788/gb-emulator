@@ -37,6 +37,9 @@ static const Instruction optable[0x100] = {
     [0x26] = {"LD H, n8", 8, &ld_r8_n8},
     [0x36] = {"LD [HL], n8", 12, &ld_mem_hl_n8},
 
+    [0x07] = {"RLCA", 4, &rlca},
+    [0x17] = {"RLA", 4, &rla},
+
     [0x09] = {"ADD HL, BC", 8, &add_hl_r16},
     [0x19] = {"ADD HL, DE", 8, &add_hl_r16},
     [0x29] = {"ADD HL, HL", 8, &add_hl_r16},
@@ -67,6 +70,8 @@ static const Instruction optable[0x100] = {
     [0x2E] = {"LD L, n8", 8, &ld_r8_n8},
     [0x3E] = {"LD A, n8", 8, &ld_r8_n8},
 
+    [0x0F] = {"RRCA", 4, &rrca},
+    [0x1F] = {"RRA", 4, &rra},
     [0x2F] = {"CPL", 4, &cpl},
 
     // Block 1
@@ -236,9 +241,79 @@ static const Instruction optable[0x100] = {
     [0xFE] = {"CP A, n8", 8, &cp_a_n8},
 };
 
-// clang-format off
 static const Instruction cb_optable[0x100] = {
     // Block 0
+    [0x00] = {"RLC B", 8, &rlc_r8},
+    [0x01] = {"RLC C", 8, &rlc_r8},
+    [0x02] = {"RLC D", 8, &rlc_r8},
+    [0x03] = {"RLC E", 8, &rlc_r8},
+    [0x04] = {"RLC H", 8, &rlc_r8},
+    [0x05] = {"RLC L", 8, &rlc_r8},
+    [0x06] = {"RLC [HL]", 16, &rlc_mem_hl},
+    [0x07] = {"RLC A", 8, &rlc_r8},
+
+    [0x08] = {"RRC B", 8, &rrc_r8},
+    [0x09] = {"RRC C", 8, &rrc_r8},
+    [0x0A] = {"RRC D", 8, &rrc_r8},
+    [0x0B] = {"RRC E", 8, &rrc_r8},
+    [0x0C] = {"RRC H", 8, &rrc_r8},
+    [0x0D] = {"RRC L", 8, &rrc_r8},
+    [0x0E] = {"RRC [HL]", 16, &rrc_mem_hl},
+    [0x0F] = {"RRC A", 8, &rrc_r8},
+
+    [0x10] = {"RL B", 8, &rl_r8},
+    [0x11] = {"RL C", 8, &rl_r8},
+    [0x12] = {"RL D", 8, &rl_r8},
+    [0x13] = {"RL E", 8, &rl_r8},
+    [0x14] = {"RL H", 8, &rl_r8},
+    [0x15] = {"RL L", 8, &rl_r8},
+    [0x16] = {"RL [HL]", 16, &rl_mem_hl},
+    [0x17] = {"RL A", 8, &rl_r8},
+
+    [0x18] = {"RR B", 8, &rr_r8},
+    [0x19] = {"RR C", 8, &rr_r8},
+    [0x1A] = {"RR D", 8, &rr_r8},
+    [0x1B] = {"RR E", 8, &rr_r8},
+    [0x1C] = {"RR H", 8, &rr_r8},
+    [0x1D] = {"RR L", 8, &rr_r8},
+    [0x1E] = {"RR [HL]", 16, &rr_mem_hl},
+    [0x1F] = {"RR A", 8, &rr_r8},
+
+    [0x20] = {"SLA B", 8, &sla_r8},
+    [0x21] = {"SLA C", 8, &sla_r8},
+    [0x22] = {"SLA D", 8, &sla_r8},
+    [0x23] = {"SLA E", 8, &sla_r8},
+    [0x24] = {"SLA H", 8, &sla_r8},
+    [0x25] = {"SLA L", 8, &sla_r8},
+    [0x26] = {"SLA [HL]", 16, &sla_mem_hl},
+    [0x27] = {"SLA A", 8, &sla_r8},
+
+    [0x28] = {"SRA B", 8, &sra_r8},
+    [0x29] = {"SRA C", 8, &sra_r8},
+    [0x2A] = {"SRA D", 8, &sra_r8},
+    [0x2B] = {"SRA E", 8, &sra_r8},
+    [0x2C] = {"SRA H", 8, &sra_r8},
+    [0x2D] = {"SRA L", 8, &sra_r8},
+    [0x2E] = {"SRA [HL]", 16, &sra_mem_hl},
+    [0x2F] = {"SRA A", 8, &sra_r8},
+
+    [0x30] = {"SWAP B", 8, &swap_r8},
+    [0x31] = {"SWAP C", 8, &swap_r8},
+    [0x32] = {"SWAP D", 8, &swap_r8},
+    [0x33] = {"SWAP E", 8, &swap_r8},
+    [0x34] = {"SWAP H", 8, &swap_r8},
+    [0x35] = {"SWAP L", 8, &swap_r8},
+    [0x36] = {"SWAP [HL]", 16, &swap_mem_hl},
+    [0x37] = {"SWAP A", 8, &swap_r8},
+
+    [0x38] = {"SRL B", 8, &srl_r8},
+    [0x39] = {"SRL C", 8, &srl_r8},
+    [0x3A] = {"SRL D", 8, &srl_r8},
+    [0x3B] = {"SRL E", 8, &srl_r8},
+    [0x3C] = {"SRL H", 8, &srl_r8},
+    [0x3D] = {"SRL L", 8, &srl_r8},
+    [0x3E] = {"SRL [HL]", 16, &srl_mem_hl},
+    [0x3F] = {"SRL A", 8, &srl_r8},
 
     // Block 1
     [0x40] = {"BIT 0, B", 8, &bit_r8},
@@ -457,5 +532,4 @@ static const Instruction cb_optable[0x100] = {
     [0xFC] = {"SET 7, H", 8, &set_r8},
     [0xFD] = {"SET 7, L", 8, &set_r8},
     [0xFE] = {"SET 7, [HL]", 16, &set_mem_hl},
-    [0xFF] = {"SET 7, A", 8, &set_r8},
-};
+    [0xFF] = {"SET 7, A", 8, &set_r8}};
