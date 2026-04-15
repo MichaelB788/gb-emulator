@@ -1,6 +1,7 @@
 #include "core/instructions.h"
 #include "core/bus.h"
 #include "core/cpu.h"
+#include "core/instruction_set.h"
 #include "util/bitwise.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -553,10 +554,36 @@ void rst_vec(CPU *cpu) {
   cpu->PC = (uint16_t)(op_y(cpu->opcode) * 8);
 }
 
+// Carry flag instructions
+void ccf(CPU *cpu) {
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, !get_flag(cpu, FLAG_C));
+}
+
+void scf(CPU *cpu) {
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, true);
+}
+
 // Interrupt-related instructions
 void halt(CPU *cpu) {}
 
 // Misc.
+void prefix(CPU *cpu) {
+  const uint8_t curr_op = read_n8(cpu);
+  cpu->opcode = curr_op;
+
+  Instruction ins = cb_optable[curr_op];
+  cpu->cycles_taken = ins.cycles;
+  ins.exec(cpu);
+
+#ifndef NDEBUG
+  log_ins(cpu, &ins);
+#endif
+}
+
 void illegal(CPU *cpu) {
   printf("Illegal opcode encountered: 0x%X", cpu->opcode);
 }

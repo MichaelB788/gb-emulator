@@ -221,6 +221,11 @@ void reti(CPU *cpu);
 
 void rst_vec(CPU *cpu);
 
+// Carry flag instructions
+void ccf(CPU *cpu);
+
+void scf(CPU *cpu);
+
 // Interrupt-related instructions
 void halt(CPU *cpu);
 
@@ -228,5 +233,7 @@ void halt(CPU *cpu);
 static inline void nop(CPU *cpu) {};
 
 static inline void stop(CPU *cpu) {};
+
+void prefix(CPU *cpu);
 
 void illegal(CPU *cpu);

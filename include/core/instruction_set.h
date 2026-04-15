@@ -41,6 +41,7 @@ static const Instruction optable[0x100] = {
 
     [0x07] = {"RLCA", 4, &rlca},
     [0x17] = {"RLA", 4, &rla},
+    [0x37] = {"SCF", 4, &scf},
 
     [0x18] = {"JR e8", 12, &jr_e8},
     [0x28] = {"JR Z, e8", 8, &jr_e8_cc},
@@ -79,6 +80,7 @@ static const Instruction optable[0x100] = {
     [0x0F] = {"RRCA", 4, &rrca},
     [0x1F] = {"RRA", 4, &rra},
     [0x2F] = {"CPL", 4, &cpl},
+    [0x3F] = {"CCF", 4, &ccf},
 
     // Block 1
     [0x40] = {"LD B, B", 4, &ld_r8_r8},

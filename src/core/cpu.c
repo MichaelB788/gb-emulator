@@ -34,12 +34,7 @@ uint8_t step(CPU *cpu) {
   ins.exec(cpu);
 
 #ifndef NDEBUG
-  static const int max_entries = 10;
-  static int entries = 0;
-  if (entries < max_entries) {
-    log_ins(cpu, &ins);
-    ++entries;
-  }
+  log_ins(cpu, &ins);
 #endif
 
   return cpu->cycles_taken;
@@ -51,11 +46,15 @@ void log_ins(CPU *cpu, Instruction *ins) {
     output_file = fopen("cpu_trace.txt", "w");
   }
 
-  fprintf(output_file,
-          "%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
-          cpu->opcode, cpu->A, cpu->F, cpu->BC.word, cpu->DE.word, cpu->HL.word,
-          cpu->PC - 1, cpu->SP, ins->name);
-  fflush(output_file);
+  static const int max_entries = 10;
+  static int entries = 0;
+  if (entries < max_entries) {
+    fprintf(output_file,
+            "%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
+            cpu->opcode, cpu->A, cpu->F, cpu->BC.word, cpu->DE.word,
+            cpu->HL.word, cpu->PC - 1, cpu->SP, ins->name);
+    fflush(output_file);
+  }
 }
 
 bool check_cc(CPU *cpu) {
