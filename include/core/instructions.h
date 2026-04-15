@@ -142,7 +142,7 @@ void set_r8(CPU *cpu);
 void set_mem_hl(CPU *cpu);
 
 // Bit shift instructions
-uint8_t RL(CPU *cpu, uint8_t operand);
+void RL(CPU *cpu, uint8_t *operand);
 
 void rl_r8(CPU *cpu);
 
@@ -150,7 +150,7 @@ void rl_mem_hl(CPU *cpu);
 
 void rla(CPU *cpu);
 
-uint8_t RLC(CPU *cpu, uint8_t operand);
+void RLC(CPU *cpu, uint8_t *operand);
 
 void rlc_r8(CPU *cpu);
 
@@ -158,7 +158,7 @@ void rlc_mem_hl(CPU *cpu);
 
 void rlca(CPU *cpu);
 
-uint8_t RR(CPU *cpu, uint8_t operand);
+void RR(CPU *cpu, uint8_t *operand);
 
 void rr_r8(CPU *cpu);
 
@@ -166,7 +166,7 @@ void rr_mem_hl(CPU *cpu);
 
 void rra(CPU *cpu);
 
-uint8_t RRC(CPU *cpu, uint8_t operand);
+void RRC(CPU *cpu, uint8_t *operand);
 
 void rrc_r8(CPU *cpu);
 
@@ -174,25 +174,25 @@ void rrc_mem_hl(CPU *cpu);
 
 void rrca(CPU *cpu);
 
-uint8_t SLA(CPU *cpu, uint8_t operand);
+void SLA(CPU *cpu, uint8_t *operand);
 
 void sla_r8(CPU *cpu);
 
 void sla_mem_hl(CPU *cpu);
 
-uint8_t SRA(CPU *cpu, uint8_t operand);
+void SRA(CPU *cpu, uint8_t *operand);
 
 void sra_r8(CPU *cpu);
 
 void sra_mem_hl(CPU *cpu);
 
-uint8_t SRL(CPU *cpu, uint8_t operand);
+void SRL(CPU *cpu, uint8_t *operand);
 
 void srl_r8(CPU *cpu);
 
 void srl_mem_hl(CPU *cpu);
 
-uint8_t SWAP(CPU *cpu, uint8_t operand);
+void SWAP(CPU *cpu, uint8_t *operand);
 
 void swap_r8(CPU *cpu);
 
@@ -201,9 +201,9 @@ void swap_mem_hl(CPU *cpu);
 // Jumps and subroutine instructions
 void call_a16(CPU *cpu);
 
-void call_a16_cc(CPU *cpu);
+void call_cc_a16(CPU *cpu);
 
-static inline void jp_hl(CPU *cpu) { cpu->PC = cpu->HL.word; }
+static inline void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
 
 static inline void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
 
@@ -211,7 +211,7 @@ void jp_cc_a16(CPU *cpu);
 
 static inline void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
 
-void jr_e8_cc(CPU *cpu);
+void jr_cc_e8(CPU *cpu);
 
 void ret(CPU *cpu);
 
@@ -226,13 +226,34 @@ void ccf(CPU *cpu);
 
 void scf(CPU *cpu);
 
+// Stack manipulation instructions
+void ADD_SP_e8(CPU *cpu, uint16_t *dest);
+
+void add_sp_e8(CPU *cpu);
+
+void ld_mem_n16_sp(CPU *cpu);
+
+void ld_hl_sp_e8(CPU *cpu);
+
+static inline void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
+
+void pop_r16stk(CPU *cpu);
+
+void push_r16stk(CPU *cpu);
+
 // Interrupt-related instructions
+static inline void di(CPU *cpu) { cpu->IME = false; }
+
+static inline void ei(CPU *cpu) { cpu->IME = true; }
+
 void halt(CPU *cpu);
 
 // Misc.
 static inline void nop(CPU *cpu) {};
 
 static inline void stop(CPU *cpu) {};
+
+void daa(CPU *cpu);
 
 void prefix(CPU *cpu);
 

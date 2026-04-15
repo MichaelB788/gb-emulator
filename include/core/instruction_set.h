@@ -6,8 +6,8 @@ static const Instruction optable[0x100] = {
     // Block 0
     [0x00] = {"NOP", 4, &nop},
     [0x10] = {"STOP", 4, &stop},
-    [0x20] = {"JR NZ, e8", 8, &jr_e8_cc},
-    [0x30] = {"JR NC, e8", 8, &jr_e8_cc},
+    [0x20] = {"JR NZ, e8", 8, &jr_cc_e8},
+    [0x30] = {"JR NC, e8", 8, &jr_cc_e8},
 
     [0x01] = {"LD BC, n16", 12, &ld_r16_n16},
     [0x11] = {"LD DE, n16", 12, &ld_r16_n16},
@@ -41,11 +41,13 @@ static const Instruction optable[0x100] = {
 
     [0x07] = {"RLCA", 4, &rlca},
     [0x17] = {"RLA", 4, &rla},
+    [0x27] = {"DAA", 4, &daa},
     [0x37] = {"SCF", 4, &scf},
 
+    [0x08] = {"LD [n16] SP", 20, &ld_mem_n16_sp},
     [0x18] = {"JR e8", 12, &jr_e8},
-    [0x28] = {"JR Z, e8", 8, &jr_e8_cc},
-    [0x38] = {"JR C, e8", 8, &jr_e8_cc},
+    [0x28] = {"JR Z, e8", 8, &jr_cc_e8},
+    [0x38] = {"JR C, e8", 8, &jr_cc_e8},
 
     [0x09] = {"ADD HL, BC", 8, &add_hl_r16},
     [0x19] = {"ADD HL, DE", 8, &add_hl_r16},
@@ -234,6 +236,11 @@ static const Instruction optable[0x100] = {
     [0xE0] = {"LDH [n8], A", 12, &ldh_mem_n8_a},
     [0xF0] = {"LDH A, [n8]", 12, &ldh_a_mem_n8},
 
+    [0xC1] = {"POP BC", 12, &pop_r16stk},
+    [0xD1] = {"POP DE", 12, &pop_r16stk},
+    [0xE1] = {"POP HL", 12, &pop_r16stk},
+    [0xF1] = {"POP AF", 12, &pop_r16stk},
+
     [0xC2] = {"JP NZ, a16", 12, &jp_cc_a16},
     [0xD2] = {"JP NC, a16", 12, &jp_cc_a16},
     [0xE2] = {"LDH [C], A", 8, &ldh_mem_c_a},
@@ -242,11 +249,17 @@ static const Instruction optable[0x100] = {
     [0xC3] = {"JP a16", 16, &jp_a16},
     [0xD3] = {"ILLEGAL", 0, &illegal},
     [0xE3] = {"ILLEGAL", 0, &illegal},
+    [0xF3] = {"DI", 4, &di},
 
-    [0xC4] = {"CALL NZ, a16", 12, &call_a16_cc},
-    [0xD4] = {"CALL NC, a16", 12, &call_a16_cc},
+    [0xC4] = {"CALL NZ, a16", 12, &call_cc_a16},
+    [0xD4] = {"CALL NC, a16", 12, &call_cc_a16},
     [0xE4] = {"ILLEGAL", 0, &illegal},
     [0xF4] = {"ILLEGAL", 0, &illegal},
+
+    [0xC5] = {"PUSH BC", 16, &push_r16stk},
+    [0xD5] = {"PUSH DE", 16, &push_r16stk},
+    [0xE5] = {"PUSH HL", 16, &push_r16stk},
+    [0xF5] = {"PUSH AF", 16, &push_r16stk},
 
     [0xC6] = {"ADD A, n8", 8, &add_a_n8},
     [0xD6] = {"SUB A, n8", 8, &sub_a_n8},
@@ -260,18 +273,26 @@ static const Instruction optable[0x100] = {
 
     [0xC8] = {"RET Z", 8, &ret_cc},
     [0xD8] = {"RET C", 8, &ret_cc},
+    [0xE8] = {"ADD SP, e8", 16, &add_sp_e8},
+    [0xF8] = {"LD HL, SP+e8", 12, &ld_hl_sp_e8},
 
     [0xC9] = {"RET", 16, &ret},
     [0xD9] = {"RETI", 16, &reti},
     [0xE9] = {"JP HL", 4, &jp_hl},
+    [0xF9] = {"LD SP HL", 8, &ld_sp_hl},
 
     [0xCA] = {"JP Z, a16", 12, &jp_cc_a16},
     [0xDA] = {"JP C, a16", 12, &jp_cc_a16},
     [0xEA] = {"LD [n16], A", 16, &ld_mem_n16_a},
     [0xFA] = {"LD A, [n16]", 16, &ld_a_mem_n16},
 
-    [0xCC] = {"CALL Z, a16", 12, &call_a16_cc},
-    [0xDC] = {"CALL C, a16", 12, &call_a16_cc},
+    [0xCB] = {"PREFIX", 4, &prefix},
+    [0xDB] = {"ILLEGAL", 0, &illegal},
+    [0xEB] = {"ILLEGAL", 0, &illegal},
+    [0xFB] = {"EI", 4, &ei},
+
+    [0xCC] = {"CALL Z, a16", 12, &call_cc_a16},
+    [0xDC] = {"CALL C, a16", 12, &call_cc_a16},
     [0xEC] = {"ILLEGAL", 0, &illegal},
     [0xFC] = {"ILLEGAL", 0, &illegal},
 
@@ -288,8 +309,7 @@ static const Instruction optable[0x100] = {
     [0xCF] = {"RST $08", 16, &rst_vec},
     [0xDF] = {"RST $18", 16, &rst_vec},
     [0xEF] = {"RST $28", 16, &rst_vec},
-    [0xFF] = {"RST $38", 16, &rst_vec},
-};
+    [0xFF] = {"RST $38", 16, &rst_vec}};
 
 static const Instruction cb_optable[0x100] = {
     // Block 0
