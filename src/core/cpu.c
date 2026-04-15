@@ -10,19 +10,24 @@
 void init_cpu(CPU *cpu, Bus *bus) {
   cpu->bus = bus;
 
-  cpu->r8[0] = &cpu->BC.byte.hi;
-  cpu->r8[1] = &cpu->BC.byte.lo;
-  cpu->r8[2] = &cpu->DE.byte.hi;
-  cpu->r8[3] = &cpu->DE.byte.lo;
-  cpu->r8[4] = &cpu->HL.byte.hi;
-  cpu->r8[5] = &cpu->HL.byte.lo;
+  cpu->r8[0] = &cpu->B;
+  cpu->r8[1] = &cpu->C;
+  cpu->r8[2] = &cpu->D;
+  cpu->r8[3] = &cpu->E;
+  cpu->r8[4] = &cpu->H;
+  cpu->r8[5] = &cpu->L;
   cpu->r8[6] = NULL;
   cpu->r8[7] = &cpu->A;
 
-  cpu->r16[0] = &cpu->BC.word;
-  cpu->r16[1] = &cpu->DE.word;
-  cpu->r16[2] = &cpu->HL.word;
+  cpu->r16[0] = &cpu->BC;
+  cpu->r16[1] = &cpu->DE;
+  cpu->r16[2] = &cpu->HL;
   cpu->r16[3] = &cpu->SP;
+
+  cpu->r16stk[0] = &cpu->BC;
+  cpu->r16stk[1] = &cpu->DE;
+  cpu->r16stk[2] = &cpu->HL;
+  cpu->r16stk[3] = &cpu->AF;
 }
 
 uint8_t step(CPU *cpu) {
@@ -51,8 +56,8 @@ void log_ins(CPU *cpu, Instruction *ins) {
   if (entries < max_entries) {
     fprintf(output_file,
             "%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
-            cpu->opcode, cpu->A, cpu->F, cpu->BC.word, cpu->DE.word,
-            cpu->HL.word, cpu->PC - 1, cpu->SP, ins->name);
+            cpu->opcode, cpu->A, cpu->F, cpu->BC, cpu->DE, cpu->HL, cpu->PC - 1,
+            cpu->SP, ins->name);
     fflush(output_file);
   }
 }

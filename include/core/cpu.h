@@ -6,19 +6,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum { FLAG_C = 4, FLAG_H, FLAG_N, FLAG_Z } Flag;
-
-typedef union {
-  struct {
-    uint8_t lo, hi;
-  } byte;
-  uint16_t word;
-} RegisterPair;
+// Bit indicies for flags
+typedef enum { FLAG_Z = 7, FLAG_N = 6, FLAG_H = 5, FLAG_C = 4 } Flag;
 
 typedef struct {
-  RegisterPair BC, DE, HL;
+  // clang-format off
+  union { struct { uint8_t C, B; }; uint16_t BC; };
 
-  uint8_t A, F, opcode, cycles_taken;
+  union { struct { uint8_t E, D; }; uint16_t DE; };
+
+  union { struct { uint8_t L, H; }; uint16_t HL; };
+
+  union { struct { uint8_t F, A; }; uint16_t AF; };
+  // clang-format on
+
+  uint8_t opcode, cycles_taken;
 
   uint16_t PC, SP;
 
@@ -29,6 +31,9 @@ typedef struct {
 
   // BC, DE, HL, SP
   uint16_t *r16[4];
+
+  // BC, DE, HL, AF
+  uint16_t *r16stk[4];
 
   Bus *bus;
 } CPU;
@@ -68,6 +73,10 @@ static inline uint16_t *r16(CPU *cpu) {
   return cpu->r16[op_y(cpu->opcode) >> 1];
 }
 
+static inline uint16_t *r16stk(CPU *cpu) {
+  return cpu->r16stk[op_y(cpu->opcode) >> 1];
+}
+
 bool check_cc(CPU *cpu);
 
 // Memory reads
@@ -75,15 +84,13 @@ static inline uint8_t read_n8(CPU *cpu) {
   return read_byte(cpu->bus, cpu->PC++);
 }
 
-static inline uint8_t read_hl(CPU *cpu) {
-  return read_byte(cpu->bus, cpu->HL.word);
-}
+static inline uint8_t read_hl(CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
 
 uint16_t read_n16(CPU *cpu);
 
 // Memory writes
 static inline void write_hl(CPU *cpu, uint8_t val) {
-  write_byte(cpu->bus, cpu->HL.word, val);
+  write_byte(cpu->bus, cpu->HL, val);
 }
 
 // Flags operations
