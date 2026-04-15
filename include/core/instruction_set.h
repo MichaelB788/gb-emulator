@@ -279,7 +279,7 @@ static const Instruction optable[0x100] = {
     [0xC9] = {"RET", 16, &ret},
     [0xD9] = {"RETI", 16, &reti},
     [0xE9] = {"JP HL", 4, &jp_hl},
-    [0xF9] = {"LD SP HL", 8, &ld_sp_hl},
+    [0xF9] = {"LD SP, HL", 8, &ld_sp_hl},
 
     [0xCA] = {"JP Z, a16", 12, &jp_cc_a16},
     [0xDA] = {"JP C, a16", 12, &jp_cc_a16},
