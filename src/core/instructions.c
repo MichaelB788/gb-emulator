@@ -3,6 +3,7 @@
 #include "core/cpu.h"
 #include "util/bitwise.h"
 #include <stdint.h>
+#include <stdio.h>
 
 // Load Instructions
 void ld_r8_r8(CPU *cpu) { *r8_dest(cpu) = *r8(cpu); }
@@ -328,7 +329,7 @@ void rla(CPU *cpu) {
 }
 
 uint8_t RLC(CPU *cpu, const uint8_t operand) {
-  bool bit_7 = get_bit(operand, 7);
+  const bool bit_7 = get_bit(operand, 7);
   const uint8_t result = (operand << 1) | bit_7;
 
   set_flag(cpu, FLAG_Z, result == 0);
@@ -491,7 +492,71 @@ void swap_mem_hl(CPU *cpu) {
   write_hl(cpu, hl_ind);
 }
 
+void call_a16(CPU *cpu) {
+  const uint16_t jmp_addr = read_n16(cpu);
+  write_byte(cpu->bus, --cpu->SP, cpu->PC >> 8);
+  write_byte(cpu->bus, --cpu->SP, cpu->PC & 0xFF);
+  cpu->PC = jmp_addr;
+}
+
+void call_a16_cc(CPU *cpu) {
+  const uint16_t jmp_addr = read_n16(cpu);
+  if (check_cc(cpu)) {
+    write_byte(cpu->bus, --cpu->SP, cpu->PC >> 8);
+    write_byte(cpu->bus, --cpu->SP, cpu->PC & 0xFF);
+    cpu->PC = jmp_addr;
+    cpu->cycles_taken += 12;
+  }
+}
+
+void jp_cc_a16(CPU *cpu) {
+  const uint16_t jmp_addr = read_n16(cpu);
+  if (check_cc(cpu)) {
+    cpu->PC = jmp_addr;
+    cpu->cycles_taken += 4;
+  }
+}
+
+void jr_cc_a16(CPU *cpu) {
+  const uint16_t jmp_addr = cpu->PC + (int8_t)read_n8(cpu);
+  if (check_cc(cpu)) {
+    cpu->PC = jmp_addr;
+    cpu->cycles_taken += 4;
+  }
+}
+
+void ret(CPU *cpu) {
+  uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+  uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+  cpu->PC = (uint16_t)hi << 8 | lo;
+}
+
+void ret_cc(CPU *cpu) {
+  if (check_cc(cpu)) {
+    uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+    uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+    cpu->PC = (uint16_t)hi << 8 | lo;
+    cpu->cycles_taken += 12;
+  }
+}
+
+void reti(CPU *cpu) {
+  uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+  uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+  cpu->PC = (uint16_t)hi << 8 | lo;
+  cpu->IME = true;
+}
+
+void rst_vec(CPU *cpu) {
+  write_byte(cpu->bus, --cpu->SP, cpu->PC >> 8);
+  write_byte(cpu->bus, --cpu->SP, cpu->PC & 0xFF);
+  cpu->PC = (uint16_t)(op_y(cpu->opcode) * 8);
+}
+
 // Interrupt-related instructions
 void halt(CPU *cpu) {}
 
 // Misc.
+void illegal(CPU *cpu) {
+  printf("Illegal opcode encountered: 0x%X", cpu->opcode);
+}

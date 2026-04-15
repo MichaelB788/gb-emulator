@@ -198,6 +198,29 @@ void swap_r8(CPU *cpu);
 
 void swap_mem_hl(CPU *cpu);
 
+// Jumps and subroutine instructions
+void call_a16(CPU *cpu);
+
+void call_a16_cc(CPU *cpu);
+
+static inline void jp_hl(CPU *cpu) { cpu->PC = cpu->HL.word; }
+
+static inline void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
+
+void jp_cc_a16(CPU *cpu);
+
+static inline void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
+
+void jr_e8_cc(CPU *cpu);
+
+void ret(CPU *cpu);
+
+void ret_cc(CPU *cpu);
+
+void reti(CPU *cpu);
+
+void rst_vec(CPU *cpu);
+
 // Interrupt-related instructions
 void halt(CPU *cpu);
 
@@ -205,3 +228,5 @@ void halt(CPU *cpu);
 static inline void nop(CPU *cpu) {};
 
 static inline void stop(CPU *cpu) {};
+
+void illegal(CPU *cpu);

@@ -6,6 +6,8 @@ static const Instruction optable[0x100] = {
     // Block 0
     [0x00] = {"NOP", 4, &nop},
     [0x10] = {"STOP", 4, &stop},
+    [0x20] = {"JR NZ, e8", 8, &jr_e8_cc},
+    [0x30] = {"JR NC, e8", 8, &jr_e8_cc},
 
     [0x01] = {"LD BC, n16", 12, &ld_r16_n16},
     [0x11] = {"LD DE, n16", 12, &ld_r16_n16},
@@ -39,6 +41,10 @@ static const Instruction optable[0x100] = {
 
     [0x07] = {"RLCA", 4, &rlca},
     [0x17] = {"RLA", 4, &rla},
+
+    [0x18] = {"JR e8", 12, &jr_e8},
+    [0x28] = {"JR Z, e8", 8, &jr_e8_cc},
+    [0x38] = {"JR C, e8", 8, &jr_e8_cc},
 
     [0x09] = {"ADD HL, BC", 8, &add_hl_r16},
     [0x19] = {"ADD HL, DE", 8, &add_hl_r16},
@@ -221,24 +227,66 @@ static const Instruction optable[0x100] = {
     [0xBF] = {"CP A, A", 4, &cp_a_r8},
 
     // Block 3
+    [0xC0] = {"RET NZ", 8, &ret_cc},
+    [0xD0] = {"RET NC", 8, &ret_cc},
     [0xE0] = {"LDH [n8], A", 12, &ldh_mem_n8_a},
     [0xF0] = {"LDH A, [n8]", 12, &ldh_a_mem_n8},
 
+    [0xC2] = {"JP NZ, a16", 12, &jp_cc_a16},
+    [0xD2] = {"JP NC, a16", 12, &jp_cc_a16},
     [0xE2] = {"LDH [C], A", 8, &ldh_mem_c_a},
     [0xF2] = {"LDH A, [C]", 8, &ldh_a_mem_c},
+
+    [0xC3] = {"JP a16", 16, &jp_a16},
+    [0xD3] = {"ILLEGAL", 0, &illegal},
+    [0xE3] = {"ILLEGAL", 0, &illegal},
+
+    [0xC4] = {"CALL NZ, a16", 12, &call_a16_cc},
+    [0xD4] = {"CALL NC, a16", 12, &call_a16_cc},
+    [0xE4] = {"ILLEGAL", 0, &illegal},
+    [0xF4] = {"ILLEGAL", 0, &illegal},
 
     [0xC6] = {"ADD A, n8", 8, &add_a_n8},
     [0xD6] = {"SUB A, n8", 8, &sub_a_n8},
     [0xE6] = {"AND A, n8", 8, &and_a_n8},
     [0xF6] = {"OR A, n8", 8, &or_a_n8},
 
+    [0xC7] = {"RST $00", 16, &rst_vec},
+    [0xD7] = {"RST $10", 16, &rst_vec},
+    [0xE7] = {"RST $20", 16, &rst_vec},
+    [0xF7] = {"RST $30", 16, &rst_vec},
+
+    [0xC8] = {"RET Z", 8, &ret_cc},
+    [0xD8] = {"RET C", 8, &ret_cc},
+
+    [0xC9] = {"RET", 16, &ret},
+    [0xD9] = {"RETI", 16, &reti},
+    [0xE9] = {"JP HL", 4, &jp_hl},
+
+    [0xCA] = {"JP Z, a16", 12, &jp_cc_a16},
+    [0xDA] = {"JP C, a16", 12, &jp_cc_a16},
     [0xEA] = {"LD [n16], A", 16, &ld_mem_n16_a},
     [0xFA] = {"LD A, [n16]", 16, &ld_a_mem_n16},
+
+    [0xCC] = {"CALL Z, a16", 12, &call_a16_cc},
+    [0xDC] = {"CALL C, a16", 12, &call_a16_cc},
+    [0xEC] = {"ILLEGAL", 0, &illegal},
+    [0xFC] = {"ILLEGAL", 0, &illegal},
+
+    [0xCD] = {"CALL a16", 24, &call_a16},
+    [0xDD] = {"ILLEGAL", 0, &illegal},
+    [0xED] = {"ILLEGAL", 0, &illegal},
+    [0xFD] = {"ILLEGAL", 0, &illegal},
 
     [0xCE] = {"ADC A, n8", 8, &adc_a_n8},
     [0xDE] = {"SBC A, n8", 8, &sbc_a_n8},
     [0xEE] = {"XOR A, n8", 8, &xor_a_n8},
     [0xFE] = {"CP A, n8", 8, &cp_a_n8},
+
+    [0xCF] = {"RST $08", 16, &rst_vec},
+    [0xDF] = {"RST $18", 16, &rst_vec},
+    [0xEF] = {"RST $28", 16, &rst_vec},
+    [0xFF] = {"RST $38", 16, &rst_vec},
 };
 
 static const Instruction cb_optable[0x100] = {
