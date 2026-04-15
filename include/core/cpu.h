@@ -24,7 +24,7 @@ typedef struct {
 
   uint16_t PC, SP;
 
-  bool IME;
+  bool IME, running;
 
   // B, C, D, E, H, L, F, A
   uint8_t *r8[8];

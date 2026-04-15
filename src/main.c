@@ -16,6 +16,6 @@ int main(void) {
   gameboy.cpu.bus->memory[2] = 0x70;
   gameboy.cpu.bus->memory[3] = 0x10;
 
-  while (read_byte(&gameboy.bus, gameboy.cpu.PC) != 0x10)
+  while (gameboy.cpu.running)
     step(&gameboy.cpu);
 }

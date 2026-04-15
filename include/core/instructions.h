@@ -251,7 +251,7 @@ void halt(CPU *cpu);
 // Misc.
 static inline void nop(CPU *cpu) {};
 
-static inline void stop(CPU *cpu) {};
+void stop_n8(CPU *cpu);
 
 void daa(CPU *cpu);
 

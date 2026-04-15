@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 void init_cpu(CPU *cpu, Bus *bus) {
+  cpu->running = true;
   cpu->bus = bus;
 
   cpu->r8[0] = &cpu->B;

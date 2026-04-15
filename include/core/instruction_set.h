@@ -5,7 +5,7 @@
 static const Instruction optable[0x100] = {
     // Block 0
     [0x00] = {"NOP", 4, &nop},
-    [0x10] = {"STOP", 4, &stop},
+    [0x10] = {"STOP", 4, &stop_n8},
     [0x20] = {"JR NZ, e8", 8, &jr_cc_e8},
     [0x30] = {"JR NC, e8", 8, &jr_cc_e8},
 

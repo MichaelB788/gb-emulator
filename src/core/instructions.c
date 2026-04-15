@@ -3,6 +3,7 @@
 #include "core/cpu.h"
 #include "core/instruction_set.h"
 #include "util/bitwise.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -636,6 +637,12 @@ void prefix(CPU *cpu) {
 #endif
 }
 
+void stop_n8(CPU *cpu) {
+  (void)read_n8(cpu);
+  cpu->running = false;
+}
+
 void illegal(CPU *cpu) {
   printf("Illegal opcode encountered: 0x%X", cpu->opcode);
+  cpu->running = false;
 }
