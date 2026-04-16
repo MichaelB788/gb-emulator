@@ -1,8 +1,9 @@
 #pragma once
+#include "core/cartridge.h"
 #include <stdint.h>
 
 typedef struct {
-  uint8_t memory[0x10000];
+  Cartridge cartridge;
 } Bus;
 
 uint8_t read_byte(Bus *bus, uint16_t addr);
