@@ -13,4 +13,4 @@ cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
 
 ninja -C "$BUILD_DIR"
 
-"$BUILD_DIR/bin/GameBoy"
+"$BUILD_DIR/bin/GameBoy" "$PROJECT_ROOT/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb"

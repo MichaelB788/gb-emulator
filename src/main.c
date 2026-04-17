@@ -1,21 +1,14 @@
-#include "core/bus.h"
-#include "core/cpu.h"
 #include "core/gameboy.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 
-int main(void) {
-  GameBoy gameboy;
-  init_gameboy(&gameboy);
-
-  gameboy.cpu.B = 0x10;
-  gameboy.cpu.C = 0x20;
-
-  gameboy.cpu.bus->memory[0] = 0x41;
-  gameboy.cpu.bus->memory[1] = 0x46;
-  gameboy.cpu.bus->memory[2] = 0x70;
-  gameboy.cpu.bus->memory[3] = 0x10;
-
-  while (gameboy.cpu.running)
-    step(&gameboy.cpu);
+int main(int argc, const char **argv) {
+  if (argc > 1) {
+    GameBoy gb;
+    init_gameboy(&gb, argv[1]);
+    close_gameboy(&gb);
+  } else {
+    fprintf(stderr, "Usage: ./Gameboy <path/to/rom>");
+  }
 }

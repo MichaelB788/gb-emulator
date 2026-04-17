@@ -8,8 +8,8 @@
 #include <stdio.h>
 
 void init_cpu(CPU *cpu, Bus *bus) {
-  cpu->running = true;
   cpu->bus = bus;
+  cpu->running = true;
 
   cpu->r8[0] = &cpu->B;
   cpu->r8[1] = &cpu->C;
@@ -55,10 +55,11 @@ void log_ins(CPU *cpu, Instruction *ins) {
   static const int max_entries = 10;
   static int entries = 0;
   if (entries < max_entries) {
-    fprintf(output_file,
-            "%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
-            cpu->opcode, cpu->A, cpu->F, cpu->BC, cpu->DE, cpu->HL, cpu->PC - 1,
-            cpu->SP, ins->name);
+    fprintf(
+        output_file,
+        "0x%02X: A:%02X F:%02X BC:%04X DE:%04X HL:%04X PC:%04X SP:%04X %s\n",
+        cpu->opcode, cpu->A, cpu->F, cpu->BC, cpu->DE, cpu->HL, cpu->PC - 1,
+        cpu->SP, ins->name);
     fflush(output_file);
   }
 }
