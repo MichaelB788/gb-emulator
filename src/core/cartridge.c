@@ -1,54 +1,80 @@
 #include "core/cartridge.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-enum { HEADER_SIZE = 0x150 };
-
-bool init_cartridge(Cartridge *cartridge, const char *path_to_rom) {
-  bool success = true;
-  FILE *rom_file;
-
-  uint8_t header[HEADER_SIZE] = {0};
-  rom_file = fopen(path_to_rom, "rb");
-  if (rom_file) {
-    const size_t header_bytes_read =
-        fread(header, sizeof header[0], HEADER_SIZE, rom_file);
-    if (header_bytes_read == HEADER_SIZE) {
-      cartridge->type = header[0x147];
-
-      const uint8_t rom_size_byte = header[0x148];
-      cartridge->rom_size =
-          rom_size_byte != 0 ? 32000 * (1 << rom_size_byte) : 0;
-
-      cartridge->rom = malloc(cartridge->rom_size);
-      const size_t bytes_read =
-          fread(cartridge->rom, 1, cartridge->rom_size, rom_file);
-      if (bytes_read == cartridge->rom_size) {
-        const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
-        cartridge->ram_size = ram_sizes[cartridge->rom[0x149]];
-        cartridge->ram = malloc(cartridge->ram_size);
-      } else {
-        success = false;
-        perror("Could not read ROM");
-      }
-    } else {
-      success = false;
-      perror("Failed to read bytes into header");
-    }
-  } else {
-    success = false;
-    perror("Could not read ROM file");
+bool initialize_ram(Cartridge *cartridge) {
+  cartridge->ram = malloc(cartridge->ram_size);
+  if (!cartridge->ram && cartridge->ram_size > 0) {
+    perror("Error allocating memory for RAM");
+    return false;
   }
 
-  fclose(rom_file);
   return true;
 }
 
+bool read_rom_into_memory(FILE *rom_file, Cartridge *cartridge) {
+  cartridge->rom = malloc(cartridge->rom_size);
+  if (!cartridge->rom) {
+    perror("Error allocating memory for ROM");
+    return false;
+  }
+
+  const size_t bytes_read =
+      fread(cartridge->rom, 1, cartridge->rom_size, rom_file);
+  if (bytes_read != cartridge->rom_size) {
+    perror("Could not read file contents into memory");
+    return false;
+  }
+
+  return true;
+}
+
+bool read_header(FILE *rom_file, Cartridge *cartridge) {
+  enum { HEADER_SIZE = 0x150 };
+
+  uint8_t header[HEADER_SIZE] = {0};
+  const size_t bytes_read = fread(header, 1, HEADER_SIZE, rom_file);
+  if (bytes_read != HEADER_SIZE) {
+    perror("Could not read ROM header into memory");
+    return false;
+  }
+
+  cartridge->type = header[0x147];
+  cartridge->rom_size = 32000 * (1 << header[0x148]);
+  const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
+  cartridge->ram_size = ram_sizes[cartridge->rom[0x149]];
+
+  return true;
+}
+
+bool init_cartridge(Cartridge *cartridge, const char *path_to_rom) {
+  FILE *rom_file = fopen(path_to_rom, "rb");
+  if (!rom_file) {
+    perror("Could not read ROM file");
+    return false;
+  }
+
+  bool success = read_header(rom_file, cartridge) &&
+                 read_rom_into_memory(rom_file, cartridge) &&
+                 initialize_ram(cartridge);
+
+  fclose(rom_file);
+  return success;
+}
+
 void close_cartridge(Cartridge *cartridge) {
-  free(cartridge->rom);
-  free(cartridge->ram);
+  if (cartridge->rom) {
+    free(cartridge->rom);
+    cartridge->rom = NULL;
+  }
+
+  if (cartridge->ram) {
+    free(cartridge->ram);
+    cartridge->ram = NULL;
+  }
 }
 
 uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
