@@ -7,7 +7,7 @@
 
 bool initialize_ram(Cartridge *cartridge) {
   cartridge->ram = malloc(cartridge->ram_size);
-  if (!cartridge->ram && cartridge->ram_size > 0) {
+  if (cartridge->ram_size > 0 && !cartridge->ram) {
     perror("Error allocating memory for RAM");
     return false;
   }
@@ -22,9 +22,8 @@ bool read_rom_into_memory(FILE *rom_file, Cartridge *cartridge) {
     return false;
   }
 
-  const size_t bytes_read =
-      fread(cartridge->rom, 1, cartridge->rom_size, rom_file);
-  if (bytes_read != cartridge->rom_size) {
+  if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
+      cartridge->rom_size) {
     perror("Could not read file contents into memory");
     return false;
   }
@@ -36,8 +35,7 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   enum { HEADER_SIZE = 0x150 };
 
   uint8_t header[HEADER_SIZE] = {0};
-  const size_t bytes_read = fread(header, 1, HEADER_SIZE, rom_file);
-  if (bytes_read != HEADER_SIZE) {
+  if (fread(header, 1, HEADER_SIZE, rom_file) != HEADER_SIZE) {
     perror("Could not read ROM header into memory");
     return false;
   }
@@ -45,12 +43,15 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   cartridge->type = header[0x147];
   cartridge->rom_size = 32000 * (1 << header[0x148]);
   const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
-  cartridge->ram_size = ram_sizes[cartridge->rom[0x149]];
+  cartridge->ram_size = ram_sizes[header[0x149]];
 
   return true;
 }
 
 bool init_cartridge(Cartridge *cartridge, const char *path_to_rom) {
+  cartridge->rom = NULL;
+  cartridge->ram = NULL;
+
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not read ROM file");
