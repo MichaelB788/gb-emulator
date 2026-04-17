@@ -11,7 +11,7 @@ void init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
     init_cpu(&gameboy->cpu, &gameboy->bus);
   } else {
     gameboy->cpu.running = false;
-    fprintf(stderr, "Could not start GameBoy");
+    fprintf(stderr, "Could not start GameBoy\n");
   }
 }
 
