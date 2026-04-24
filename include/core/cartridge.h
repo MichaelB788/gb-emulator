@@ -21,6 +21,7 @@ typedef struct {
   size_t rom_size;
   size_t ram_size;
 
+  bool ram_enabled;
   uint8_t rom_bank;
   uint8_t ram_bank;
 } Cartridge;
