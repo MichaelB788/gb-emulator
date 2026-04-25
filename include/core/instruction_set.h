@@ -236,10 +236,10 @@ static const Instruction optable[0x100] = {
     [0xE0] = {"LDH [n8], A", 12, &ldh_mem_n8_a},
     [0xF0] = {"LDH A, [n8]", 12, &ldh_a_mem_n8},
 
-    [0xC1] = {"POP BC", 12, &pop_r16stk},
-    [0xD1] = {"POP DE", 12, &pop_r16stk},
-    [0xE1] = {"POP HL", 12, &pop_r16stk},
-    [0xF1] = {"POP AF", 12, &pop_r16stk},
+    [0xC1] = {"POP BC", 12, &pop_r16},
+    [0xD1] = {"POP DE", 12, &pop_r16},
+    [0xE1] = {"POP HL", 12, &pop_r16},
+    [0xF1] = {"POP AF", 12, &pop_af},
 
     [0xC2] = {"JP NZ, a16", 12, &jp_cc_a16},
     [0xD2] = {"JP NC, a16", 12, &jp_cc_a16},
@@ -256,10 +256,10 @@ static const Instruction optable[0x100] = {
     [0xE4] = {"ILLEGAL", 0, &illegal},
     [0xF4] = {"ILLEGAL", 0, &illegal},
 
-    [0xC5] = {"PUSH BC", 16, &push_r16stk},
-    [0xD5] = {"PUSH DE", 16, &push_r16stk},
-    [0xE5] = {"PUSH HL", 16, &push_r16stk},
-    [0xF5] = {"PUSH AF", 16, &push_r16stk},
+    [0xC5] = {"PUSH BC", 16, &push_r16},
+    [0xD5] = {"PUSH DE", 16, &push_r16},
+    [0xE5] = {"PUSH HL", 16, &push_r16},
+    [0xF5] = {"PUSH AF", 16, &push_af},
 
     [0xC6] = {"ADD A, n8", 8, &add_a_n8},
     [0xD6] = {"SUB A, n8", 8, &sub_a_n8},

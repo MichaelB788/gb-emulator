@@ -584,20 +584,33 @@ void ld_mem_n16_sp(CPU *cpu) {
 
 void ld_hl_sp_e8(CPU *cpu) { ADD_SP_e8(cpu, &cpu->HL); }
 
-void pop_r16stk(CPU *cpu) {
-  const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+void pop_r16(CPU *cpu) {
   const uint8_t lo = read_byte(cpu->bus, cpu->SP++);
-  *r16stk(cpu) = (uint16_t)hi << 8 | lo;
+  const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+  *r16(cpu) = (uint16_t)hi << 8 | lo;
 }
 
-void push_r16stk(CPU *cpu) {
-  const uint16_t operand = *r16stk(cpu);
+void pop_af(CPU *cpu) {
+  cpu->F = read_byte(cpu->bus, cpu->SP++) & 0xF0;
+  cpu->A = read_byte(cpu->bus, cpu->SP++);
+}
+
+void push_r16(CPU *cpu) {
+  const uint16_t operand = *r16(cpu);
   write_byte(cpu->bus, --cpu->SP, operand >> 8);
   write_byte(cpu->bus, --cpu->SP, operand & 0xFF);
 }
 
+void push_af(CPU *cpu) {
+  write_byte(cpu->bus, --cpu->SP, cpu->A);
+  write_byte(cpu->bus, --cpu->SP, cpu->F);
+}
+
 // Interrupt-related instructions
-void halt(CPU *cpu) {}
+void halt(CPU *cpu) {
+  // TODO: Proper halt behavior, halt bug.
+  cpu->state = CPU_HALTED;
+}
 
 // Misc.
 void daa(CPU *cpu) {
@@ -639,10 +652,10 @@ void prefix(CPU *cpu) {
 
 void stop_n8(CPU *cpu) {
   (void)read_n8(cpu);
-  cpu->running = false;
+  cpu->state = CPU_STOPPED;
 }
 
 void illegal(CPU *cpu) {
   printf("Illegal opcode encountered: 0x%X", cpu->opcode);
-  cpu->running = false;
+  cpu->state = CPU_STOPPED;
 }

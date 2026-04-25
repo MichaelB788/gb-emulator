@@ -1,5 +1,6 @@
 #include "core/cpu.h"
 #include "core/instruction_set.h"
+#include "util/bitwise.h"
 #include <assert.h>
 #include <endian.h>
 #include <stdarg.h>
@@ -8,9 +9,6 @@
 #include <stdio.h>
 
 void init_cpu(CPU *cpu, Bus *bus) {
-  cpu->bus = bus;
-  cpu->running = true;
-
   cpu->r8[0] = &cpu->B;
   cpu->r8[1] = &cpu->C;
   cpu->r8[2] = &cpu->D;
@@ -24,11 +22,6 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[1] = &cpu->DE;
   cpu->r16[2] = &cpu->HL;
   cpu->r16[3] = &cpu->SP;
-
-  cpu->r16stk[0] = &cpu->BC;
-  cpu->r16stk[1] = &cpu->DE;
-  cpu->r16stk[2] = &cpu->HL;
-  cpu->r16stk[3] = &cpu->AF;
 }
 
 uint8_t step(CPU *cpu) {
@@ -84,3 +77,33 @@ uint16_t read_n16(CPU *cpu) {
   uint8_t hi = read_byte(cpu->bus, cpu->PC++);
   return (uint16_t)hi << 8 | lo;
 }
+
+uint8_t op_y(uint8_t op) { return (op >> 3) & 0x7; }
+
+uint8_t op_z(uint8_t op) { return op & 0x7; }
+
+uint8_t *r8(CPU *cpu) {
+  uint8_t i = op_z(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
+
+uint8_t *r8_dest(CPU *cpu) {
+  uint8_t i = op_y(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
+
+uint16_t *r16(CPU *cpu) { return cpu->r16[op_y(cpu->opcode) >> 1]; }
+
+uint8_t read_n8(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
+
+uint8_t read_hl(CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
+
+void write_hl(CPU *cpu, uint8_t val) { write_byte(cpu->bus, cpu->HL, val); }
+
+void set_flag(CPU *cpu, Flag flag, bool val) {
+  set_bit(&cpu->F, (uint8_t)flag, val);
+}
+
+bool get_flag(CPU *cpu, Flag flag) { return get_bit(cpu->F, (uint8_t)flag); }

@@ -237,9 +237,13 @@ void ld_hl_sp_e8(CPU *cpu);
 
 static inline void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
 
-void pop_r16stk(CPU *cpu);
+void pop_r16(CPU *cpu);
 
-void push_r16stk(CPU *cpu);
+void pop_af(CPU *cpu);
+
+void push_r16(CPU *cpu);
+
+void push_af(CPU *cpu);
 
 // Interrupt-related instructions
 static inline void di(CPU *cpu) { cpu->IME = false; }
