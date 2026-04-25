@@ -4,12 +4,13 @@
 #include "core/cpu.h"
 
 typedef struct {
-  Cartridge cartridge;
+  Cartridge *cartridge;
   Bus bus;
   CPU cpu;
 } GameBoy;
 
-void init_gameboy(GameBoy *gameboy, const char *path_to_rom);
+// Initializes the GameBoy. Returns `true` on success, `false` otherwise.
+bool init_gameboy(GameBoy *gameboy, const char *path_to_rom);
 
 void run_gameboy(GameBoy *gameboy);
 

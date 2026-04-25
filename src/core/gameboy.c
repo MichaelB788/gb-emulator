@@ -1,23 +1,25 @@
 #include "core/gameboy.h"
-#include "core/bus.h"
 #include "core/cartridge.h"
 #include "core/cpu.h"
 #include <stdbool.h>
-#include <stdio.h>
 
-void init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
-  if (init_cartridge(&gameboy->cartridge, path_to_rom)) {
-    gameboy->bus.cartridge = &gameboy->cartridge;
+bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
+  gameboy->cartridge = create_cartridge(path_to_rom);
+  if (gameboy->cartridge) {
+    gameboy->bus.cartridge = gameboy->cartridge;
+    gameboy->bus.IE = false;
     init_cpu(&gameboy->cpu, &gameboy->bus);
+    return true;
   } else {
-    gameboy->cpu.running = false;
-    fprintf(stderr, "Could not start GameBoy\n");
+    gameboy->cpu.state = CPU_STOPPED;
+    return false;
   }
 }
 
 void run_gameboy(GameBoy *gameboy) {
-  while (gameboy->cpu.running)
+  while (gameboy->cpu.state == CPU_RUNNING) {
     step(&gameboy->cpu);
+  }
 }
 
-void close_gameboy(GameBoy *gameboy) { close_cartridge(&gameboy->cartridge); }
+void close_gameboy(GameBoy *gameboy) { destroy_cartridge(gameboy->cartridge); }

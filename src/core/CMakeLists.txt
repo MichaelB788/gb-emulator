@@ -4,5 +4,6 @@ add_library(GB_Core
   cpu.c
   gameboy.c
   instructions.c
+  mbc.c
 )
 add_library(GB::Core ALIAS GB_Core)

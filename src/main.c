@@ -5,10 +5,12 @@
 
 int main(int argc, const char **argv) {
   if (argc > 1) {
-    GameBoy gb;
-    init_gameboy(&gb, argv[1]);
-    run_gameboy(&gb);
-    close_gameboy(&gb);
+    GameBoy gameboy = {0};
+    // TODO: Sanitize path
+    if (init_gameboy(&gameboy, argv[1])) {
+      run_gameboy(&gameboy);
+    }
+    close_gameboy(&gameboy);
   } else {
     fprintf(stderr, "Usage: ./Gameboy <path/to/rom>");
   }
