@@ -1,31 +1,67 @@
 #include "core/cartridge.h"
 #include "core/mbc.h"
+#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+bool invalid_rom_file(FILE *file) {
+  if (!file) {
+    fprintf(stderr, "ROM file is NULL\n");
+    return true;
+  }
+
+  return false;
+}
+
+bool invalid_cartridge(Cartridge *cartridge) {
+  if (!cartridge) {
+    fprintf(stderr, "Cartridge is NULL\n");
+    return true;
+  }
+
+  return false;
+}
+
 bool initialize_ram(Cartridge *cartridge) {
+  if (invalid_cartridge(cartridge)) {
+    return false;
+  }
+  if (cartridge->ram_size == 0) {
+    // No RAM, so skip initialization and assume success.
+    return true;
+  }
+
+  // Cartridge has RAM, so initialize it.
   cartridge->ram = malloc(cartridge->ram_size);
-  if (cartridge->ram_size > 0 && !cartridge->ram) {
-    perror("Error allocating memory for RAM");
+  if (!cartridge->ram) {
+    perror("RAM malloc failed");
     return false;
   }
 
   return true;
 }
 
-bool read_rom_into_memory(FILE *rom_file, Cartridge *cartridge) {
-  cartridge->rom = malloc(cartridge->rom_size);
-  if (!cartridge->rom) {
-    perror("Error allocating memory for ROM");
+bool initialize_rom(FILE *rom_file, Cartridge *cartridge) {
+  if (invalid_rom_file(rom_file) || invalid_cartridge(cartridge)) {
+    return false;
+  }
+  if (cartridge->rom_size < 32000) {
+    fprintf(stderr, "Invalid ROM size: %zu\n", cartridge->rom_size);
     return false;
   }
 
+  // Attempt to read ROM file bytes into memory.
+  cartridge->rom = malloc(cartridge->rom_size);
+  if (!cartridge->rom) {
+    perror("ROM malloc failed");
+    return false;
+  }
   if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
       cartridge->rom_size) {
-    perror("Could not read file contents into memory");
+    perror("Could not ROM file");
     return false;
   }
 
@@ -33,9 +69,13 @@ bool read_rom_into_memory(FILE *rom_file, Cartridge *cartridge) {
 }
 
 bool read_header(FILE *rom_file, Cartridge *cartridge) {
+  if (invalid_rom_file(rom_file) || invalid_cartridge(cartridge)) {
+    return false;
+  }
+
   enum { HEADER_SIZE = 0x150 };
 
-  // Load the cartridge header into a temporary buffer
+  // Read the first 0x150 bytes into a temporary buffer.
   uint8_t header[HEADER_SIZE] = {0};
   if (fread(header, 1, HEADER_SIZE, rom_file) != HEADER_SIZE) {
     perror("Could not read ROM header into memory");
@@ -51,38 +91,42 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   return true;
 }
 
-bool init_cartridge(Cartridge *cartridge, const char *path_to_rom) {
-  // Initialize variables
-  cartridge->rom = NULL;
-  cartridge->ram = NULL;
-  cartridge->rom_bank = 1;
-  cartridge->ram_enabled = false;
+Cartridge *create_cartridge(const char *path_to_rom) {
+  static Cartridge cartridge = {0};
 
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not read ROM file");
-    return false;
+    return NULL;
   }
 
-  // Expression chain will short circuit if any errors occur. It is important
-  // that these functions are called in this order.
-  bool success = read_header(rom_file, cartridge) &&
-                 read_rom_into_memory(rom_file, cartridge) &&
-                 initialize_ram(cartridge);
+  // It's important to read the header before initializing ROM and RAM, as it
+  // contains important information about MBC type and ROM/RAM size, which will
+  // then be used in initalize_rom and initialize_ram.
+  bool success = true;
+  if (read_header(rom_file, &cartridge)) {
+    success =
+        initialize_rom(rom_file, &cartridge) && initialize_ram(&cartridge);
+  } else {
+    success = false;
+  }
 
   fclose(rom_file);
-  return success;
+
+  return success ? &cartridge : NULL;
 }
 
 void close_cartridge(Cartridge *cartridge) {
-  if (cartridge->rom) {
-    free(cartridge->rom);
-    cartridge->rom = NULL;
-  }
+  if (cartridge) {
+    if (cartridge->rom) {
+      free(cartridge->rom);
+      cartridge->rom = NULL;
+    }
 
-  if (cartridge->ram) {
-    free(cartridge->ram);
-    cartridge->ram = NULL;
+    if (cartridge->ram) {
+      free(cartridge->ram);
+      cartridge->ram = NULL;
+    }
   }
 }
 

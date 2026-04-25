@@ -26,9 +26,11 @@ typedef struct {
   uint8_t ram_bank;
 } Cartridge;
 
-bool init_cartridge(Cartridge *cartridge, const char *path_to_rom);
+// Returns a pointer to a statically created Cartridge on success, NULL on
+// failure.
+Cartridge *create_cartridge(const char *path_to_rom);
 
-void close_cartridge(Cartridge *cartridge);
+void destroy_cartridge(Cartridge *cartridge);
 
 uint8_t read_rom(Cartridge *cartridge, uint16_t addr);
 
