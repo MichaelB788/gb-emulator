@@ -73,7 +73,14 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
     return false;
   }
 
-  enum { HEADER_SIZE = 0x150 };
+  // Important byte addresses + header size. See:
+  // https://gbdev.io/pandocs/The_Cartridge_Header.html
+  enum {
+    MAPPER_BYTE = 0x147,
+    ROM_SIZE_BYTE = 0x148,
+    RAM_SIZE_BYTE = 0x149,
+    HEADER_SIZE = 0x150
+  };
 
   // Read the first 0x150 bytes into a temporary buffer.
   uint8_t header[HEADER_SIZE] = {0};
@@ -82,41 +89,41 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
     return false;
   }
 
-  // Refer to: https://gbdev.io/pandocs/The_Cartridge_Header.html
+  // Note: A RAM size byte with value 0x1 isn't used by any official ROMS, so
+  // the actual size is unknown. I just assume no RAM.
   const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
-  cartridge->type = header[0x147];
-  cartridge->rom_size = 32000 * (1 << header[0x148]);
-  cartridge->ram_size = ram_sizes[header[0x149]];
+
+  // Parse the header.
+  cartridge->mapper = header[MAPPER_BYTE];
+  cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
+  cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
 
   return true;
 }
 
 Cartridge *create_cartridge(const char *path_to_rom) {
-  static Cartridge cartridge = {0};
-
+  // Read the file in binary mode.
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not read ROM file");
     return NULL;
   }
 
-  // It's important to read the header before initializing ROM and RAM, as it
-  // contains important information about MBC type and ROM/RAM size, which will
-  // then be used in initalize_rom and initialize_ram.
-  bool success = true;
-  if (read_header(rom_file, &cartridge)) {
-    success =
-        initialize_rom(rom_file, &cartridge) && initialize_ram(&cartridge);
-  } else {
-    success = false;
+  // It's important to call read_header() before initializing ROM or RAM as
+  // we'll need to know the appropriate sizes for both before allocating memory.
+  Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
+  bool success = read_header(rom_file, cartridge) &&
+                 initialize_rom(rom_file, cartridge) &&
+                 initialize_ram(cartridge);
+
+  if (!success) {
+    destroy_cartridge(cartridge);
   }
-
   fclose(rom_file);
-
-  return success ? &cartridge : NULL;
+  return cartridge;
 }
 
-void close_cartridge(Cartridge *cartridge) {
+void destroy_cartridge(Cartridge *cartridge) {
   if (cartridge) {
     if (cartridge->rom) {
       free(cartridge->rom);
@@ -127,14 +134,17 @@ void close_cartridge(Cartridge *cartridge) {
       free(cartridge->ram);
       cartridge->ram = NULL;
     }
+
+    free(cartridge);
+    cartridge = NULL;
   }
 }
 
 uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
-  switch (cartridge->type) {
-  case ROM_ONLY:
+  switch (cartridge->mapper) {
+  case MAPPER_ROM_ONLY:
     return cartridge->rom[addr];
-  case MBC1:
+  case MAPPER_MBC1:
     return read_mbc1_rom(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -143,10 +153,10 @@ uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
 }
 
 uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
-  switch (cartridge->type) {
+  switch (cartridge->mapper) {
   // These MBC's have no RAM
-  case ROM_ONLY:
-  case MBC1:
+  case MAPPER_ROM_ONLY:
+  case MAPPER_MBC1:
     return 0x00;
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -155,10 +165,10 @@ uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
 }
 
 void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
-  switch (cartridge->type) {
+  switch (cartridge->mapper) {
   // These MBC's have no RAM, so this action is a NOP.
-  case ROM_ONLY:
-  case MBC1:
+  case MAPPER_ROM_ONLY:
+  case MAPPER_MBC1:
     (void)addr;
     (void)val;
     break;
@@ -169,10 +179,10 @@ void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
 }
 
 void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val) {
-  switch (cartridge->type) {
+  switch (cartridge->mapper) {
   // These MBC's have no RAM, so this action is a NOP.
-  case ROM_ONLY:
-  case MBC1:
+  case MAPPER_ROM_ONLY:
+  case MAPPER_MBC1:
     (void)val;
     (void)addr;
     break;

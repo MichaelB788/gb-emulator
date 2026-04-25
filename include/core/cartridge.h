@@ -4,16 +4,16 @@
 #include <stdint.h>
 
 typedef enum {
-  ROM_ONLY,
-  MBC1,
-  MBC1_RAM,
-  MBC1_RAM_BATTERY,
-  MBC2,
-  MBC2_BATTERY,
-} CartridgeType;
+  MAPPER_ROM_ONLY,
+  MAPPER_MBC1,
+  MAPPER_MBC1_RAM,
+  MAPPER_MBC1_RAM_BATTERY,
+  MAPPER_MBC2,
+  MAPPER_MBC2_BATTERY,
+} Mapper;
 
 typedef struct {
-  CartridgeType type;
+  Mapper mapper;
 
   uint8_t *rom;
   uint8_t *ram;
@@ -26,10 +26,10 @@ typedef struct {
   uint8_t ram_bank;
 } Cartridge;
 
-// Returns a pointer to a statically created Cartridge on success, NULL on
-// failure.
+// Returns a heap allocated cartridge on success, NULL on failure
 Cartridge *create_cartridge(const char *path_to_rom);
 
+// Destroys a cartridge if it exists, otherwise this operation is a no-op.
 void destroy_cartridge(Cartridge *cartridge);
 
 uint8_t read_rom(Cartridge *cartridge, uint16_t addr);
