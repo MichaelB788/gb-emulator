@@ -15,15 +15,16 @@ typedef enum {
 typedef struct {
   Mapper mapper;
 
-  uint8_t *rom;
-  uint8_t *ram;
+  bool ram_enabled;
+
+  uint8_t rom_bank;
+  uint8_t ram_bank;
 
   size_t rom_size;
   size_t ram_size;
 
-  bool ram_enabled;
-  uint8_t rom_bank;
-  uint8_t ram_bank;
+  uint8_t *rom;
+  uint8_t *ram;
 } Cartridge;
 
 // Returns a heap allocated cartridge on success, NULL on failure

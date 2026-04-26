@@ -98,6 +98,9 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
   cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
 
+  // See: https://gbdev.io/pandocs/MBC1.html#registers
+  cartridge->rom_bank = 0x01;
+
   return true;
 }
 
