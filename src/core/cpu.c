@@ -2,13 +2,12 @@
 #include "core/instruction_set.h"
 #include "util/bitwise.h"
 #include <assert.h>
-#include <endian.h>
-#include <stdarg.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
 void init_cpu(CPU *cpu, Bus *bus) {
+  cpu->bus = bus;
+
   cpu->r8[0] = &cpu->B;
   cpu->r8[1] = &cpu->C;
   cpu->r8[2] = &cpu->D;
@@ -28,7 +27,7 @@ uint8_t step(CPU *cpu) {
   const uint8_t curr_op = read_n8(cpu);
   cpu->opcode = curr_op;
 
-  Instruction ins = optable[curr_op];
+  const Instruction ins = optable[curr_op];
   cpu->cycles_taken = ins.cycles;
   ins.exec(cpu);
 
@@ -39,7 +38,7 @@ uint8_t step(CPU *cpu) {
   return cpu->cycles_taken;
 }
 
-void log_ins(CPU *cpu, Instruction *ins) {
+void log_ins(const CPU *cpu, const Instruction *ins) {
   static FILE *output_file = NULL;
   if (output_file == NULL) {
     output_file = fopen("cpu_trace.txt", "w");
@@ -57,7 +56,19 @@ void log_ins(CPU *cpu, Instruction *ins) {
   }
 }
 
-bool check_cc(CPU *cpu) {
+uint8_t op_y(const uint8_t op) { return (op >> 3) & 0x7; }
+
+uint8_t op_z(const uint8_t op) { return op & 0x7; }
+
+uint8_t *r8_dest(CPU *cpu) {
+  uint8_t i = op_y(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
+
+uint16_t *r16(CPU *cpu) { return cpu->r16[op_y(cpu->opcode) >> 1]; }
+
+bool check_cc(const CPU *cpu) {
   switch (op_y(cpu->opcode) & 0x3) {
   case 0: // NZ
     return !get_flag(cpu, FLAG_Z);
@@ -72,38 +83,24 @@ bool check_cc(CPU *cpu) {
   }
 }
 
+uint8_t read_n8(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
+
+uint8_t read_hl(const CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
+
 uint16_t read_n16(CPU *cpu) {
-  uint8_t lo = read_byte(cpu->bus, cpu->PC++);
-  uint8_t hi = read_byte(cpu->bus, cpu->PC++);
+  const uint8_t lo = read_byte(cpu->bus, cpu->PC++);
+  const uint8_t hi = read_byte(cpu->bus, cpu->PC++);
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t op_y(uint8_t op) { return (op >> 3) & 0x7; }
-
-uint8_t op_z(uint8_t op) { return op & 0x7; }
-
-uint8_t *r8(CPU *cpu) {
-  uint8_t i = op_z(cpu->opcode);
-  assert(i != 6);
-  return cpu->r8[i];
+void write_hl(CPU *cpu, const uint8_t val) {
+  write_byte(cpu->bus, cpu->HL, val);
 }
 
-uint8_t *r8_dest(CPU *cpu) {
-  uint8_t i = op_y(cpu->opcode);
-  assert(i != 6);
-  return cpu->r8[i];
-}
-
-uint16_t *r16(CPU *cpu) { return cpu->r16[op_y(cpu->opcode) >> 1]; }
-
-uint8_t read_n8(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
-
-uint8_t read_hl(CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
-
-void write_hl(CPU *cpu, uint8_t val) { write_byte(cpu->bus, cpu->HL, val); }
-
-void set_flag(CPU *cpu, Flag flag, bool val) {
+void set_flag(CPU *cpu, const Flag flag, const bool val) {
   set_bit(&cpu->F, (uint8_t)flag, val);
 }
 
-bool get_flag(CPU *cpu, Flag flag) { return get_bit(cpu->F, (uint8_t)flag); }
+bool get_flag(const CPU *cpu, const Flag flag) {
+  return get_bit(cpu->F, (uint8_t)flag);
+}
