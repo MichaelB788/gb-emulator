@@ -98,9 +98,6 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
   cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
 
-  // See: https://gbdev.io/pandocs/MBC1.html#registers
-  cartridge->rom_bank = 0x01;
-
   return true;
 }
 
@@ -112,9 +109,15 @@ Cartridge *create_cartridge(const char *path_to_rom) {
     return NULL;
   }
 
+  // Initialize variables
+  Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
+  cartridge->rom = cartridge->ram = NULL;
+  cartridge->primary_bank = 0x1;
+  cartridge->secondary_bank = 0x0;
+  cartridge->ram_enabled = cartridge->advanced_banking_enabled = false;
+
   // It's important to call read_header() before initializing ROM or RAM as
   // we'll need to know the appropriate sizes for both before allocating memory.
-  Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
   bool success = read_header(rom_file, cartridge) &&
                  initialize_rom(rom_file, cartridge) &&
                  initialize_ram(cartridge);
@@ -157,10 +160,10 @@ uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
 
 uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
   switch (cartridge->mapper) {
-  // These MBC's have no RAM
   case MAPPER_ROM_ONLY:
+    return 0xFF; // No RAM available
   case MAPPER_MBC1:
-    return 0x00;
+    return read_mbc1_ram(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
     return 0x10;
@@ -169,11 +172,13 @@ uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
 
 void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
   switch (cartridge->mapper) {
-  // These MBC's have no RAM, so this action is a NOP.
   case MAPPER_ROM_ONLY:
-  case MAPPER_MBC1:
+    // No RAM available
     (void)addr;
     (void)val;
+    break;
+  case MAPPER_MBC1:
+    write_mbc1_rom(cartridge, addr, val);
     break;
   default:
     fprintf(stderr, "Attempting write from unimplemented cartridge type\n");
@@ -183,11 +188,13 @@ void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
 
 void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val) {
   switch (cartridge->mapper) {
-  // These MBC's have no RAM, so this action is a NOP.
   case MAPPER_ROM_ONLY:
-  case MAPPER_MBC1:
+    // No RAM available
     (void)val;
     (void)addr;
+    break;
+  case MAPPER_MBC1:
+    write_mbc1_ram(cartridge, addr, val);
     break;
   default:
     fprintf(stderr, "Attempting write from unimplemented cartridge type\n");

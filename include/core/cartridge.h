@@ -17,8 +17,9 @@ typedef struct {
 
   bool ram_enabled;
 
-  uint8_t rom_bank;
-  uint8_t ram_bank;
+  bool advanced_banking_enabled;
+  uint8_t primary_bank;
+  uint8_t secondary_bank;
 
   size_t rom_size;
   size_t ram_size;
