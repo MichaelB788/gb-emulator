@@ -60,6 +60,12 @@ uint8_t op_y(const uint8_t op) { return (op >> 3) & 0x7; }
 
 uint8_t op_z(const uint8_t op) { return op & 0x7; }
 
+uint8_t *r8(CPU *cpu) {
+  uint8_t i = op_z(cpu->opcode);
+  assert(i != 6);
+  return cpu->r8[i];
+}
+
 uint8_t *r8_dest(CPU *cpu) {
   uint8_t i = op_y(cpu->opcode);
   assert(i != 6);
