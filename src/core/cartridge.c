@@ -1,5 +1,5 @@
 #include "core/cartridge.h"
-#include "core/mbc.h"
+#include "core/mbc1.h"
 #include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -12,7 +12,6 @@ bool invalid_rom_file(FILE *file) {
     fprintf(stderr, "ROM file is NULL\n");
     return true;
   }
-
   return false;
 }
 
@@ -21,7 +20,6 @@ bool invalid_cartridge(Cartridge *cartridge) {
     fprintf(stderr, "Cartridge is NULL\n");
     return true;
   }
-
   return false;
 }
 
@@ -40,7 +38,6 @@ bool initialize_ram(Cartridge *cartridge) {
     perror("RAM malloc failed");
     return false;
   }
-
   return true;
 }
 
@@ -94,11 +91,20 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
 
   // Parse the header.
-  cartridge->mapper = header[MAPPER_BYTE];
+  cartridge->type = header[MAPPER_BYTE];
   cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
   cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
 
   return true;
+}
+
+void init_mapper(Cartridge *cart) {
+  switch (cart->type) {
+  case MAPPER_MBC1:
+  default:
+    init_mbc1(&cart->mapper.mbc1);
+    break;
+  }
 }
 
 Cartridge *create_cartridge(const char *path_to_rom) {
@@ -112,9 +118,7 @@ Cartridge *create_cartridge(const char *path_to_rom) {
   // Initialize variables
   Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
   cartridge->rom = cartridge->ram = NULL;
-  cartridge->primary_bank = 0x1;
-  cartridge->secondary_bank = 0x0;
-  cartridge->ram_enabled = cartridge->advanced_banking_enabled = false;
+  cartridge->ram_enabled = false;
 
   // It's important to call read_header() before initializing ROM or RAM as
   // we'll need to know the appropriate sizes for both before allocating memory.
@@ -122,9 +126,12 @@ Cartridge *create_cartridge(const char *path_to_rom) {
                  initialize_rom(rom_file, cartridge) &&
                  initialize_ram(cartridge);
 
-  if (!success) {
+  if (success) {
+    init_mapper(cartridge);
+  } else {
     destroy_cartridge(cartridge);
   }
+
   fclose(rom_file);
   return cartridge;
 }
@@ -147,7 +154,7 @@ void destroy_cartridge(Cartridge *cartridge) {
 }
 
 uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
-  switch (cartridge->mapper) {
+  switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     return cartridge->rom[addr];
   case MAPPER_MBC1:
@@ -159,7 +166,7 @@ uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
 }
 
 uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
-  switch (cartridge->mapper) {
+  switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     return 0xFF; // No RAM available
   case MAPPER_MBC1:
@@ -171,7 +178,7 @@ uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
 }
 
 void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
-  switch (cartridge->mapper) {
+  switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     // No RAM available
     (void)addr;
@@ -187,7 +194,7 @@ void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
 }
 
 void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val) {
-  switch (cartridge->mapper) {
+  switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     // No RAM available
     (void)val;

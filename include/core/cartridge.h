@@ -10,16 +10,25 @@ typedef enum {
   MAPPER_MBC1_RAM_BATTERY,
   MAPPER_MBC2,
   MAPPER_MBC2_BATTERY,
-} Mapper;
+} CartrideType;
 
 typedef struct {
-  Mapper mapper;
-
-  bool ram_enabled;
-
   bool advanced_banking_enabled;
   uint8_t primary_bank;
   uint8_t secondary_bank;
+} MBC1;
+
+typedef union {
+  MBC1 mbc1;
+  // TODO: More mappers
+} Mapper;
+
+typedef struct {
+  CartrideType type;
+
+  bool ram_enabled;
+
+  Mapper mapper;
 
   size_t rom_size;
   size_t ram_size;
