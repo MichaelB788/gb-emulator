@@ -18,21 +18,15 @@ typedef struct {
   uint8_t secondary_bank;
 } MBC1;
 
-typedef union {
-  MBC1 mbc1;
-  // TODO: More mappers
-} Mapper;
-
 typedef struct {
   CartrideType type;
-
+  union {
+    MBC1 mbc1;
+    // TODO: More mappers
+  };
   bool ram_enabled;
-
-  Mapper mapper;
-
   size_t rom_size;
   size_t ram_size;
-
   uint8_t *rom;
   uint8_t *ram;
 } Cartridge;

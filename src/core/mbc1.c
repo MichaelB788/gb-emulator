@@ -13,11 +13,11 @@ void init_mbc1(MBC1 *mbc1) {
 }
 
 uint8_t read_mbc1_rom(const Cartridge *cartridge, const uint16_t addr) {
-  if (addr < 0x4000 || cartridge->mapper.mbc1.primary_bank == 1) {
+  if (addr < 0x4000 || cartridge->mbc1.primary_bank == 1) {
     return cartridge->rom[addr];
   }
   const uint16_t internal_addr =
-      internal_rom_addr(cartridge->mapper.mbc1.primary_bank, addr);
+      internal_rom_addr(cartridge->mbc1.primary_bank, addr);
   return cartridge->rom[internal_addr];
 }
 
@@ -53,23 +53,22 @@ void write_mbc1_rom(Cartridge *cartridge, const uint16_t addr,
   if (addr < 0x2000) { // Write to RAM Enable Register
     cartridge->ram_enabled = (val & 0xF) == 0xA;
   } else if (addr < 0x4000) {
-    write_primary_bank_register(&cartridge->mapper.mbc1, val,
+    write_primary_bank_register(&cartridge->mbc1, val,
                                 num_banks(cartridge->rom_size));
   } else if (addr < 0x6000) { // Write to Secondary Bank Register
-    write_secondary_bank_register(&cartridge->mapper.mbc1, val,
+    write_secondary_bank_register(&cartridge->mbc1, val,
                                   num_banks(cartridge->ram_size));
   } else {
-    write_banking_mode_select(&cartridge->mapper.mbc1, val,
-                              cartridge->rom_size);
+    write_banking_mode_select(&cartridge->mbc1, val, cartridge->rom_size);
   }
 }
 
 uint8_t read_mbc1_ram(Cartridge *cartridge, const uint16_t addr) {
   if (cartridge->ram_enabled) {
     cartridge->ram_enabled = false;
-    if (cartridge->mapper.mbc1.advanced_banking_enabled) {
+    if (cartridge->mbc1.advanced_banking_enabled) {
       const uint16_t internal_addr =
-          internal_ram_addr(cartridge->mapper.mbc1.secondary_bank, addr);
+          internal_ram_addr(cartridge->mbc1.secondary_bank, addr);
       return cartridge->ram[internal_addr];
     } else {
       return cartridge->ram[addr - EXTERNAL_RAM_START_ADDRESS];
@@ -82,9 +81,9 @@ void write_mbc1_ram(Cartridge *cartridge, const uint16_t addr,
                     const uint8_t val) {
   if (cartridge->ram_enabled) {
     cartridge->ram_enabled = false;
-    if (cartridge->mapper.mbc1.advanced_banking_enabled) {
+    if (cartridge->mbc1.advanced_banking_enabled) {
       const uint16_t internal_addr =
-          internal_ram_addr(cartridge->mapper.mbc1.secondary_bank, addr);
+          internal_ram_addr(cartridge->mbc1.secondary_bank, addr);
       cartridge->ram[internal_addr] = val;
     } else {
       cartridge->ram[addr - EXTERNAL_RAM_START_ADDRESS] = val;
