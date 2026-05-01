@@ -23,7 +23,7 @@ bool invalid_cartridge(Cartridge *cartridge) {
   return false;
 }
 
-bool initialize_ram(Cartridge *cartridge) {
+bool init_ram(Cartridge *cartridge) {
   if (invalid_cartridge(cartridge)) {
     return false;
   }
@@ -41,7 +41,7 @@ bool initialize_ram(Cartridge *cartridge) {
   return true;
 }
 
-bool initialize_rom(FILE *rom_file, Cartridge *cartridge) {
+bool init_rom(FILE *rom_file, Cartridge *cartridge) {
   if (invalid_rom_file(rom_file) || invalid_cartridge(cartridge)) {
     return false;
   }
@@ -56,6 +56,8 @@ bool initialize_rom(FILE *rom_file, Cartridge *cartridge) {
     perror("ROM malloc failed");
     return false;
   }
+
+  rewind(rom_file);
   if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
       cartridge->rom_size) {
     perror("Could not ROM file");
@@ -78,8 +80,6 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
     RAM_SIZE_BYTE = 0x149,
     HEADER_SIZE = 0x150
   };
-
-  // Read the first 0x150 bytes into a temporary buffer.
   uint8_t header[HEADER_SIZE] = {0};
   if (fread(header, 1, HEADER_SIZE, rom_file) != HEADER_SIZE) {
     perror("Could not read ROM header into memory");
@@ -89,8 +89,6 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
   // Note: A RAM size byte with value 0x1 isn't used by any official ROMS, so
   // the actual size is unknown. I just assume no RAM.
   const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
-
-  // Parse the header.
   cartridge->type = header[MAPPER_BYTE];
   cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
   cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
@@ -102,20 +100,18 @@ void init_mapper(Cartridge *cart) {
   switch (cart->type) {
   case MAPPER_MBC1:
   default:
-    init_mbc1(&cart->mapper.mbc1);
+    init_mbc1(&cart->mbc1);
     break;
   }
 }
 
 Cartridge *create_cartridge(const char *path_to_rom) {
-  // Read the file in binary mode.
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not read ROM file");
     return NULL;
   }
 
-  // Initialize variables
   Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
   cartridge->rom = cartridge->ram = NULL;
   cartridge->ram_enabled = false;
@@ -123,9 +119,7 @@ Cartridge *create_cartridge(const char *path_to_rom) {
   // It's important to call read_header() before initializing ROM or RAM as
   // we'll need to know the appropriate sizes for both before allocating memory.
   bool success = read_header(rom_file, cartridge) &&
-                 initialize_rom(rom_file, cartridge) &&
-                 initialize_ram(cartridge);
-
+                 init_rom(rom_file, cartridge) && init_ram(cartridge);
   if (success) {
     init_mapper(cartridge);
   } else {
