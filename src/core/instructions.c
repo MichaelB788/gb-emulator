@@ -656,6 +656,6 @@ void stop_n8(CPU *cpu) {
 }
 
 void illegal(CPU *cpu) {
-  printf("Illegal opcode encountered: 0x%X", cpu->opcode);
+  fprintf(stderr, "Illegal opcode encountered: 0x%X\n", cpu->opcode);
   cpu->state = CPU_STOPPED;
 }

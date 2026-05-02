@@ -10,7 +10,7 @@ typedef enum {
   MAPPER_MBC1_RAM_BATTERY,
   MAPPER_MBC2,
   MAPPER_MBC2_BATTERY,
-} CartrideType;
+} CartridgeType;
 
 typedef struct {
   bool advanced_banking_enabled;
@@ -19,7 +19,7 @@ typedef struct {
 } MBC1;
 
 typedef struct {
-  CartrideType type;
+  CartridgeType type;
   union {
     MBC1 mbc1;
     // TODO: More mappers
@@ -37,7 +37,7 @@ Cartridge *create_cartridge(const char *path_to_rom);
 // Destroys a cartridge if it exists, otherwise this operation is a no-op.
 void destroy_cartridge(Cartridge *cartridge);
 
-uint8_t read_rom(Cartridge *cartridge, uint16_t addr);
+uint8_t read_rom(const Cartridge *cartridge, uint16_t addr);
 
 uint8_t read_ram(Cartridge *cartridge, uint16_t addr);
 

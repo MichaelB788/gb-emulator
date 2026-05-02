@@ -112,13 +112,14 @@ Cartridge *create_cartridge(const char *path_to_rom) {
     return NULL;
   }
 
-  Cartridge *cartridge = (Cartridge *)malloc(sizeof(Cartridge));
-  cartridge->rom = cartridge->ram = NULL;
+  Cartridge *cartridge = malloc(sizeof(Cartridge));
+  cartridge->rom = NULL;
+  cartridge->ram = NULL;
   cartridge->ram_enabled = false;
 
   // It's important to call read_header() before initializing ROM or RAM as
   // we'll need to know the appropriate sizes for both before allocating memory.
-  bool success = read_header(rom_file, cartridge) &&
+  const bool success = read_header(rom_file, cartridge) &&
                  init_rom(rom_file, cartridge) && init_ram(cartridge);
   if (success) {
     init_mapper(cartridge);
@@ -147,7 +148,7 @@ void destroy_cartridge(Cartridge *cartridge) {
   }
 }
 
-uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
+uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     return cartridge->rom[addr];
@@ -159,7 +160,7 @@ uint8_t read_rom(Cartridge *cartridge, uint16_t addr) {
   }
 }
 
-uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
+uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     return 0xFF; // No RAM available
@@ -171,7 +172,7 @@ uint8_t read_ram(Cartridge *cartridge, uint16_t addr) {
   }
 }
 
-void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
+void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     // No RAM available
@@ -187,7 +188,7 @@ void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val) {
   }
 }
 
-void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val) {
+void write_ram(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
     // No RAM available

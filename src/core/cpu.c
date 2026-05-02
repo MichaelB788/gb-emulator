@@ -21,6 +21,8 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[1] = &cpu->DE;
   cpu->r16[2] = &cpu->HL;
   cpu->r16[3] = &cpu->SP;
+
+  cpu->PC = 0x100;
 }
 
 uint8_t step(CPU *cpu) {
