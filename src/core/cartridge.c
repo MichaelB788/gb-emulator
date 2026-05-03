@@ -1,6 +1,5 @@
 #include "core/cartridge.h"
 #include "core/mbc1.h"
-#include <complex.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -60,7 +59,7 @@ bool init_rom(FILE *rom_file, Cartridge *cartridge) {
   rewind(rom_file);
   if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
       cartridge->rom_size) {
-    perror("Could not ROM file");
+    perror("Could not read ROM file");
     return false;
   }
 
@@ -119,12 +118,12 @@ Cartridge *create_cartridge(const char *path_to_rom) {
 
   // It's important to call read_header() before initializing ROM or RAM as
   // we'll need to know the appropriate sizes for both before allocating memory.
-  const bool success = read_header(rom_file, cartridge) &&
-                 init_rom(rom_file, cartridge) && init_ram(cartridge);
-  if (success) {
+  if (read_header(rom_file, cartridge) && init_rom(rom_file, cartridge) &&
+      init_ram(cartridge)) {
     init_mapper(cartridge);
   } else {
     destroy_cartridge(cartridge);
+    cartridge = NULL;
   }
 
   fclose(rom_file);
@@ -133,18 +132,9 @@ Cartridge *create_cartridge(const char *path_to_rom) {
 
 void destroy_cartridge(Cartridge *cartridge) {
   if (cartridge) {
-    if (cartridge->rom) {
-      free(cartridge->rom);
-      cartridge->rom = NULL;
-    }
-
-    if (cartridge->ram) {
-      free(cartridge->ram);
-      cartridge->ram = NULL;
-    }
-
+    free(cartridge->rom);
+    free(cartridge->ram);
     free(cartridge);
-    cartridge = NULL;
   }
 }
 

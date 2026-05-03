@@ -12,6 +12,6 @@ uint8_t read_mbc1_rom(const Cartridge *cartridge, uint16_t addr);
 
 void write_mbc1_rom(Cartridge *cartridge, uint16_t addr, uint8_t val);
 
-uint8_t read_mbc1_ram(Cartridge *cartridge, uint16_t addr);
+uint8_t read_mbc1_ram(const Cartridge *cartridge, uint16_t addr);
 
 void write_mbc1_ram(Cartridge *cartridge, uint16_t addr, uint8_t val);

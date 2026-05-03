@@ -15,9 +15,7 @@ uint8_t read_mbc1_rom(const Cartridge *cartridge, const uint16_t addr) {
   if (addr < 0x4000 || cartridge->mbc1.primary_bank == 1) {
     return cartridge->rom[addr];
   }
-  const uint16_t internal_addr =
-      internal_rom_addr(cartridge->mbc1.primary_bank, addr);
-  return cartridge->rom[internal_addr];
+  return cartridge->rom[internal_rom_addr(addr, cartridge->mbc1.primary_bank)];
 }
 
 uint8_t num_banks(size_t total_bytes) { return total_bytes / 0x4000; }
@@ -64,9 +62,8 @@ void write_mbc1_rom(Cartridge *cartridge, const uint16_t addr,
   }
 }
 
-uint8_t read_mbc1_ram(Cartridge *cartridge, const uint16_t addr) {
+uint8_t read_mbc1_ram(const Cartridge *cartridge, const uint16_t addr) {
   if (cartridge->ram_enabled) {
-    cartridge->ram_enabled = false;
     if (cartridge->mbc1.advanced_banking_enabled) {
       const uint16_t internal_addr = internal_ram_addr(
           addr, cartridge->mbc1.secondary_bank, cartridge->ram_size);
@@ -81,7 +78,6 @@ uint8_t read_mbc1_ram(Cartridge *cartridge, const uint16_t addr) {
 void write_mbc1_ram(Cartridge *cartridge, const uint16_t addr,
                     const uint8_t val) {
   if (cartridge->ram_enabled) {
-    cartridge->ram_enabled = false;
     if (cartridge->mbc1.advanced_banking_enabled) {
       const uint16_t internal_addr = internal_ram_addr(
           addr, cartridge->mbc1.secondary_bank, cartridge->ram_size);
