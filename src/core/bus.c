@@ -28,21 +28,21 @@ uint8_t read_byte(Bus *bus, uint16_t addr) {
 void write_byte(Bus *bus, uint16_t addr, uint8_t val) {
   if (addr < 0x8000) // ROM
     write_rom(bus->cartridge, addr, val);
-  if (addr < 0xA000) // TODO: VRAM
+  else if (addr < 0xA000) // TODO: VRAM
     return;
-  if (addr < 0xC000) // External RAM
+  else if (addr < 0xC000) // External RAM
     write_ram(bus->cartridge, addr, val);
-  if (addr < 0xE000) // Work RAM (No banking)
+  else if (addr < 0xE000) // Work RAM (No banking)
     bus->wram[addr - 0xC000] = val;
-  if (addr < 0xFE00) // Echo RAM
+  else if (addr < 0xFE00) // Echo RAM
     bus->wram[addr - 0xE000] = val;
-  if (addr < 0xFEA0) // TODO: OAM
+  else if (addr < 0xFEA0) // TODO: OAM
     return;
-  if (addr < 0xFF00) // Prohibited space
+  else if (addr < 0xFF00) // Prohibited space
     return;
-  if (addr < 0xFF80) // TODO: IO Registers
+  else if (addr < 0xFF80) // TODO: IO Registers
     return;
-  if (addr < 0xFFFE) // High RAM
+  else if (addr < 0xFFFE) // High RAM
     bus->hram[addr - 0xFF80] = val;
   else // Interrupt Enable Register
     bus->interrupt_enable = val & 1;
