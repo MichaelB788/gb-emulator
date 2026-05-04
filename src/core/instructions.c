@@ -203,6 +203,10 @@ void add_hl_r16(CPU *cpu) {
   cpu->HL = (uint16_t)sum;
 }
 
+void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
+
+void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
+
 void AND(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
 
@@ -503,6 +507,10 @@ void call_cc_a16(CPU *cpu) {
   }
 }
 
+void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
+
+void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
+
 void jp_cc_a16(CPU *cpu) {
   const uint16_t jmp_addr = read_n16(cpu);
   if (check_cc(cpu)) {
@@ -510,6 +518,8 @@ void jp_cc_a16(CPU *cpu) {
     cpu->cycles_taken += 4;
   }
 }
+
+void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
 
 void jr_cc_e8(CPU *cpu) {
   const uint16_t jmp_addr = cpu->PC + (int8_t)read_n8(cpu);
@@ -584,6 +594,8 @@ void ld_mem_n16_sp(CPU *cpu) {
 
 void ld_hl_sp_e8(CPU *cpu) { ADD_SP_e8(cpu, &cpu->HL); }
 
+void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
+
 void pop_r16(CPU *cpu) {
   const uint8_t lo = read_byte(cpu->bus, cpu->SP++);
   const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
@@ -650,6 +662,8 @@ void prefix(CPU *cpu) {
 #endif
 }
 
+void nop(CPU *cpu) {};
+
 void stop_n8(CPU *cpu) {
   (void)read_n8(cpu);
   cpu->state = CPU_STOPPED;
@@ -659,3 +673,7 @@ void illegal(CPU *cpu) {
   fprintf(stderr, "Illegal opcode encountered: 0x%X\n", cpu->opcode);
   cpu->state = CPU_STOPPED;
 }
+
+void di(CPU *cpu) { cpu->IME = false; }
+
+void ei(CPU *cpu) { cpu->IME = true; }

@@ -2,7 +2,10 @@
 #include "core/cpu.h"
 #include <stdint.h>
 
+//
 // Load Instructions
+//
+
 void ld_r8_r8(CPU *cpu);
 
 void ld_r8_n8(CPU *cpu);
@@ -39,7 +42,10 @@ void ld_a_mem_hli(CPU *cpu);
 
 void ld_a_mem_hld(CPU *cpu);
 
+//
 // 8-bit arithmetic instructions
+//
+
 void ADC(CPU *cpu, uint8_t operand);
 
 void adc_a_r8(CPU *cpu);
@@ -92,14 +98,20 @@ void sub_a_mem_hl(CPU *cpu);
 
 void sub_a_n8(CPU *cpu);
 
+//
 // 16-bit arithmetic instructions
+//
+
 void add_hl_r16(CPU *cpu);
 
-static void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
+void dec_r16(CPU *cpu);
 
-static void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
+void inc_r16(CPU *cpu);
 
+//
 // Bitwise logic instructions
+//
+
 void AND(CPU *cpu, uint8_t operand);
 
 void and_a_r8(CPU *cpu);
@@ -126,7 +138,10 @@ void xor_a_mem_hl(CPU *cpu);
 
 void xor_a_n8(CPU *cpu);
 
+//
 // Bit flag instructions
+//
+
 void BIT(CPU *cpu, uint8_t operand);
 
 void bit_r8(CPU *cpu);
@@ -141,7 +156,10 @@ void set_r8(CPU *cpu);
 
 void set_mem_hl(CPU *cpu);
 
+//
 // Bit shift instructions
+//
+
 void RL(CPU *cpu, uint8_t *operand);
 
 void rl_r8(CPU *cpu);
@@ -198,18 +216,21 @@ void swap_r8(CPU *cpu);
 
 void swap_mem_hl(CPU *cpu);
 
+//
 // Jumps and subroutine instructions
+//
+
 void call_a16(CPU *cpu);
 
 void call_cc_a16(CPU *cpu);
 
-static void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
+void jp_hl(CPU *cpu);
 
-static void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
+void jp_a16(CPU *cpu);
 
 void jp_cc_a16(CPU *cpu);
 
-static void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
+void jr_e8(CPU *cpu);
 
 void jr_cc_e8(CPU *cpu);
 
@@ -221,12 +242,18 @@ void reti(CPU *cpu);
 
 void rst_vec(CPU *cpu);
 
+//
 // Carry flag instructions
+//
+
 void ccf(CPU *cpu);
 
 void scf(CPU *cpu);
 
+//
 // Stack manipulation instructions
+//
+
 void ADD_SP_e8(CPU *cpu, uint16_t *dest);
 
 void add_sp_e8(CPU *cpu);
@@ -235,7 +262,7 @@ void ld_mem_n16_sp(CPU *cpu);
 
 void ld_hl_sp_e8(CPU *cpu);
 
-static void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
+void ld_sp_hl(CPU *cpu);
 
 void pop_r16(CPU *cpu);
 
@@ -245,15 +272,21 @@ void push_r16(CPU *cpu);
 
 void push_af(CPU *cpu);
 
+//
 // Interrupt-related instructions
-static void di(CPU *cpu) { cpu->IME = false; }
+//
 
-static void ei(CPU *cpu) { cpu->IME = true; }
+void di(CPU *cpu);
+
+void ei(CPU *cpu);
 
 void halt(CPU *cpu);
 
+//
 // Misc.
-static void nop(CPU *cpu) {};
+//
+
+void nop(CPU *cpu);
 
 void stop_n8(CPU *cpu);
 
