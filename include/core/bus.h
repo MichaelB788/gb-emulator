@@ -4,10 +4,11 @@
 #include <stdint.h>
 
 typedef struct {
-  bool interrupt_enable;
-  uint8_t wram[0x2000];
-  uint8_t hram[127];
   Cartridge *cartridge;
+  uint8_t wram[8192]; // 8 KiB of work ram. Does not assume bank switching, as
+                      // it's a feature of the GameBoy Color.
+  uint8_t hram[127];
+  bool interrupt_enable;
 } Bus;
 
 uint8_t read_byte(Bus *bus, uint16_t addr);

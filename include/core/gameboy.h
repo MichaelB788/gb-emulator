@@ -1,10 +1,8 @@
 #pragma once
 #include "core/bus.h"
-#include "core/cartridge.h"
 #include "core/cpu.h"
 
 typedef struct {
-  Cartridge *cartridge;
   Bus bus;
   CPU cpu;
 } GameBoy;

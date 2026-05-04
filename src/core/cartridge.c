@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool invalid_rom_file(FILE *file) {
+bool is_invalid_rom_file(FILE *file) {
   if (!file) {
     fprintf(stderr, "ROM file is NULL\n");
     return true;
@@ -14,7 +14,7 @@ bool invalid_rom_file(FILE *file) {
   return false;
 }
 
-bool invalid_cartridge(Cartridge *cartridge) {
+bool is_invalid_cartridge(Cartridge *cartridge) {
   if (!cartridge) {
     fprintf(stderr, "Cartridge is NULL\n");
     return true;
@@ -23,12 +23,11 @@ bool invalid_cartridge(Cartridge *cartridge) {
 }
 
 bool init_ram(Cartridge *cartridge) {
-  if (invalid_cartridge(cartridge)) {
+  if (is_invalid_cartridge(cartridge)) {
     return false;
   }
   if (cartridge->ram_size == 0) {
-    // No RAM, so skip initialization and assume success.
-    return true;
+    return true; // No RAM, so skip initialization and assume success.
   }
 
   // Cartridge has RAM, so initialize it.
@@ -41,7 +40,7 @@ bool init_ram(Cartridge *cartridge) {
 }
 
 bool init_rom(FILE *rom_file, Cartridge *cartridge) {
-  if (invalid_rom_file(rom_file) || invalid_cartridge(cartridge)) {
+  if (is_invalid_rom_file(rom_file) || is_invalid_cartridge(cartridge)) {
     return false;
   }
   if (cartridge->rom_size < 32000) {
@@ -67,7 +66,7 @@ bool init_rom(FILE *rom_file, Cartridge *cartridge) {
 }
 
 bool read_header(FILE *rom_file, Cartridge *cartridge) {
-  if (invalid_rom_file(rom_file) || invalid_cartridge(cartridge)) {
+  if (is_invalid_rom_file(rom_file) || is_invalid_cartridge(cartridge)) {
     return false;
   }
 
@@ -98,8 +97,10 @@ bool read_header(FILE *rom_file, Cartridge *cartridge) {
 void init_mapper(Cartridge *cart) {
   switch (cart->type) {
   case MAPPER_MBC1:
-  default:
     init_mbc1(&cart->mbc1);
+    break;
+  default:
+    fprintf(stderr, "Cannot init mapper\n");
     break;
   }
 }
@@ -143,6 +144,8 @@ uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
   case MAPPER_ROM_ONLY:
     return cartridge->rom[addr];
   case MAPPER_MBC1:
+  case MAPPER_MBC1_RAM:
+  case MAPPER_MBC1_RAM_BATTERY:
     return read_mbc1_rom(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -153,8 +156,12 @@ uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
 uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
-    return 0xFF; // No RAM available
   case MAPPER_MBC1:
+  case MAPPER_MBC2:
+    return 0xFF; // This is technically undefined behavior. The value returned
+                 // can really be anything.
+  case MAPPER_MBC1_RAM:
+  case MAPPER_MBC1_RAM_BATTERY:
     return read_mbc1_ram(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -165,11 +172,10 @@ uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
 void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
-    // No RAM available
-    (void)addr;
-    (void)val;
-    break;
+    break; // No MBC to handle writes, so this is a no op.
   case MAPPER_MBC1:
+  case MAPPER_MBC1_RAM:
+  case MAPPER_MBC1_RAM_BATTERY:
     write_mbc1_rom(cartridge, addr, val);
     break;
   default:
@@ -181,11 +187,11 @@ void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
 void write_ram(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
   case MAPPER_ROM_ONLY:
-    // No RAM available
-    (void)val;
-    (void)addr;
-    break;
   case MAPPER_MBC1:
+  case MAPPER_MBC2:
+    break; // No RAM available, so this is a no op.
+  case MAPPER_MBC1_RAM:
+  case MAPPER_MBC1_RAM_BATTERY:
     write_mbc1_ram(cartridge, addr, val);
     break;
   default:
