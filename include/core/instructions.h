@@ -95,9 +95,9 @@ void sub_a_n8(CPU *cpu);
 // 16-bit arithmetic instructions
 void add_hl_r16(CPU *cpu);
 
-static inline void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
+static void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
 
-static inline void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
+static void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
 
 // Bitwise logic instructions
 void AND(CPU *cpu, uint8_t operand);
@@ -203,13 +203,13 @@ void call_a16(CPU *cpu);
 
 void call_cc_a16(CPU *cpu);
 
-static inline void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
+static void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
 
-static inline void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
+static void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
 
 void jp_cc_a16(CPU *cpu);
 
-static inline void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
+static void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
 
 void jr_cc_e8(CPU *cpu);
 
@@ -235,7 +235,7 @@ void ld_mem_n16_sp(CPU *cpu);
 
 void ld_hl_sp_e8(CPU *cpu);
 
-static inline void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
+static void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
 
 void pop_r16(CPU *cpu);
 
@@ -246,14 +246,14 @@ void push_r16(CPU *cpu);
 void push_af(CPU *cpu);
 
 // Interrupt-related instructions
-static inline void di(CPU *cpu) { cpu->IME = false; }
+static void di(CPU *cpu) { cpu->IME = false; }
 
-static inline void ei(CPU *cpu) { cpu->IME = true; }
+static void ei(CPU *cpu) { cpu->IME = true; }
 
 void halt(CPU *cpu);
 
 // Misc.
-static inline void nop(CPU *cpu) {};
+static void nop(CPU *cpu) {};
 
 void stop_n8(CPU *cpu);
 
