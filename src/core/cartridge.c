@@ -6,101 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool is_invalid_rom_file(FILE *file) {
-  if (!file) {
-    fprintf(stderr, "ROM file is NULL\n");
-    return true;
-  }
-  return false;
-}
-
-bool is_invalid_cartridge(Cartridge *cartridge) {
-  if (!cartridge) {
-    fprintf(stderr, "Cartridge is NULL\n");
-    return true;
-  }
-  return false;
-}
-
-bool init_ram(Cartridge *cartridge) {
-  if (is_invalid_cartridge(cartridge)) {
-    return false;
-  }
-  if (cartridge->ram_size == 0) {
-    return true; // No RAM, so skip initialization and assume success.
-  }
-
-  // Cartridge has RAM, so initialize it.
-  cartridge->ram = malloc(cartridge->ram_size);
-  if (!cartridge->ram) {
-    perror("RAM malloc failed");
-    return false;
-  }
-  return true;
-}
-
-bool init_rom(FILE *rom_file, Cartridge *cartridge) {
-  if (is_invalid_rom_file(rom_file) || is_invalid_cartridge(cartridge)) {
-    return false;
-  }
-  if (cartridge->rom_size < 32000) {
-    fprintf(stderr, "Invalid ROM size: %zu\n", cartridge->rom_size);
-    return false;
-  }
-
-  // Attempt to read ROM file bytes into memory.
-  cartridge->rom = malloc(cartridge->rom_size);
-  if (!cartridge->rom) {
-    perror("ROM malloc failed");
-    return false;
-  }
-
-  rewind(rom_file);
-  if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
-      cartridge->rom_size) {
-    perror("Could not read ROM file");
-    return false;
-  }
-
-  return true;
-}
-
-bool read_header(FILE *rom_file, Cartridge *cartridge) {
-  if (is_invalid_rom_file(rom_file) || is_invalid_cartridge(cartridge)) {
-    return false;
-  }
-
-  // Important byte addresses + header size. See:
-  // https://gbdev.io/pandocs/The_Cartridge_Header.html
-  enum {
-    MAPPER_BYTE = 0x147,
-    ROM_SIZE_BYTE = 0x148,
-    RAM_SIZE_BYTE = 0x149,
-    HEADER_SIZE = 0x150
-  };
-  uint8_t header[HEADER_SIZE] = {0};
-  if (fread(header, 1, HEADER_SIZE, rom_file) != HEADER_SIZE) {
-    perror("Could not read ROM header into memory");
-    return false;
-  }
-
-  // Note: A RAM size byte with value 0x1 isn't used by any official ROMS, so
-  // the actual size is unknown. I just assume no RAM.
-  const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
-  cartridge->type = header[MAPPER_BYTE];
-  cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
-  cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
-
-  return true;
-}
-
 void init_mapper(Cartridge *cart) {
   switch (cart->type) {
   case MAPPER_MBC1:
     init_mbc1(&cart->mbc1);
     break;
   default:
-    fprintf(stderr, "Cannot init mapper\n");
     break;
   }
 }
@@ -117,18 +28,60 @@ Cartridge *create_cartridge(const char *path_to_rom) {
   cartridge->ram = NULL;
   cartridge->ram_enabled = false;
 
-  // It's important to call read_header() before initializing ROM or RAM as
-  // we'll need to know the appropriate sizes for both before allocating memory.
-  if (read_header(rom_file, cartridge) && init_rom(rom_file, cartridge) &&
-      init_ram(cartridge)) {
+  // Read the cartridge header into memory
+  {
+    // Important byte addresses + header size. See:
+    // https://gbdev.io/pandocs/The_Cartridge_Header.html
+    enum {
+      MAPPER_BYTE = 0x147,
+      ROM_SIZE_BYTE = 0x148,
+      RAM_SIZE_BYTE = 0x149,
+      HEADER_END = 0x150
+    };
+    uint8_t header[HEADER_END] = {0};
+    if (fread(header, 1, HEADER_END, rom_file) != HEADER_END) {
+      perror("Could not read ROM header into memory");
+      goto cleanup;
+    }
+    rewind(rom_file);
+
+    // Note: A RAM size byte with value 0x1 isn't used by any official ROMS, so
+    // the actual size is unknown. I just assume no RAM exists.
+    const size_t ram_sizes[6] = {0, 0, 8000, 32000, 128000, 64000};
+    cartridge->type = header[MAPPER_BYTE];
+    cartridge->rom_size = 32000 * (1 << header[ROM_SIZE_BYTE]);
+    cartridge->ram_size = ram_sizes[header[RAM_SIZE_BYTE]];
     init_mapper(cartridge);
-  } else {
-    destroy_cartridge(cartridge);
-    cartridge = NULL;
+  }
+
+  // Read the ROM file into memory
+  cartridge->rom = malloc(cartridge->rom_size);
+  if (!cartridge->rom) {
+    perror("ROM malloc failed");
+    goto cleanup;
+  }
+  if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
+      cartridge->rom_size) {
+    perror("Could not read ROM file");
+    goto cleanup;
+  }
+
+  // Initialize RAM if the cartridge type has it.
+  if (cartridge->ram_size > 0) {
+    cartridge->ram = malloc(cartridge->ram_size);
+    if (!cartridge->ram) {
+      perror("RAM malloc failed");
+      goto cleanup;
+    }
   }
 
   fclose(rom_file);
   return cartridge;
+
+cleanup:
+  fclose(rom_file);
+  destroy_cartridge(cartridge);
+  return NULL;
 }
 
 void destroy_cartridge(Cartridge *cartridge) {
