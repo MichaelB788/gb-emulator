@@ -10,22 +10,22 @@
 // Load Instructions
 void ld_r8_r8(CPU *cpu) { *r8_dest(cpu) = *r8(cpu); }
 
-void ld_r8_n8(CPU *cpu) { *r8_dest(cpu) = read_n8(cpu); }
+void ld_r8_n8(CPU *cpu) { *r8_dest(cpu) = fetch_byte(cpu); }
 
-void ld_r16_n16(CPU *cpu) { *r16(cpu) = read_n16(cpu); }
+void ld_r16_n16(CPU *cpu) { *r16(cpu) = fetch_word(cpu); }
 
 void ld_mem_hl_r8(CPU *cpu) { write_hl(cpu, *r8(cpu)); }
 
-void ld_mem_hl_n8(CPU *cpu) { write_hl(cpu, read_n8(cpu)); }
+void ld_mem_hl_n8(CPU *cpu) { write_hl(cpu, fetch_byte(cpu)); }
 
 void ld_r8_mem_hl(CPU *cpu) { *r8_dest(cpu) = read_hl(cpu); }
 
 void ld_mem_r16_a(CPU *cpu) { write_byte(cpu->bus, *r16(cpu), cpu->A); }
 
-void ld_mem_n16_a(CPU *cpu) { write_byte(cpu->bus, read_n16(cpu), cpu->A); }
+void ld_mem_n16_a(CPU *cpu) { write_byte(cpu->bus, fetch_word(cpu), cpu->A); }
 
 void ldh_mem_n8_a(CPU *cpu) {
-  write_byte(cpu->bus, (uint16_t)(0xFF00 | read_n8(cpu)), cpu->A);
+  write_byte(cpu->bus, (uint16_t)(0xFF00 | fetch_byte(cpu)), cpu->A);
 }
 
 void ldh_mem_c_a(CPU *cpu) {
@@ -34,10 +34,10 @@ void ldh_mem_c_a(CPU *cpu) {
 
 void ld_a_mem_r16(CPU *cpu) { cpu->A = read_byte(cpu->bus, *r16(cpu)); }
 
-void ld_a_mem_n16(CPU *cpu) { cpu->A = read_byte(cpu->bus, read_n16(cpu)); }
+void ld_a_mem_n16(CPU *cpu) { cpu->A = read_byte(cpu->bus, fetch_word(cpu)); }
 
 void ldh_a_mem_n8(CPU *cpu) {
-  cpu->A = read_byte(cpu->bus, (uint16_t)(0xFF00 | read_n8(cpu)));
+  cpu->A = read_byte(cpu->bus, (uint16_t)(0xFF00 | fetch_byte(cpu)));
 }
 
 void ldh_a_mem_c(CPU *cpu) {
@@ -72,7 +72,7 @@ void adc_a_r8(CPU *cpu) { ADC(cpu, *r8(cpu)); }
 
 void adc_a_mem_hl(CPU *cpu) { ADC(cpu, read_hl(cpu)); }
 
-void adc_a_n8(CPU *cpu) { ADC(cpu, read_n8(cpu)); }
+void adc_a_n8(CPU *cpu) { ADC(cpu, fetch_byte(cpu)); }
 
 void ADD(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
@@ -92,7 +92,7 @@ void add_a_r8(CPU *cpu) { ADD(cpu, *r8(cpu)); }
 
 void add_a_mem_hl(CPU *cpu) { ADD(cpu, read_hl(cpu)); }
 
-void add_a_n8(CPU *cpu) { ADD(cpu, read_n8(cpu)); }
+void add_a_n8(CPU *cpu) { ADD(cpu, fetch_byte(cpu)); }
 
 void CP(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
@@ -109,7 +109,7 @@ void cp_a_r8(CPU *cpu) { CP(cpu, *r8(cpu)); }
 
 void cp_a_mem_hl(CPU *cpu) { CP(cpu, read_hl(cpu)); }
 
-void cp_a_n8(CPU *cpu) { CP(cpu, read_n8(cpu)); }
+void cp_a_n8(CPU *cpu) { CP(cpu, fetch_byte(cpu)); }
 
 uint8_t DEC(CPU *cpu, const uint8_t operand) {
   const uint8_t result = operand - 1;
@@ -155,7 +155,7 @@ void SBC(CPU *cpu, const uint8_t operand) {
   const uint8_t carry = get_flag(cpu, FLAG_C);
   const uint8_t A = cpu->A;
 
-  const uint8_t result = A - operand - carry;
+  const uint8_t result = A - (operand + carry);
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, true);
@@ -169,9 +169,9 @@ void sbc_a_r8(CPU *cpu) { SBC(cpu, *r8(cpu)); }
 
 void sbc_a_mem_hl(CPU *cpu) { SBC(cpu, read_hl(cpu)); }
 
-void sbc_a_n8(CPU *cpu) { SBC(cpu, read_n8(cpu)); }
+void sbc_a_n8(CPU *cpu) { SBC(cpu, fetch_byte(cpu)); }
 
-void SUB(CPU *cpu, uint8_t operand) {
+void SUB(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
 
   const uint8_t result = A - operand;
@@ -188,7 +188,7 @@ void sub_a_r8(CPU *cpu) { SUB(cpu, *r8(cpu)); }
 
 void sub_a_mem_hl(CPU *cpu) { SUB(cpu, read_hl(cpu)); }
 
-void sub_a_n8(CPU *cpu) { SUB(cpu, read_n8(cpu)); }
+void sub_a_n8(CPU *cpu) { SUB(cpu, fetch_byte(cpu)); }
 
 void add_hl_r16(CPU *cpu) {
   const uint16_t HL = cpu->HL;
@@ -203,9 +203,9 @@ void add_hl_r16(CPU *cpu) {
   cpu->HL = (uint16_t)sum;
 }
 
-void dec_r16(CPU *cpu) { --cpu->r16[op_y(cpu->opcode) >> 1]; }
+void dec_r16(CPU *cpu) { --(*r16(cpu)); }
 
-void inc_r16(CPU *cpu) { ++cpu->r16[op_y(cpu->opcode) >> 1]; }
+void inc_r16(CPU *cpu) { ++(*r16(cpu)); }
 
 void AND(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
@@ -224,7 +224,7 @@ void and_a_r8(CPU *cpu) { AND(cpu, *r8(cpu)); }
 
 void and_a_mem_hl(CPU *cpu) { AND(cpu, read_hl(cpu)); }
 
-void and_a_n8(CPU *cpu) { AND(cpu, read_n8(cpu)); }
+void and_a_n8(CPU *cpu) { AND(cpu, fetch_byte(cpu)); }
 
 void cpl(CPU *cpu) {
   cpu->A = (uint8_t)~cpu->A;
@@ -249,7 +249,7 @@ void or_a_r8(CPU *cpu) { OR(cpu, *r8(cpu)); }
 
 void or_a_mem_hl(CPU *cpu) { OR(cpu, read_hl(cpu)); }
 
-void or_a_n8(CPU *cpu) { OR(cpu, read_n8(cpu)); }
+void or_a_n8(CPU *cpu) { OR(cpu, fetch_byte(cpu)); }
 
 void XOR(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
@@ -268,12 +268,10 @@ void xor_a_r8(CPU *cpu) { XOR(cpu, *r8(cpu)); }
 
 void xor_a_mem_hl(CPU *cpu) { XOR(cpu, read_hl(cpu)); }
 
-void xor_a_n8(CPU *cpu) { XOR(cpu, read_n8(cpu)); }
+void xor_a_n8(CPU *cpu) { XOR(cpu, fetch_byte(cpu)); }
 
 void BIT(CPU *cpu, const uint8_t operand) {
-  const uint8_t bit_idx = op_y(cpu->opcode);
-
-  set_flag(cpu, FLAG_Z, get_bit(operand, bit_idx));
+  set_flag(cpu, FLAG_Z, !get_bit(operand, op_y(cpu->opcode)));
   set_flag(cpu, FLAG_N, false);
   set_flag(cpu, FLAG_H, true);
 }
@@ -282,35 +280,25 @@ void bit_r8(CPU *cpu) { BIT(cpu, *r8(cpu)); }
 
 void bit_mem_hl(CPU *cpu) { BIT(cpu, read_hl(cpu)); }
 
-void res_r8(CPU *cpu) {
-  const uint8_t bit_idx = op_y(cpu->opcode);
-  set_bit(r8(cpu), bit_idx, false);
-}
+void res_r8(CPU *cpu) { set_bit(r8(cpu), op_y(cpu->opcode), false); }
 
 void res_mem_hl(CPU *cpu) {
-  const uint8_t bit_idx = op_y(cpu->opcode);
   uint8_t hl_ind = read_hl(cpu);
-
-  set_bit(&hl_ind, bit_idx, false);
+  set_bit(&hl_ind, op_y(cpu->opcode), false);
   write_hl(cpu, hl_ind);
 }
 
-void set_r8(CPU *cpu) {
-  const uint8_t bit_idx = op_y(cpu->opcode);
-  set_bit(r8(cpu), bit_idx, true);
-}
+void set_r8(CPU *cpu) { set_bit(r8(cpu), op_y(cpu->opcode), true); }
 
 void set_mem_hl(CPU *cpu) {
-  const uint8_t bit_idx = op_y(cpu->opcode);
   uint8_t hl_ind = read_hl(cpu);
-
-  set_bit(&hl_ind, bit_idx, true);
+  set_bit(&hl_ind, op_y(cpu->opcode), true);
   write_hl(cpu, hl_ind);
 }
 
 void RL(CPU *cpu, uint8_t *operand) {
   const uint8_t r8 = *operand;
-  const uint8_t result = (r8 << 1) | get_flag(cpu, FLAG_C);
+  const uint8_t result = r8 << 1 | get_flag(cpu, FLAG_C);
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, false);
@@ -432,7 +420,7 @@ void sla_mem_hl(CPU *cpu) {
 
 void SRA(CPU *cpu, uint8_t *operand) {
   const uint8_t r8 = *operand;
-  const uint8_t result = (r8 & 0x8) | (r8 >> 1);
+  const uint8_t result = (r8 & 0x80) | (r8 >> 1);
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, false);
@@ -491,14 +479,14 @@ void swap_mem_hl(CPU *cpu) {
 }
 
 void call_a16(CPU *cpu) {
-  const uint16_t jmp_addr = read_n16(cpu);
+  const uint16_t jmp_addr = fetch_word(cpu);
   write_byte(cpu->bus, --cpu->SP, cpu->PC >> 8);
   write_byte(cpu->bus, --cpu->SP, cpu->PC & 0xFF);
   cpu->PC = jmp_addr;
 }
 
 void call_cc_a16(CPU *cpu) {
-  const uint16_t jmp_addr = read_n16(cpu);
+  const uint16_t jmp_addr = fetch_word(cpu);
   if (check_cc(cpu)) {
     write_byte(cpu->bus, --cpu->SP, cpu->PC >> 8);
     write_byte(cpu->bus, --cpu->SP, cpu->PC & 0xFF);
@@ -509,20 +497,20 @@ void call_cc_a16(CPU *cpu) {
 
 void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
 
-void jp_a16(CPU *cpu) { cpu->PC = read_n16(cpu); }
+void jp_a16(CPU *cpu) { cpu->PC = fetch_word(cpu); }
 
 void jp_cc_a16(CPU *cpu) {
-  const uint16_t jmp_addr = read_n16(cpu);
+  const uint16_t jmp_addr = fetch_word(cpu);
   if (check_cc(cpu)) {
     cpu->PC = jmp_addr;
     cpu->cycles_taken += 4;
   }
 }
 
-void jr_e8(CPU *cpu) { cpu->PC += (int8_t)read_n8(cpu); }
+void jr_e8(CPU *cpu) { cpu->PC += (int8_t)fetch_byte(cpu); }
 
 void jr_cc_e8(CPU *cpu) {
-  const uint16_t jmp_addr = cpu->PC + (int8_t)read_n8(cpu);
+  const uint16_t jmp_addr = cpu->PC + (int8_t)fetch_byte(cpu);
   if (check_cc(cpu)) {
     cpu->PC = jmp_addr;
     cpu->cycles_taken += 4;
@@ -530,23 +518,23 @@ void jr_cc_e8(CPU *cpu) {
 }
 
 void ret(CPU *cpu) {
-  uint8_t lo = read_byte(cpu->bus, cpu->SP++);
-  uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+  const uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+  const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
   cpu->PC = (uint16_t)hi << 8 | lo;
 }
 
 void ret_cc(CPU *cpu) {
   if (check_cc(cpu)) {
-    uint8_t lo = read_byte(cpu->bus, cpu->SP++);
-    uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+    const uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+    const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
     cpu->PC = (uint16_t)hi << 8 | lo;
     cpu->cycles_taken += 12;
   }
 }
 
 void reti(CPU *cpu) {
-  uint8_t lo = read_byte(cpu->bus, cpu->SP++);
-  uint8_t hi = read_byte(cpu->bus, cpu->SP++);
+  const uint8_t lo = read_byte(cpu->bus, cpu->SP++);
+  const uint8_t hi = read_byte(cpu->bus, cpu->SP++);
   cpu->PC = (uint16_t)hi << 8 | lo;
   cpu->IME = true;
 }
@@ -573,21 +561,21 @@ void scf(CPU *cpu) {
 // Stack manipulation instructions
 void ADD_SP_e8(CPU *cpu, uint16_t *dest) {
   const uint16_t SP = cpu->SP;
-  const uint8_t n8 = read_n8(cpu);
-  const int32_t result = SP + (int8_t)(n8);
+  const uint8_t n8 = fetch_byte(cpu);
+  const int32_t sum = SP + (int8_t)n8;
 
   set_flag(cpu, FLAG_Z, false);
   set_flag(cpu, FLAG_N, false);
   set_flag(cpu, FLAG_H, (SP & 0xF) + (n8 & 0xF) > 0xF);
-  set_flag(cpu, FLAG_C, result > 0xFF);
+  set_flag(cpu, FLAG_C, sum > 0xFF);
 
-  *dest = result;
+  *dest = (uint16_t)sum;
 }
 
 void add_sp_e8(CPU *cpu) { ADD_SP_e8(cpu, &cpu->SP); }
 
 void ld_mem_n16_sp(CPU *cpu) {
-  const uint16_t addr = read_n16(cpu);
+  const uint16_t addr = fetch_word(cpu);
   write_byte(cpu->bus, addr, cpu->SP & 0xFF);
   write_byte(cpu->bus, addr + 1, cpu->SP >> 8);
 }
@@ -627,15 +615,22 @@ void halt(CPU *cpu) {
 // Misc.
 void daa(CPU *cpu) {
   const uint8_t A = cpu->A;
-  uint8_t result;
+  uint8_t result = 0;
+
   if (get_flag(cpu, FLAG_N)) {
     uint8_t adjustment = 0;
-    adjustment |= get_flag(cpu, FLAG_H) ? 0x6 : 0x0;
-    adjustment |= get_flag(cpu, FLAG_C) ? 0x60 : 0x0;
+    if (get_flag(cpu, FLAG_H)) {
+      adjustment |= 0x6;
+    }
+    if (get_flag(cpu, FLAG_C)) {
+      adjustment |= 0x60;
+    }
     result = A - adjustment;
   } else {
     uint8_t adjustment = 0;
-    adjustment |= get_flag(cpu, FLAG_H) || (A & 0xF) > 0x9 ? 0x6 : 0x0;
+    if (get_flag(cpu, FLAG_H) || (A & 0xF) > 0x9) {
+      adjustment |= 0x6;
+    }
     if (get_flag(cpu, FLAG_C) || A > 0x99) {
       adjustment |= 0x60;
       set_flag(cpu, FLAG_C, true);
@@ -650,7 +645,7 @@ void daa(CPU *cpu) {
 }
 
 void prefix(CPU *cpu) {
-  const uint8_t curr_op = read_n8(cpu);
+  const uint8_t curr_op = fetch_byte(cpu);
   cpu->opcode = curr_op;
 
   Instruction ins = cb_optable[curr_op];
@@ -665,7 +660,7 @@ void prefix(CPU *cpu) {
 void nop(CPU *cpu) {};
 
 void stop_n8(CPU *cpu) {
-  (void)read_n8(cpu);
+  (void)fetch_byte(cpu);
   cpu->state = CPU_STOPPED;
 }
 

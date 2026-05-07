@@ -88,11 +88,11 @@ uint16_t *r16(CPU *cpu);
 
 bool check_cc(const CPU *cpu);
 
-uint8_t read_n8(CPU *cpu);
+uint8_t fetch_byte(CPU *cpu);
 
 uint8_t read_hl(const CPU *cpu);
 
-uint16_t read_n16(CPU *cpu);
+uint16_t fetch_word(CPU *cpu);
 
 void write_hl(CPU *cpu, uint8_t val);
 

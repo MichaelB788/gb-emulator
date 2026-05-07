@@ -26,7 +26,7 @@ void init_cpu(CPU *cpu, Bus *bus) {
 }
 
 uint8_t step(CPU *cpu) {
-  const uint8_t curr_op = read_n8(cpu);
+  const uint8_t curr_op = fetch_byte(cpu);
   cpu->opcode = curr_op;
 
   const Instruction ins = optable[curr_op];
@@ -91,11 +91,13 @@ bool check_cc(const CPU *cpu) {
   }
 }
 
-uint8_t read_n8(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
+// Fetches the next byte and advances PC.
+uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
 
+// Fetches the next two bytes and advances PC by 2.
 uint8_t read_hl(const CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
 
-uint16_t read_n16(CPU *cpu) {
+uint16_t fetch_word(CPU *cpu) {
   const uint8_t lo = read_byte(cpu->bus, cpu->PC++);
   const uint8_t hi = read_byte(cpu->bus, cpu->PC++);
   return (uint16_t)hi << 8 | lo;
