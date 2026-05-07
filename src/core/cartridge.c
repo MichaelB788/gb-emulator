@@ -8,7 +8,7 @@
 
 void init_mapper(Cartridge *cart) {
   switch (cart->type) {
-  case MAPPER_MBC1:
+  case MBC1_MAPPER:
     init_mbc1(&cart->mbc1);
     break;
   default:
@@ -94,11 +94,11 @@ void destroy_cartridge(Cartridge *cartridge) {
 
 uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
-  case MAPPER_ROM_ONLY:
+  case ROM_ONLY_MAPPER:
     return cartridge->rom[addr];
-  case MAPPER_MBC1:
-  case MAPPER_MBC1_RAM:
-  case MAPPER_MBC1_RAM_BATTERY:
+  case MBC1_MAPPER:
+  case MBC1_RAM_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER:
     return read_mbc1_rom(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -108,13 +108,13 @@ uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
 
 uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
-  case MAPPER_ROM_ONLY:
-  case MAPPER_MBC1:
-  case MAPPER_MBC2:
+  case ROM_ONLY_MAPPER:
+  case MBC1_MAPPER:
+  case MBC2_MAPPER:
     return 0xFF; // This is technically undefined behavior. The value returned
                  // can really be anything.
-  case MAPPER_MBC1_RAM:
-  case MAPPER_MBC1_RAM_BATTERY:
+  case MBC1_RAM_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER:
     return read_mbc1_ram(cartridge, addr);
   default:
     fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
@@ -124,11 +124,11 @@ uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
 
 void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
-  case MAPPER_ROM_ONLY:
+  case ROM_ONLY_MAPPER:
     break; // No MBC to handle writes, so this is a no op.
-  case MAPPER_MBC1:
-  case MAPPER_MBC1_RAM:
-  case MAPPER_MBC1_RAM_BATTERY:
+  case MBC1_MAPPER:
+  case MBC1_RAM_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER:
     write_mbc1_rom(cartridge, addr, val);
     break;
   default:
@@ -139,12 +139,12 @@ void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
 
 void write_ram(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
-  case MAPPER_ROM_ONLY:
-  case MAPPER_MBC1:
-  case MAPPER_MBC2:
+  case ROM_ONLY_MAPPER:
+  case MBC1_MAPPER:
+  case MBC2_MAPPER:
     break; // No RAM available, so this is a no op.
-  case MAPPER_MBC1_RAM:
-  case MAPPER_MBC1_RAM_BATTERY:
+  case MBC1_RAM_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER:
     write_mbc1_ram(cartridge, addr, val);
     break;
   default:
