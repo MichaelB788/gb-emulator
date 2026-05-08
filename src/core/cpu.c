@@ -23,6 +23,7 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[3] = &cpu->SP;
 
   cpu->PC = 0x100;
+  cpu->state = CPU_RUNNING;
 }
 
 uint8_t step(CPU *cpu) {
@@ -63,13 +64,13 @@ uint8_t op_y(const uint8_t op) { return (op >> 3) & 0x7; }
 uint8_t op_z(const uint8_t op) { return op & 0x7; }
 
 uint8_t *r8(CPU *cpu) {
-  uint8_t i = op_z(cpu->opcode);
+  const uint8_t i = op_z(cpu->opcode);
   assert(i != 6);
   return cpu->r8[i];
 }
 
 uint8_t *r8_dest(CPU *cpu) {
-  uint8_t i = op_y(cpu->opcode);
+  const uint8_t i = op_y(cpu->opcode);
   assert(i != 6);
   return cpu->r8[i];
 }
@@ -91,10 +92,8 @@ bool check_cc(const CPU *cpu) {
   }
 }
 
-// Fetches the next byte and advances PC.
 uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->bus, cpu->PC++); }
 
-// Fetches the next two bytes and advances PC by 2.
 uint8_t read_hl(const CPU *cpu) { return read_byte(cpu->bus, cpu->HL); }
 
 uint16_t fetch_word(CPU *cpu) {

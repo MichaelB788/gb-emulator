@@ -88,12 +88,16 @@ uint16_t *r16(CPU *cpu);
 
 bool check_cc(const CPU *cpu);
 
+// Fetches the next byte and advances PC.
 uint8_t fetch_byte(CPU *cpu);
 
+// Fetches the byte at HL (HL indirect).
 uint8_t read_hl(const CPU *cpu);
 
+// Fetches the next two bytes and advances PC by 2.
 uint16_t fetch_word(CPU *cpu);
 
+// Writes to HL indirect.
 void write_hl(CPU *cpu, uint8_t val);
 
 void set_flag(CPU *cpu, Flag flag, bool val);
