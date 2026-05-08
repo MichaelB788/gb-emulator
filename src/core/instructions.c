@@ -111,44 +111,42 @@ void cp_a_mem_hl(CPU *cpu) { CP(cpu, read_hl(cpu)); }
 
 void cp_a_n8(CPU *cpu) { CP(cpu, fetch_byte(cpu)); }
 
-uint8_t DEC(CPU *cpu, const uint8_t operand) {
-  const uint8_t result = operand - 1;
+void DEC(CPU *cpu, uint8_t *operand) {
+  const uint8_t r8 = *operand;
+  const uint8_t result = r8 - 1;
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, true);
-  set_flag(cpu, FLAG_H, (operand & 0xF) == 0x0);
+  set_flag(cpu, FLAG_H, (r8 & 0xF) == 0x0);
 
-  return result;
+  *operand = result;
 }
 
-void dec_r8(CPU *cpu) {
-  uint8_t *reg = r8(cpu);
-  *reg = DEC(cpu, *reg);
-}
+void dec_r8(CPU *cpu) { DEC(cpu, r8(cpu)); }
 
 void dec_mem_hl(CPU *cpu) {
-  const uint8_t result = DEC(cpu, read_hl(cpu));
-  write_hl(cpu, result);
+  uint8_t hl_ind = read_hl(cpu);
+  DEC(cpu, &hl_ind);
+  write_hl(cpu, hl_ind);
 }
 
-uint8_t INC(CPU *cpu, const uint8_t operand) {
-  const uint8_t result = operand + 1;
+void INC(CPU *cpu, uint8_t *operand) {
+  const uint8_t r8 = *operand;
+  const uint8_t result = r8 + 1;
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, (operand & 0xF) == 0xF);
+  set_flag(cpu, FLAG_H, (r8 & 0xF) == 0xF);
 
-  return result;
+  *operand = result;
 }
 
-void inc_r8(CPU *cpu) {
-  uint8_t *reg = r8(cpu);
-  *reg = INC(cpu, *reg);
-}
+void inc_r8(CPU *cpu) { INC(cpu, r8(cpu)); }
 
 void inc_mem_hl(CPU *cpu) {
-  const uint8_t result = INC(cpu, read_hl(cpu));
-  write_hl(cpu, result);
+  uint8_t hl_ind = read_hl(cpu);
+  INC(cpu, &hl_ind);
+  write_hl(cpu, hl_ind);
 }
 
 void SBC(CPU *cpu, const uint8_t operand) {
