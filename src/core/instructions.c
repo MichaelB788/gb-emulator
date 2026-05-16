@@ -122,7 +122,7 @@ void DEC(CPU *cpu, uint8_t *operand) {
   *operand = result;
 }
 
-void dec_r8(CPU *cpu) { DEC(cpu, r8(cpu)); }
+void dec_r8(CPU *cpu) { DEC(cpu, r8_dest(cpu)); }
 
 void dec_mem_hl(CPU *cpu) {
   uint8_t hl_ind = read_hl(cpu);
@@ -141,7 +141,7 @@ void INC(CPU *cpu, uint8_t *operand) {
   *operand = result;
 }
 
-void inc_r8(CPU *cpu) { INC(cpu, r8(cpu)); }
+void inc_r8(CPU *cpu) { INC(cpu, r8_dest(cpu)); }
 
 void inc_mem_hl(CPU *cpu) {
   uint8_t hl_ind = read_hl(cpu);
