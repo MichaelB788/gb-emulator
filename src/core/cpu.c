@@ -22,7 +22,6 @@ void init_cpu(CPU *cpu, Bus *bus) {
   cpu->r16[2] = &cpu->HL;
   cpu->r16[3] = &cpu->SP;
 
-  cpu->PC = 0x100;
   cpu->state = CPU_RUNNING;
 }
 
