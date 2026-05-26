@@ -97,9 +97,7 @@ void add_a_n8(CPU *cpu) { ADD(cpu, fetch_byte(cpu)); }
 void CP(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->A;
 
-  const uint8_t result = A - operand;
-
-  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_Z, A - operand == 0);
   set_flag(cpu, FLAG_N, true);
   set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
   set_flag(cpu, FLAG_C, A < operand);
@@ -508,9 +506,9 @@ void jp_cc_a16(CPU *cpu) {
 void jr_e8(CPU *cpu) { cpu->PC += (int8_t)fetch_byte(cpu); }
 
 void jr_cc_e8(CPU *cpu) {
-  const uint16_t jmp_addr = cpu->PC + (int8_t)fetch_byte(cpu);
+  const int8_t jmp_addr = (int8_t)fetch_byte(cpu);
   if (check_cc(cpu)) {
-    cpu->PC = jmp_addr;
+    cpu->PC += jmp_addr;
     cpu->cycles_taken += 4;
   }
 }
