@@ -12,6 +12,7 @@ void init_mapper(Cartridge *cart) {
     init_mbc1(&cart->mbc1);
     break;
   default:
+    fprintf(stderr, "Error: Cannot init unknown mapper\n");
     break;
   }
 }
@@ -19,7 +20,7 @@ void init_mapper(Cartridge *cart) {
 Cartridge *create_cartridge(const char *path_to_rom) {
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
-    perror("Could not read ROM file");
+    perror("Could not open file from path");
     return NULL;
   }
 
@@ -40,8 +41,8 @@ Cartridge *create_cartridge(const char *path_to_rom) {
     };
     uint8_t header[HEADER_END] = {0};
     if (fread(header, 1, HEADER_END, rom_file) != HEADER_END) {
-      perror("Could not read ROM header into memory");
-      goto cleanup;
+      perror("Could not read header from file");
+      goto error;
     }
     rewind(rom_file);
 
@@ -58,12 +59,12 @@ Cartridge *create_cartridge(const char *path_to_rom) {
   cartridge->rom = malloc(cartridge->rom_size);
   if (!cartridge->rom) {
     perror("ROM malloc failed");
-    goto cleanup;
+    goto error;
   }
   if (fread(cartridge->rom, 1, cartridge->rom_size, rom_file) !=
       cartridge->rom_size) {
-    perror("Could not read ROM file");
-    goto cleanup;
+    perror("Could not read ROM from file");
+    goto error;
   }
 
   // Initialize RAM if the cartridge type has it.
@@ -71,14 +72,14 @@ Cartridge *create_cartridge(const char *path_to_rom) {
     cartridge->ram = malloc(cartridge->ram_size);
     if (!cartridge->ram) {
       perror("RAM malloc failed");
-      goto cleanup;
+      goto error;
     }
   }
 
   fclose(rom_file);
   return cartridge;
 
-cleanup:
+error:
   fclose(rom_file);
   destroy_cartridge(cartridge);
   return NULL;
@@ -101,7 +102,7 @@ uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
   case MBC1_RAM_BATTERY_MAPPER:
     return read_mbc1_rom(cartridge, addr);
   default:
-    fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
+    fprintf(stderr, "Error: ROM read to unimplemented mapper\n");
     return 0x10;
   }
 }
@@ -117,7 +118,7 @@ uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
   case MBC1_RAM_BATTERY_MAPPER:
     return read_mbc1_ram(cartridge, addr);
   default:
-    fprintf(stderr, "Attempting read from unimplemented cartridge type\n");
+    fprintf(stderr, "Error: RAM read to unimplemented mapper\n");
     return 0x10;
   }
 }
@@ -132,7 +133,7 @@ void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
     write_mbc1_rom(cartridge, addr, val);
     break;
   default:
-    fprintf(stderr, "Attempting write from unimplemented cartridge type\n");
+    fprintf(stderr, "Error: ROM write to unimplemented mapper\n");
     break;
   }
 }
@@ -148,7 +149,7 @@ void write_ram(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
     write_mbc1_ram(cartridge, addr, val);
     break;
   default:
-    fprintf(stderr, "Attempting write from unimplemented cartridge type\n");
+    fprintf(stderr, "Error: RAM write to unimplemented mapper\n");
     break;
   }
 }
