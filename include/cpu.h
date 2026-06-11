@@ -1,5 +1,5 @@
 #pragma once
-#include "core/bus.h"
+#include "bus.h"
 #include <stdbool.h>
 #include <stdint.h>
 

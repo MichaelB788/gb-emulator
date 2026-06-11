@@ -1,6 +1,6 @@
-#include "core/cpu.h"
-#include "core/instruction_set.h"
-#include "util/bitwise.h"
+#include "cpu.h"
+#include "bitwise.h"
+#include "instruction_set.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>

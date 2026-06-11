@@ -1,8 +1,8 @@
-#include "core/instructions.h"
-#include "core/bus.h"
-#include "core/cpu.h"
-#include "core/instruction_set.h"
-#include "util/bitwise.h"
+#include "instructions.h"
+#include "bitwise.h"
+#include "bus.h"
+#include "cpu.h"
+#include "instruction_set.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

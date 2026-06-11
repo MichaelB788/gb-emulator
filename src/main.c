@@ -1,4 +1,4 @@
-#include "core/gameboy.h"
+#include "gameboy.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>

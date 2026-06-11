@@ -1,6 +1,6 @@
 #pragma once
-#include "core/bus.h"
-#include "core/cpu.h"
+#include "bus.h"
+#include "cpu.h"
 
 typedef struct {
   Bus bus;

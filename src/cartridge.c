@@ -1,5 +1,5 @@
-#include "core/cartridge.h"
-#include "core/mbc1.h"
+#include "cartridge.h"
+#include "mbc1.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -95,59 +95,82 @@ void destroy_cartridge(Cartridge *cartridge) {
 
 uint8_t read_rom(const Cartridge *cartridge, const uint16_t addr) {
   switch (cartridge->type) {
-  case ROM_ONLY_MAPPER:
+  // ROM Only
+  case ROM_ONLY_MAPPER: {
     return cartridge->rom[addr];
+  }
+
+  // MBC1 mappers
   case MBC1_MAPPER:
   case MBC1_RAM_MAPPER:
-  case MBC1_RAM_BATTERY_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER: {
     return read_mbc1_rom(cartridge, addr);
+  }
+
+  // Error
   default:
     fprintf(stderr, "Error: ROM read to unimplemented mapper\n");
     return 0x10;
   }
 }
 
-uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
-  switch (cartridge->type) {
-  case ROM_ONLY_MAPPER:
-  case MBC1_MAPPER:
-  case MBC2_MAPPER:
-    return 0xFF; // This is technically undefined behavior. The value returned
-                 // can really be anything.
-  case MBC1_RAM_MAPPER:
-  case MBC1_RAM_BATTERY_MAPPER:
-    return read_mbc1_ram(cartridge, addr);
-  default:
-    fprintf(stderr, "Error: RAM read to unimplemented mapper\n");
-    return 0x10;
-  }
-}
-
 void write_rom(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
+  // ROM is read only, so this is a no-op.
   case ROM_ONLY_MAPPER:
-    break; // No MBC to handle writes, so this is a no op.
+    break;
+
+  // MBC1 mappers
   case MBC1_MAPPER:
   case MBC1_RAM_MAPPER:
   case MBC1_RAM_BATTERY_MAPPER:
     write_mbc1_rom(cartridge, addr, val);
     break;
+
+  // Error
   default:
     fprintf(stderr, "Error: ROM write to unimplemented mapper\n");
     break;
   }
 }
 
+uint8_t read_ram(Cartridge *cartridge, const uint16_t addr) {
+  switch (cartridge->type) {
+  // Mappers have no RAM to read from
+  case ROM_ONLY_MAPPER:
+  case MBC1_MAPPER:
+  case MBC2_MAPPER: {
+    return 0xFF;
+  }
+
+  // MBC1 mappers with built in RAM
+  case MBC1_RAM_MAPPER:
+  case MBC1_RAM_BATTERY_MAPPER: {
+    return read_mbc1_ram(cartridge, addr);
+  }
+
+  // Error
+  default:
+    fprintf(stderr, "Error: RAM read to unimplemented mapper\n");
+    return 0x10;
+  }
+}
+
 void write_ram(Cartridge *cartridge, const uint16_t addr, const uint8_t val) {
   switch (cartridge->type) {
+  // Mappers with no ram.
   case ROM_ONLY_MAPPER:
   case MBC1_MAPPER:
   case MBC2_MAPPER:
-    break; // No RAM available, so this is a no op.
+    break;
+
+  // MBC1 mappers with RAM
   case MBC1_RAM_MAPPER:
   case MBC1_RAM_BATTERY_MAPPER:
     write_mbc1_ram(cartridge, addr, val);
     break;
+
+  // Error
   default:
     fprintf(stderr, "Error: RAM write to unimplemented mapper\n");
     break;

@@ -1,6 +1,6 @@
-#include "core/bus.h"
-#include "core/cartridge.h"
-#include "core/io.h"
+#include "bus.h"
+#include "cartridge.h"
+#include "io.h"
 #include <stdint.h>
 #include <stdio.h>
 

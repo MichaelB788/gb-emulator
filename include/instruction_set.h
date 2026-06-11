@@ -1,6 +1,6 @@
 #pragma once
-#include "core/cpu.h"
-#include "core/instructions.h"
+#include "cpu.h"
+#include "instructions.h"
 
 static const Instruction optable[0x100] = {
     // Block 0

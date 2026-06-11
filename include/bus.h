@@ -1,6 +1,6 @@
 #pragma once
-#include "core/cartridge.h"
-#include "core/io.h"
+#include "cartridge.h"
+#include "io.h"
 #include <stdbool.h>
 #include <stdint.h>
 

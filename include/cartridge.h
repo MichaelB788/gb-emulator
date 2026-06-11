@@ -13,12 +13,6 @@ typedef enum {
 } CartridgeType;
 
 typedef struct {
-  bool advanced_banking_enabled;
-  uint8_t primary_bank;
-  uint8_t secondary_bank;
-} MBC1;
-
-typedef struct {
   CartridgeType type;
   union {
     MBC1 mbc1;
@@ -39,8 +33,8 @@ void destroy_cartridge(Cartridge *cartridge);
 
 uint8_t read_rom(const Cartridge *cartridge, uint16_t addr);
 
-uint8_t read_ram(Cartridge *cartridge, uint16_t addr);
-
 void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val);
+
+uint8_t read_ram(Cartridge *cartridge, uint16_t addr);
 
 void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val);

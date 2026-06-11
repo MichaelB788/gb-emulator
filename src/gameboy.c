@@ -1,6 +1,6 @@
-#include "core/gameboy.h"
-#include "core/cartridge.h"
-#include "core/cpu.h"
+#include "gameboy.h"
+#include "cartridge.h"
+#include "cpu.h"
 #include <stdbool.h>
 
 bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
