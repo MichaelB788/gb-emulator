@@ -1,17 +1,17 @@
 #include "gameboy.h"
-#include <stddef.h>
-#include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
-int main(int argc, const char **argv) {
-  if (argc > 1) {
-    GameBoy gameboy = {0};
-    // TODO: Sanitize path
-    if (init_gameboy(&gameboy, argv[1])) {
-      run_gameboy(&gameboy);
-    }
-    close_gameboy(&gameboy);
-  } else {
-    fprintf(stderr, "Usage: ./Gameboy <path/to/rom>");
+int main() {
+  char full_path[200] = PROJECT_ROOT;
+  const char *test_rom = "/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb";
+  strcat(full_path, test_rom);
+
+  GameBoy gameboy = {0};
+  if (init_gameboy(&gameboy, full_path)) {
+    run_gameboy(&gameboy);
   }
+  close_gameboy(&gameboy);
+
+  printf("Hello world\n");
 }

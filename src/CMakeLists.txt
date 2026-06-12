@@ -9,7 +9,7 @@ add_library(GB_Core
   cartridge.c
   cpu.c
   gameboy.c
-  instructions.c
+  #instructions.c
   io.c
   mbc1.c
 )

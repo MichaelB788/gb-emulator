@@ -1,6 +1,6 @@
-#/usr/bin/env bash
+#!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
 PROJECT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 BUILD_DIR="$PROJECT_ROOT/build"
@@ -13,4 +13,4 @@ cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
 
 ninja -C "$BUILD_DIR"
 
-"$BUILD_DIR/bin/GameBoy" "$PROJECT_ROOT/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb"
+"$BUILD_DIR/bin/GameBoy"
