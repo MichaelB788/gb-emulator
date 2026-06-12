@@ -20,28 +20,36 @@ uint8_t mbc1_read_rom(const Cartridge *cart, const uint16_t addr) {
   }
 }
 
+void set_rom_bank_number(Cartridge *cart, uint8_t val) {
+  const uint8_t bits_needed = cart->rom_size / KiB_16;
+  if (bits_needed > 5) {
+    if (cart->mbc1.advanced_banking_enabled) {
+      cart->mbc1.rom_bank = (cart->mbc1.ram_bank << 5) + val & 0x1F;
+    } else {
+      cart->mbc1.rom_bank = val & 0x1F;
+    }
+  } else {
+    cart->mbc1.rom_bank = val & ((1 << bits_needed) - 1);
+  }
+  if ((cart->mbc1.rom_bank & 0x1F) == 0) {
+    cart->mbc1.rom_bank += 1;
+  }
+}
+
+void set_ram_bank_number(Cartridge *cart, uint8_t val) {
+  if (cart->ram_size >= KiB_32 || cart->rom_size >= MiB_1) {
+    cart->mbc1.ram_bank = val & 0x3;
+  }
+}
+
 void mbc1_write_rom(Cartridge *cart, const uint16_t addr, const uint8_t val) {
   // See: https://gbdev.io/pandocs/MBC1.html#registers
   if (addr <= 0x1FFF) /* RAM Enable */ {
     cart->mbc1.ram_enabled = (val & 0xF) == 0xA;
   } else if (0x2000 <= addr && addr <= 0x3FFF) /* ROM Bank Number */ {
-    const uint8_t bits_needed = cart->rom_size / KiB_16;
-    if (bits_needed > 5) {
-      if (cart->mbc1.advanced_banking_enabled) {
-        cart->mbc1.rom_bank = (cart->mbc1.ram_bank << 5) + val & 0x1F;
-      } else {
-        cart->mbc1.rom_bank = val & 0x1F;
-      }
-    } else {
-      cart->mbc1.rom_bank = val & ((1 << bits_needed) - 1);
-    }
-    if ((cart->mbc1.rom_bank & 0x1F) == 0) {
-      cart->mbc1.rom_bank += 1;
-    }
+    set_rom_bank_number(cart, val);
   } else if (0x4000 <= addr && addr <= 0x5FFF) /* RAM Bank Number */ {
-    if (cart->ram_size >= KiB_32 || cart->rom_size >= MiB_1) {
-      cart->mbc1.ram_bank = val & 0x3;
-    }
+    set_ram_bank_number(cart, val);
   } else if (0x6000 <= addr && addr <= 0x7FFF) /* Banking Mode Select */ {
     cart->mbc1.advanced_banking_enabled = val & 1;
   }
