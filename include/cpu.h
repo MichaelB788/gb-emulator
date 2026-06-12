@@ -1,50 +1,32 @@
 #pragma once
-#include "bus.h"
 #include <stdbool.h>
 #include <stdint.h>
 
-/**
- * Values set for each flag correspond to their bit index. For more info, see:
- * https://gbdev.io/pandocs/CPU_Registers_and_Flags.html#the-flags-register-lower-8-bits-of-af-register
- */
-typedef enum { FLAG_Z = 7, FLAG_N = 6, FLAG_H = 5, FLAG_C = 4 } Flag;
+// ISA indicies for the regular 8-bit registers.
+typedef enum {
+  REG_B = 0,
+  REG_C = 1,
+  REG_D = 2,
+  REG_E = 3,
+  REG_H = 4,
+  REG_L = 5,
+  REG_A = 7,
+  REG_F = 6 // Typically this index would map to [HL], but since [HL] is a
+            // memory access rather than an actual register, this index points
+            // to the flags register instead.
+} Reg8_Idx;
 
-typedef enum { CPU_RUNNING, CPU_STOPPED, CPU_HALTED } CPU_State;
+// Offsets to form the regular 8-bit register pairs, such that
+// hi = r8[i], and lo = r8[i + 1]
+typedef enum { REG_BC = 0, REG_DE = 2, REG_HL = 4 } Reg16_Idx;
 
 typedef struct {
-  union {
-    struct {
-      uint8_t C, B;
-    };
-    uint16_t BC;
-  };
-  union {
-    struct {
-      uint8_t E, D;
-    };
-    uint16_t DE;
-  };
-  union {
-    struct {
-      uint8_t L, H;
-    };
-    uint16_t HL;
-  };
-  union {
-    struct {
-      uint8_t F, A;
-    };
-    uint16_t AF;
-  };
-
-  uint16_t PC, SP;
-  uint8_t opcode, cycles_taken;
+  uint8_t r8[8];   // B, C, D, E, H, L, F, A
+  uint8_t field_y; // Bit field y of the ISA pattern [xx yyy zzz]
+  uint8_t field_z; // Bit field z of the ISA pattern [xx yyy zzz]
   bool IME;
-  CPU_State state;
-
-  uint8_t *r8[8];   // B, C, D, E, H, L, F, A
-  uint16_t *r16[4]; // BC, DE, HL, SP
-  Bus *bus;
+  uint16_t PC;
+  uint16_t SP;
 } CPU;
 
 typedef struct {
@@ -53,53 +35,20 @@ typedef struct {
   void (*exec)(CPU *);
 } Instruction;
 
-void init_cpu(CPU *cpu, Bus *bus);
+void init_cpu(CPU *cpu);
 
-uint8_t step(CPU *cpu);
+void set_r16(CPU *cpu, Reg16_Idx r16_idx, uint16_t val);
+uint16_t get_r16(const CPU *cpu, Reg16_Idx r16_idx);
 
-void log_ins(const CPU *cpu, const Instruction *ins);
+void set_z(uint8_t *flags, bool val);
+void set_n(uint8_t *flags, bool val);
+void set_h(uint8_t *flags, bool val);
+void set_c(uint8_t *flags, bool val);
 
-// Obtains the y field of the opcode bit pattern [xx yyy zzz].
-uint8_t op_y(uint8_t op);
+bool is_z_set(uint8_t flags);
+bool is_n_set(uint8_t flags);
+bool is_h_set(uint8_t flags);
+bool is_c_set(uint8_t flags);
 
-// Obtains the z field of the opcode bit pattern [xx yyy zzz].
-uint8_t op_z(uint8_t op);
-
-/**
- * Returns a pointer to an 8-bit CPU register based on the current opcode.
- *
- * Note: Attempting to access what should be [HL] is undefined behavior.
- */
-uint8_t *r8(CPU *cpu);
-
-/**
- * Returns a pointer to an 8-bit CPU register based on the current opcode.
- * This function should only be used in register-to-register loads.
- *
- * Note: Attempting to access what should be [HL] is undefined behavior.
- */
-uint8_t *r8_dest(CPU *cpu);
-
-/**
- * Obtains a pointer to a 16-bit CPU register based on the current opcode.
- * This includes: [BC, DE, HL, SP]
- */
-uint16_t *r16(CPU *cpu);
-
-bool check_cc(const CPU *cpu);
-
-// Fetches the next byte and advances PC.
-uint8_t fetch_byte(CPU *cpu);
-
-// Fetches the byte at HL (HL indirect).
-uint8_t read_hl(const CPU *cpu);
-
-// Fetches the next two bytes and advances PC by 2.
-uint16_t fetch_word(CPU *cpu);
-
-// Writes to HL indirect.
-void write_hl(CPU *cpu, uint8_t val);
-
-void set_flag(CPU *cpu, Flag flag, bool val);
-
-bool get_flag(const CPU *cpu, Flag flag);
+typedef enum { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 } Condition;
+bool check_condition(uint8_t flags, Condition cond);
