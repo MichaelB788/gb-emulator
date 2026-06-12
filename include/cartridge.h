@@ -1,40 +1,36 @@
 #pragma once
+#include "mbc1.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
 typedef enum {
-  ROM_ONLY_MAPPER,
+  ROM_MAPPER,
   MBC1_MAPPER,
-  MBC1_RAM_MAPPER,
-  MBC1_RAM_BATTERY_MAPPER,
-  MBC2_MAPPER,
-  MBC2_BATTERY_MAPPER,
-} CartridgeType;
+} Mapper;
 
-typedef struct {
-  CartridgeType type;
+typedef struct Cartridge {
+  Mapper mapper;
   union {
     MBC1 mbc1;
-    // TODO: More mappers
   };
-  bool ram_enabled;
-  size_t rom_size;
-  size_t ram_size;
+
   uint8_t *rom;
+  size_t rom_size;
   uint8_t *ram;
+  size_t ram_size;
 } Cartridge;
 
 // Returns a heap allocated cartridge on success, NULL on failure
 Cartridge *create_cartridge(const char *path_to_rom);
 
 // Destroys a cartridge if it exists, otherwise this operation is a no-op.
-void destroy_cartridge(Cartridge *cartridge);
+void destroy_cartridge(Cartridge *cart);
 
-uint8_t read_rom(const Cartridge *cartridge, uint16_t addr);
+uint8_t read_rom(const Cartridge *cart, uint16_t addr);
 
-void write_rom(Cartridge *cartridge, uint16_t addr, uint8_t val);
+void write_rom(Cartridge *cart, uint16_t addr, uint8_t val);
 
-uint8_t read_ram(Cartridge *cartridge, uint16_t addr);
+uint8_t read_ram(Cartridge *cart, uint16_t addr);
 
-void write_ram(Cartridge *cartridge, uint16_t addr, uint8_t val);
+void write_ram(Cartridge *cart, uint16_t addr, uint8_t val);
