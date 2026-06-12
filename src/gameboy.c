@@ -19,8 +19,8 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
 void run_gameboy(GameBoy *gameboy) {
   while (false) {
     const uint8_t opcode = read_byte(gameboy, gameboy->cpu.PC++);
-    gameboy->cpu.field_y = (opcode >> 3) & 0x7;
-    gameboy->cpu.field_z = opcode & 0x7;
+    gameboy->cpu.y_field = (opcode >> 3) & 0x7;
+    gameboy->cpu.z_field = opcode & 0x7;
 
     /*
     const Instruction ins = optable[opcode];

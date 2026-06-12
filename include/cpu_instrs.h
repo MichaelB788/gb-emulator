@@ -9,15 +9,9 @@ typedef struct CPU CPU;
 
 void ld_r8_r8(CPU *cpu);
 
-void ld_r8_n8(CPU *cpu);
+void ld_r8_imm8(CPU *cpu);
 
 void ld_r16_n16(CPU *cpu);
-
-void ld_mem_hl_r8(CPU *cpu);
-
-void ld_mem_hl_n8(CPU *cpu);
-
-void ld_r8_mem_hl(CPU *cpu);
 
 void ld_mem_r16_a(CPU *cpu);
 
@@ -35,21 +29,11 @@ void ldh_a_mem_n8(CPU *cpu);
 
 void ldh_a_mem_c(CPU *cpu);
 
-void ld_mem_hli_a(CPU *cpu);
-
-void ld_mem_hld_a(CPU *cpu);
-
-void ld_a_mem_hli(CPU *cpu);
-
-void ld_a_mem_hld(CPU *cpu);
-
 //
 // 8-bit arithmetic instructions
 //
 
 void adc_a_r8(CPU *cpu);
-
-void adc_a_mem_hl(CPU *cpu);
 
 void adc_a_n8(CPU *cpu);
 

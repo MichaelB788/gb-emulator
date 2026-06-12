@@ -23,8 +23,8 @@ typedef enum { REG_BC = 0, REG_DE = 2, REG_HL = 4 } R16_Idx;
 typedef struct GameBoy GameBoy;
 typedef struct CPU {
   uint8_t r8[8];   // B, C, D, E, H, L, F, A
-  uint8_t field_y; // Bit field y of the ISA pattern [xx yyy zzz]
-  uint8_t field_z; // Bit field z of the ISA pattern [xx yyy zzz]
+  uint8_t y_field; // Bit field y of the ISA pattern [xx yyy zzz]
+  uint8_t z_field; // Bit field z of the ISA pattern [xx yyy zzz]
   bool IME;
   uint16_t PC;
   uint16_t SP;
@@ -36,10 +36,10 @@ void init_cpu(CPU *cpu, GameBoy *gameboy);
 void set_r16(CPU *cpu, R16_Idx r16_idx, uint16_t val);
 uint16_t get_r16(const CPU *cpu, R16_Idx r16_idx);
 
-uint8_t fetch_imm8(CPU *cpu);
-uint16_t fetch_imm16(CPU *cpu);
+uint8_t fetch_byte(CPU *cpu);
+uint16_t fetch_word(CPU *cpu);
 uint8_t read_hl(CPU *cpu);
-void write_hl(CPU *cpu);
+void write_hl(CPU *cpu, uint8_t val);
 
 void set_z(CPU *cpu, bool val);
 void set_n(CPU *cpu, bool val);
