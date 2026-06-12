@@ -1,6 +1,7 @@
 #pragma once
-#include "cpu.h"
 #include <stdint.h>
+
+typedef struct CPU CPU;
 
 //
 // Load Instructions

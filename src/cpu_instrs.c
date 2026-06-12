@@ -1,8 +1,7 @@
-#include "instructions.h"
+#include "cpu_instrs.h"
 #include "bitwise.h"
-#include "bus.h"
 #include "cpu.h"
-#include "instruction_set.h"
+#include "optable.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

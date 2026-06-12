@@ -1,6 +1,12 @@
 #pragma once
-#include "cpu.h"
-#include "instructions.h"
+#include "cpu_instrs.h"
+
+typedef struct CPU CPU;
+typedef struct Instruction {
+  const char *name;
+  uint8_t cycles;
+  void (*exec)(CPU *);
+} Instruction;
 
 static const Instruction optable[0x100] = {
     // Block 0
