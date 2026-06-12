@@ -1,7 +1,9 @@
 #include "cpu.h"
+#include "gameboy.h"
 #include <stdint.h>
 
-void init_cpu(CPU *cpu) {
+void init_cpu(CPU *cpu, GameBoy *gameboy) {
+  cpu->gameboy = gameboy;
   cpu->r8[0] = 0xFF;
   cpu->r8[1] = 0x13;
   cpu->r8[2] = 0x00;
@@ -14,64 +16,76 @@ void init_cpu(CPU *cpu) {
   cpu->SP = 0xFFFE;
 }
 
-void set_r16(CPU *cpu, Reg16_Idx r16_idx, uint16_t val) {
+void set_r16(CPU *cpu, R16_Idx r16_idx, uint16_t val) {
   cpu->r8[r16_idx] = val >> 8;
   cpu->r8[r16_idx + 1] = val & 0xFF;
 }
 
-uint16_t get_r16(const CPU *cpu, Reg16_Idx r16_idx) {
+uint16_t get_r16(const CPU *cpu, R16_Idx r16_idx) {
   return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
 }
 
-void set_z(uint8_t *flags, bool val) {
+uint16_t fetch_imm16(CPU *cpu) {
+  const uint8_t lo = read_byte(cpu->gameboy, cpu->PC++);
+  const uint8_t hi = read_byte(cpu->gameboy, cpu->PC++);
+  return (uint16_t)hi << 8 | lo;
+}
+
+uint8_t fetch_imm8(CPU *cpu) { return read_byte(cpu->gameboy, cpu->PC++); }
+
+uint8_t read_hl(CPU *cpu) {
+  return read_byte(cpu->gameboy, get_r16(cpu, REG_HL));
+}
+
+void set_z(CPU *cpu, bool val) {
   if (val) {
-    *flags |= 0x80;
+    cpu->r8[REG_F] |= 0x80;
   } else {
-    *flags &= ~0x80;
+    cpu->r8[REG_F] &= ~0x80;
   }
 }
 
-void set_n(uint8_t *flags, bool val) {
+void set_n(CPU *cpu, bool val) {
   if (val) {
-    *flags |= 0x40;
+    cpu->r8[REG_F] |= 0x40;
   } else {
-    *flags &= ~0x40;
+    cpu->r8[REG_F] &= ~0x40;
   }
 }
 
-void set_h(uint8_t *flags, bool val) {
+void set_h(CPU *cpu, bool val) {
   if (val) {
-    *flags |= 0x20;
+    cpu->r8[REG_F] |= 0x20;
   } else {
-    *flags &= ~0x20;
+    cpu->r8[REG_F] &= ~0x20;
   }
 }
 
-void set_c(uint8_t *flags, bool val) {
+void set_c(CPU *cpu, bool val) {
   if (val) {
-    *flags |= 0x10;
+    cpu->r8[REG_F] |= 0x10;
   } else {
-    *flags &= ~0x10;
+    cpu->r8[REG_F] &= ~0x10;
   }
 }
 
-bool is_z_set(uint8_t flags) { return flags & 0x80; }
+bool is_z_set(CPU *cpu) { return cpu->r8[REG_F] & 0x80; }
 
-bool is_n_set(uint8_t flags) { return flags & 0x40; }
+bool is_n_set(CPU *cpu) { return cpu->r8[REG_F] & 0x40; }
 
-bool is_h_set(uint8_t flags) { return flags & 0x20; }
+bool is_h_set(CPU *cpu) { return cpu->r8[REG_F] & 0x20; }
 
-bool is_c_set(uint8_t flags) { return flags & 0x10; }
+bool is_c_set(CPU *cpu) { return cpu->r8[REG_F] & 0x10; }
 
-bool check_condition(uint8_t flags, Condition cond) {
+bool check_condition(CPU *cpu, Condition cond) {
   switch (cond) {
   case COND_NZ:
-    return !is_z_set(flags);
+    return !is_z_set(cpu);
   case COND_Z: // Z
-    return is_z_set(flags);
+    return is_z_set(cpu);
   case COND_NC: // NC
-    return !is_c_set(flags);
+    return !is_c_set(cpu);
   case COND_C: // C
-    return is_c_set(flags);
+    return is_c_set(cpu);
   }
 }

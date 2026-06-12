@@ -8,7 +8,7 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
   gameboy->cartridge = create_cartridge(path_to_rom);
   if (gameboy->cartridge) {
     gameboy->interrupt_enable = false;
-    init_cpu(&gameboy->cpu);
+    init_cpu(&gameboy->cpu, gameboy);
     return true;
   } else {
     gameboy->state = GB_STOPPED;
@@ -134,8 +134,8 @@ void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val) {
   gameboy->interrupt_enable = val;
 }
 
-uint16_t fetch_n16(GameBoy *gameboy, uint16_t addr) {
-  const uint8_t lo = read_byte(gameboy, gameboy->cpu.PC++);
-  const uint8_t hi = read_byte(gameboy, gameboy->cpu.PC++);
+uint16_t read_word(GameBoy *gameboy, uint16_t addr) {
+  const uint8_t lo = read_byte(gameboy, addr);
+  const uint8_t hi = read_byte(gameboy, addr);
   return (uint16_t)hi << 8 | lo;
 }

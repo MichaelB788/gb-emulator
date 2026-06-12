@@ -27,4 +27,4 @@ uint8_t read_byte(GameBoy *gameboy, uint16_t addr);
 
 void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val);
 
-uint16_t fetch_n16(GameBoy *gameboy, uint16_t addr);
+uint16_t read_word(GameBoy *gameboy, uint16_t addr);
