@@ -33,8 +33,8 @@ typedef struct CPU {
 
 void init_cpu(CPU *cpu, GameBoy *gameboy);
 
-void set_r16(CPU *cpu, R16_Idx r16_idx, uint16_t val);
-uint16_t get_r16(const CPU *cpu, R16_Idx r16_idx);
+void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val);
+uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx);
 
 uint8_t fetch_byte(CPU *cpu);
 uint16_t fetch_word(CPU *cpu);

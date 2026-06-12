@@ -6,50 +6,80 @@
 #include <stdint.h>
 #include <stdio.h>
 
-uint16_t get_r16_addr(CPU *cpu) {
+uint8_t get_r8(CPU *cpu, uint8_t opcode_field) {
+  if (opcode_field == 6)
+    return read_hl(cpu);
+  else
+    return cpu->r8[opcode_field];
+}
+
+void set_r8(CPU *cpu, uint8_t opcode_field, uint8_t val) {
+  if (opcode_field == 6)
+    write_hl(cpu, val);
+  else
+    cpu->r8[opcode_field] = val;
+}
+
+uint16_t get_r16(CPU *cpu) {
+  const uint16_t src = cpu->y_field >> 1;
+  if (src == 3)
+    return cpu->SP;
+  else
+    return get_r8_pair(cpu, (R16_Idx)src);
+}
+
+void set_r16(CPU *cpu, uint16_t val) {
+  const uint16_t dest = cpu->y_field >> 1;
+  if (dest == 3)
+    cpu->SP = val;
+  else
+    set_r8_pair(cpu, (R16_Idx)dest, val);
+}
+
+uint16_t get_r16stk(CPU *cpu) {
+  const uint16_t src = cpu->y_field >> 1;
+  if (src == 3)
+    return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
+  else
+    return get_r8_pair(cpu, (R16_Idx)src);
+}
+
+void set_r16stk(CPU *cpu, uint16_t val) {
+  const uint16_t dest = cpu->y_field >> 1;
+  if (dest == 3) {
+    cpu->r8[REG_A] = val >> 8;
+    cpu->r8[REG_F] = val & 0xF0;
+  } else {
+    set_r8_pair(cpu, (R16_Idx)dest, val);
+  }
+}
+
+uint16_t get_r16mem(CPU *cpu) {
   const uint8_t r16mem = cpu->y_field >> 1;
   if (r16mem == 0 || r16mem == 1) /* BC or DE */ {
-    return get_r16(cpu, (R16_Idx)r16mem);
+    return get_r8_pair(cpu, (R16_Idx)r16mem);
   } else {
-    const uint16_t ret = get_r16(cpu, REG_HL);
+    const uint16_t ret = get_r8_pair(cpu, REG_HL);
     if (r16mem == 2) /* HLI */
-      set_r16(cpu, REG_HL, ret + 1);
+      set_r8_pair(cpu, REG_HL, ret + 1);
     else /* HLD */
-      set_r16(cpu, REG_HL, ret - 1);
+      set_r8_pair(cpu, REG_HL, ret - 1);
     return ret;
   }
 }
 
 // Load Instructions
+
 void ld_r8_r8(CPU *cpu) {
-  const uint8_t src = cpu->z_field;
-  const uint8_t dest = cpu->y_field;
-  if (src == 6)
-    cpu->r8[dest] = read_hl(cpu);
-  else if (dest == 6)
-    write_hl(cpu, cpu->r8[src]);
-  else
-    cpu->r8[dest] = cpu->r8[src];
+  set_r8(cpu, cpu->y_field, get_r8(cpu, cpu->z_field));
 }
 
-void ld_r8_imm8(CPU *cpu) {
-  const uint8_t dest = cpu->y_field;
-  if (dest == 6)
-    write_hl(cpu, fetch_byte(cpu));
-  else
-    cpu->r8[dest] = fetch_byte(cpu);
-}
+void ld_r8_imm8(CPU *cpu) { set_r8(cpu, cpu->y_field, fetch_byte(cpu)); }
 
-void ld_r16_n16(CPU *cpu) {
-  const uint8_t dest = cpu->y_field >> 1;
-  if (dest == 4)
-    cpu->SP = fetch_word(cpu);
-  else
-    set_r16(cpu, (R16_Idx)dest, fetch_word(cpu));
-}
+void ld_r16_n16(CPU *cpu) { set_r16(cpu, fetch_word(cpu)); }
 
 void ld_mem_r16_a(CPU *cpu) {
-  write_byte(cpu->gameboy, get_r16_addr(cpu), cpu->r8[REG_A]);
+  write_byte(cpu->gameboy, get_r16mem(cpu), cpu->r8[REG_A]);
 }
 
 void ld_mem_n16_a(CPU *cpu) {
@@ -57,16 +87,17 @@ void ld_mem_n16_a(CPU *cpu) {
 }
 
 void ldh_mem_n8_a(CPU *cpu) {
-  write_byte(cpu->gameboy, (uint16_t)(0xFF00 | fetch_byte(cpu)),
-             cpu->r8[REG_A]);
+  const uint16_t addr = 0xFF00 | fetch_byte(cpu);
+  write_byte(cpu->gameboy, addr, cpu->r8[REG_A]);
 }
 
 void ldh_mem_c_a(CPU *cpu) {
-  write_byte(cpu->gameboy, (uint16_t)(0xFF00 | cpu->r8[REG_C]), cpu->r8[REG_A]);
+  const uint16_t addr = 0xFF00 | cpu->r8[REG_C];
+  write_byte(cpu->gameboy, addr, cpu->r8[REG_A]);
 }
 
 void ld_a_mem_r16(CPU *cpu) {
-  cpu->r8[REG_A] = read_byte(cpu->gameboy, get_r16_addr(cpu));
+  cpu->r8[REG_A] = read_byte(cpu->gameboy, get_r16mem(cpu));
 }
 
 void ld_a_mem_n16(CPU *cpu) {
@@ -74,12 +105,13 @@ void ld_a_mem_n16(CPU *cpu) {
 }
 
 void ldh_a_mem_n8(CPU *cpu) {
-  cpu->r8[REG_A] =
-      read_byte(cpu->gameboy, (uint16_t)(0xFF00 | fetch_byte(cpu)));
+  const uint16_t addr = 0xFF00 | fetch_byte(cpu);
+  cpu->r8[REG_A] = read_byte(cpu->gameboy, addr);
 }
 
 void ldh_a_mem_c(CPU *cpu) {
-  cpu->r8[REG_A] = read_byte(cpu->gameboy, (uint16_t)(0xFF00 | cpu->r8[REG_C]));
+  const uint16_t addr = 0xFF00 | cpu->r8[REG_C];
+  cpu->r8[REG_A] = read_byte(cpu->gameboy, addr);
 }
 
 // 8-bit arithmetic
@@ -98,12 +130,7 @@ void ADC(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void adc_a_r8(CPU *cpu) {
-  if (cpu->z_field == 6)
-    ADC(cpu, read_hl(cpu));
-  else
-    ADC(cpu, cpu->r8[cpu->z_field]);
-}
+void adc_a_r8(CPU *cpu) { ADC(cpu, get_r8(cpu, cpu->z_field)); }
 
 void adc_a_n8(CPU *cpu) { ADC(cpu, fetch_byte(cpu)); }
 
@@ -121,9 +148,7 @@ void ADD(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void add_a_r8(CPU *cpu) { ADD(cpu, cpu->r8[cpu->z_field]); }
-
-void add_a_mem_hl(CPU *cpu) { ADD(cpu, read_hl(cpu)); }
+void add_a_r8(CPU *cpu) { ADD(cpu, get_r8(cpu, cpu->z_field)); }
 
 void add_a_n8(CPU *cpu) { ADD(cpu, fetch_byte(cpu)); }
 
@@ -136,48 +161,32 @@ void CP(CPU *cpu, const uint8_t operand) {
   set_c(cpu, A < operand);
 }
 
-void cp_a_r8(CPU *cpu) { CP(cpu, cpu->r8[cpu->z_field]); }
-
-void cp_a_mem_hl(CPU *cpu) { CP(cpu, read_hl(cpu)); }
+void cp_a_r8(CPU *cpu) { CP(cpu, get_r8(cpu, cpu->z_field)); }
 
 void cp_a_n8(CPU *cpu) { CP(cpu, fetch_byte(cpu)); }
 
-void DEC(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = r8 - 1;
+void dec_r8(CPU *cpu) {
+  const uint8_t dest = cpu->y_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = operand - 1;
 
   set_z(cpu, result == 0);
   set_n(cpu, true);
-  set_h(cpu, (r8 & 0xF) == 0x0);
+  set_h(cpu, (operand & 0xF) == 0x0);
 
-  *operand = result;
+  set_r8(cpu, dest, result);
 }
 
-void dec_r8(CPU *cpu) { DEC(cpu, r8_dest(cpu)); }
-
-void dec_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  DEC(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
-}
-
-void INC(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = r8 + 1;
+void inc_r8(CPU *cpu) {
+  const uint8_t dest = cpu->y_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = operand + 1;
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
-  set_h(cpu, (r8 & 0xF) == 0xF);
+  set_h(cpu, (operand & 0xF) == 0xF);
 
-  *operand = result;
-}
-
-void inc_r8(CPU *cpu) { INC(cpu, r8_dest(cpu)); }
-
-void inc_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  INC(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
+  set_r8(cpu, dest, result);
 }
 
 void SBC(CPU *cpu, const uint8_t operand) {
@@ -194,9 +203,7 @@ void SBC(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void sbc_a_r8(CPU *cpu) { SBC(cpu, cpu->r8[cpu->z_field]); }
-
-void sbc_a_mem_hl(CPU *cpu) { SBC(cpu, read_hl(cpu)); }
+void sbc_a_r8(CPU *cpu) { SBC(cpu, get_r8(cpu, cpu->z_field)); }
 
 void sbc_a_n8(CPU *cpu) { SBC(cpu, fetch_byte(cpu)); }
 
@@ -213,15 +220,13 @@ void SUB(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void sub_a_r8(CPU *cpu) { SUB(cpu, cpu->r8[cpu->z_field]); }
-
-void sub_a_mem_hl(CPU *cpu) { SUB(cpu, read_hl(cpu)); }
+void sub_a_r8(CPU *cpu) { SUB(cpu, get_r8(cpu, cpu->z_field)); }
 
 void sub_a_n8(CPU *cpu) { SUB(cpu, fetch_byte(cpu)); }
 
 void add_hl_r16(CPU *cpu) {
-  const uint16_t HL = cpu->HL;
-  const uint16_t operand = *r16(cpu);
+  const uint16_t HL = get_r8_pair(cpu, REG_HL);
+  const uint16_t operand = get_r16(cpu);
 
   const uint32_t sum = HL + operand;
 
@@ -229,12 +234,12 @@ void add_hl_r16(CPU *cpu) {
   set_h(cpu, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
   set_c(cpu, sum > 0xFFFF);
 
-  cpu->HL = (uint16_t)sum;
+  set_r8_pair(cpu, REG_HL, sum);
 }
 
-void dec_r16(CPU *cpu) { --(*r16(cpu)); }
+void dec_r16(CPU *cpu) { set_r16(cpu, get_r16(cpu) - 1); }
 
-void inc_r16(CPU *cpu) { ++(*r16(cpu)); }
+void inc_r16(CPU *cpu) { set_r16(cpu, get_r16(cpu) + 1); }
 
 void AND(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
@@ -249,9 +254,7 @@ void AND(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void and_a_r8(CPU *cpu) { AND(cpu, cpu->r8[cpu->z_field]); }
-
-void and_a_mem_hl(CPU *cpu) { AND(cpu, read_hl(cpu)); }
+void and_a_r8(CPU *cpu) { AND(cpu, get_r8(cpu, cpu->z_field)); }
 
 void and_a_n8(CPU *cpu) { AND(cpu, fetch_byte(cpu)); }
 
@@ -274,9 +277,7 @@ void OR(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void or_a_r8(CPU *cpu) { OR(cpu, cpu->r8[cpu->z_field]); }
-
-void or_a_mem_hl(CPU *cpu) { OR(cpu, read_hl(cpu)); }
+void or_a_r8(CPU *cpu) { OR(cpu, get_r8(cpu, cpu->z_field)); }
 
 void or_a_n8(CPU *cpu) { OR(cpu, fetch_byte(cpu)); }
 
@@ -293,87 +294,80 @@ void XOR(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void xor_a_r8(CPU *cpu) { XOR(cpu, cpu->r8[cpu->z_field]); }
-
-void xor_a_mem_hl(CPU *cpu) { XOR(cpu, read_hl(cpu)); }
+void xor_a_r8(CPU *cpu) { XOR(cpu, get_r8(cpu, cpu->z_field)); }
 
 void xor_a_n8(CPU *cpu) { XOR(cpu, fetch_byte(cpu)); }
 
-void BIT(CPU *cpu, const uint8_t operand) {
-  set_z(cpu, !get_bit(operand, op_y(cpu->opcode)));
+void bit_b3_r8(CPU *cpu) {
+  set_z(cpu, !get_bit(get_r8(cpu, cpu->z_field), cpu->y_field));
   set_n(cpu, false);
   set_h(cpu, true);
 }
 
-void bit_r8(CPU *cpu) { BIT(cpu, cpu->r8[cpu->z_field]); }
-
-void bit_mem_hl(CPU *cpu) { BIT(cpu, read_hl(cpu)); }
-
-void res_r8(CPU *cpu) { set_bit(r8(cpu), op_y(cpu->opcode), false); }
-
-void res_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  set_bit(&hl_ind, op_y(cpu->opcode), false);
-  write_hl(cpu, hl_ind);
+void res_b3_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  uint8_t operand = get_r8(cpu, dest);
+  set_bit(&operand, cpu->y_field, false);
+  set_r8(cpu, dest, operand);
 }
 
-void set_r8(CPU *cpu) { set_bit(r8(cpu), op_y(cpu->opcode), true); }
-
-void set_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  set_bit(&hl_ind, op_y(cpu->opcode), true);
-  write_hl(cpu, hl_ind);
+void set_b3_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  uint8_t operand = get_r8(cpu, dest);
+  set_bit(&operand, cpu->y_field, true);
+  set_r8(cpu, dest, operand);
 }
 
-void RL(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = r8 << 1 | is_c_set(cpu);
+void RL(CPU *cpu, uint8_t *operand) {}
+
+void rl_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = operand << 1 | is_c_set(cpu);
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
   set_h(cpu, false);
-  set_c(cpu, get_bit(r8, 7));
+  set_c(cpu, operand & 0x80);
 
-  *operand = result;
-}
-
-void rl_r8(CPU *cpu) { RL(cpu, r8(cpu)); }
-
-void rl_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  RL(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
+  set_r8(cpu, dest, result);
 }
 
 void rla(CPU *cpu) {
-  RL(cpu, &cpu->r8[REG_A]);
+  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t result = A << 1 | is_c_set(cpu);
+
   set_z(cpu, false);
-}
-
-void RLC(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const bool bit_7 = get_bit(r8, 7);
-  const uint8_t result = (r8 << 1) | bit_7;
-
-  set_z(cpu, r8 == 0);
   set_n(cpu, false);
   set_h(cpu, false);
-  set_c(cpu, bit_7);
+  set_c(cpu, A & 0x80);
 
-  *operand = result;
+  cpu->r8[REG_A] = result;
 }
 
-void rlc_r8(CPU *cpu) { RLC(cpu, r8(cpu)); }
+void rlc_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = operand << 1 | is_c_set(cpu);
 
-void rlc_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  RLC(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
+  set_z(cpu, result == 0);
+  set_n(cpu, false);
+  set_h(cpu, false);
+  set_c(cpu, operand & 0x80);
+
+  set_r8(cpu, dest, result);
 }
 
 void rlca(CPU *cpu) {
-  RLC(cpu, &cpu->r8[REG_A]);
+  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t result = A << 1 | is_c_set(cpu);
+
   set_z(cpu, false);
+  set_n(cpu, false);
+  set_h(cpu, false);
+  set_c(cpu, A & 0x80);
+
+  cpu->r8[REG_A] = result;
 }
 
 void RR(CPU *cpu, uint8_t *operand) {

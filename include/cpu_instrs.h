@@ -39,33 +39,21 @@ void adc_a_n8(CPU *cpu);
 
 void add_a_r8(CPU *cpu);
 
-void add_a_mem_hl(CPU *cpu);
-
 void add_a_n8(CPU *cpu);
 
 void cp_a_r8(CPU *cpu);
-
-void cp_a_mem_hl(CPU *cpu);
 
 void cp_a_n8(CPU *cpu);
 
 void dec_r8(CPU *cpu);
 
-void dec_mem_hl(CPU *cpu);
-
 void inc_r8(CPU *cpu);
 
-void inc_mem_hl(CPU *cpu);
-
 void sbc_a_r8(CPU *cpu);
-
-void sbc_a_mem_hl(CPU *cpu);
 
 void sbc_a_n8(CPU *cpu);
 
 void sub_a_r8(CPU *cpu);
-
-void sub_a_mem_hl(CPU *cpu);
 
 void sub_a_n8(CPU *cpu);
 
@@ -85,21 +73,15 @@ void inc_r16(CPU *cpu);
 
 void and_a_r8(CPU *cpu);
 
-void and_a_mem_hl(CPU *cpu);
-
 void and_a_n8(CPU *cpu);
 
 void cpl(CPU *cpu);
 
 void or_a_r8(CPU *cpu);
 
-void or_a_mem_hl(CPU *cpu);
-
 void or_a_n8(CPU *cpu);
 
 void xor_a_r8(CPU *cpu);
-
-void xor_a_mem_hl(CPU *cpu);
 
 void xor_a_n8(CPU *cpu);
 
@@ -107,17 +89,11 @@ void xor_a_n8(CPU *cpu);
 // Bit flag instructions
 //
 
-void bit_r8(CPU *cpu);
+void bit_b3_r8(CPU *cpu);
 
-void bit_mem_hl(CPU *cpu);
+void res_b3_r8(CPU *cpu);
 
-void res_r8(CPU *cpu);
-
-void res_mem_hl(CPU *cpu);
-
-void set_r8(CPU *cpu);
-
-void set_mem_hl(CPU *cpu);
+void set_b3_r8(CPU *cpu);
 
 //
 // Bit shift instructions
@@ -125,43 +101,27 @@ void set_mem_hl(CPU *cpu);
 
 void rl_r8(CPU *cpu);
 
-void rl_mem_hl(CPU *cpu);
-
 void rla(CPU *cpu);
 
 void rlc_r8(CPU *cpu);
-
-void rlc_mem_hl(CPU *cpu);
 
 void rlca(CPU *cpu);
 
 void rr_r8(CPU *cpu);
 
-void rr_mem_hl(CPU *cpu);
-
 void rra(CPU *cpu);
 
 void rrc_r8(CPU *cpu);
-
-void rrc_mem_hl(CPU *cpu);
 
 void rrca(CPU *cpu);
 
 void sla_r8(CPU *cpu);
 
-void sla_mem_hl(CPU *cpu);
-
 void sra_r8(CPU *cpu);
-
-void sra_mem_hl(CPU *cpu);
 
 void srl_r8(CPU *cpu);
 
-void srl_mem_hl(CPU *cpu);
-
 void swap_r8(CPU *cpu);
-
-void swap_mem_hl(CPU *cpu);
 
 //
 // Jumps and subroutine instructions

@@ -16,12 +16,12 @@ void init_cpu(CPU *cpu, GameBoy *gameboy) {
   cpu->SP = 0xFFFE;
 }
 
-void set_r16(CPU *cpu, R16_Idx r16_idx, uint16_t val) {
+void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val) {
   cpu->r8[r16_idx] = val >> 8;
   cpu->r8[r16_idx + 1] = val & 0xFF;
 }
 
-uint16_t get_r16(const CPU *cpu, R16_Idx r16_idx) {
+uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx) {
   return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
 }
 
@@ -34,11 +34,11 @@ uint16_t fetch_word(CPU *cpu) {
 uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->gameboy, cpu->PC++); }
 
 uint8_t read_hl(CPU *cpu) {
-  return read_byte(cpu->gameboy, get_r16(cpu, REG_HL));
+  return read_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL));
 }
 
 void write_hl(CPU *cpu, uint8_t val) {
-  write_byte(cpu->gameboy, get_r16(cpu, REG_HL), val);
+  write_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL), val);
 }
 
 void set_z(CPU *cpu, bool val) {
