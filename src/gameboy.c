@@ -18,8 +18,8 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
 }
 
 void run_gameboy(GameBoy *gameboy) {
-  while (false) {
-    const uint8_t opcode = read_byte(gameboy, gameboy->cpu.PC++);
+  while (gameboy->state == GB_RUNNING) {
+    const uint8_t opcode = fetch_byte(&gameboy->cpu);
     gameboy->cpu.y_field = (opcode >> 3) & 0x7;
     gameboy->cpu.z_field = opcode & 0x7;
 
@@ -129,10 +129,4 @@ void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val) {
 
   /* TODO: IE */
   gameboy->interrupt_enable = val;
-}
-
-uint16_t read_word(GameBoy *gameboy, uint16_t addr) {
-  const uint8_t lo = read_byte(gameboy, addr);
-  const uint8_t hi = read_byte(gameboy, addr);
-  return (uint16_t)hi << 8 | lo;
 }

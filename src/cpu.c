@@ -4,14 +4,14 @@
 
 void init_cpu(CPU *cpu, GameBoy *gameboy) {
   cpu->gameboy = gameboy;
-  cpu->r8[0] = 0xFF;
-  cpu->r8[1] = 0x13;
-  cpu->r8[2] = 0x00;
-  cpu->r8[3] = 0xC1;
-  cpu->r8[4] = 0x84;
-  cpu->r8[5] = 0x03;
-  cpu->r8[6] = 0x00;
-  cpu->r8[7] = 0x01;
+  cpu->r8[REG_B] = 0xFF;
+  cpu->r8[REG_C] = 0x13;
+  cpu->r8[REG_D] = 0x00;
+  cpu->r8[REG_E] = 0xC1;
+  cpu->r8[REG_H] = 0x84;
+  cpu->r8[REG_L] = 0x03;
+  cpu->r8[REG_A] = 0x01;
+  cpu->r8[REG_F] = 0x00;
   cpu->PC = 0x0100;
   cpu->SP = 0xFFFE;
 }

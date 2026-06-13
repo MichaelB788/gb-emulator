@@ -27,5 +27,3 @@ void close_gameboy(GameBoy *gameboy);
 uint8_t read_byte(GameBoy *gameboy, uint16_t addr);
 
 void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val);
-
-uint16_t read_word(GameBoy *gameboy, uint16_t addr);
