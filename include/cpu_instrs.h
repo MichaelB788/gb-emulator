@@ -171,11 +171,7 @@ void ld_sp_hl(CPU *cpu);
 
 void pop_r16(CPU *cpu);
 
-void pop_af(CPU *cpu);
-
 void push_r16(CPU *cpu);
-
-void push_af(CPU *cpu);
 
 //
 // Interrupt-related instructions

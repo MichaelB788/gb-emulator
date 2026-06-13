@@ -37,9 +37,6 @@ void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val);
 uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx);
 
 uint8_t fetch_byte(CPU *cpu);
-uint16_t fetch_word(CPU *cpu);
-uint8_t read_hl(CPU *cpu);
-void write_hl(CPU *cpu, uint8_t val);
 
 void set_z(CPU *cpu, bool val);
 void set_n(CPU *cpu, bool val);
@@ -50,6 +47,3 @@ bool is_z_set(CPU *cpu);
 bool is_n_set(CPU *cpu);
 bool is_h_set(CPU *cpu);
 bool is_c_set(CPU *cpu);
-
-typedef enum { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 } Condition;
-bool check_condition(CPU *cpu, Condition cond);

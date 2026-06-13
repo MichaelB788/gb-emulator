@@ -12,6 +12,7 @@ typedef struct GameBoy {
   IO io;
   bool interrupt_enable;
   GameBoyState state;
+  uint8_t cycles;
   uint8_t wram[KiB_8];
   uint8_t hram[127];
   Cartridge *cartridge;

@@ -1,6 +1,7 @@
 #include "gameboy.h"
 #include "cartridge.h"
 #include "cpu.h"
+#include "optable.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -22,13 +23,9 @@ void run_gameboy(GameBoy *gameboy) {
     gameboy->cpu.y_field = (opcode >> 3) & 0x7;
     gameboy->cpu.z_field = opcode & 0x7;
 
-    /*
     const Instruction ins = optable[opcode];
-    cpu->cycles_taken = ins.cycles;
-    ins.exec(cpu);
-
-    return cpu->cycles_taken;
-    */
+    gameboy->cycles = ins.cycles;
+    ins.exec(&gameboy->cpu);
   }
 }
 

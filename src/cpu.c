@@ -25,21 +25,7 @@ uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx) {
   return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
 }
 
-uint16_t fetch_word(CPU *cpu) {
-  const uint8_t lo = read_byte(cpu->gameboy, cpu->PC++);
-  const uint8_t hi = read_byte(cpu->gameboy, cpu->PC++);
-  return (uint16_t)hi << 8 | lo;
-}
-
 uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->gameboy, cpu->PC++); }
-
-uint8_t read_hl(CPU *cpu) {
-  return read_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL));
-}
-
-void write_hl(CPU *cpu, uint8_t val) {
-  write_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL), val);
-}
 
 void set_z(CPU *cpu, bool val) {
   if (val) {
@@ -80,16 +66,3 @@ bool is_n_set(CPU *cpu) { return cpu->r8[REG_F] & 0x40; }
 bool is_h_set(CPU *cpu) { return cpu->r8[REG_F] & 0x20; }
 
 bool is_c_set(CPU *cpu) { return cpu->r8[REG_F] & 0x10; }
-
-bool check_condition(CPU *cpu, Condition cond) {
-  switch (cond) {
-  case COND_NZ:
-    return !is_z_set(cpu);
-  case COND_Z: // Z
-    return is_z_set(cpu);
-  case COND_NC: // NC
-    return !is_c_set(cpu);
-  case COND_C: // C
-    return is_c_set(cpu);
-  }
-}

@@ -2,9 +2,22 @@
 #include "bitwise.h"
 #include "cpu.h"
 #include "gameboy.h"
+#include "optable.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+
+//
+// Helper functions
+//
+
+uint8_t read_hl(CPU *cpu) {
+  return read_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL));
+}
+
+void write_hl(CPU *cpu, uint8_t val) {
+  write_byte(cpu->gameboy, get_r8_pair(cpu, REG_HL), val);
+}
 
 uint8_t get_r8(CPU *cpu, uint8_t opcode_field) {
   if (opcode_field == 6)
@@ -68,7 +81,40 @@ uint16_t get_r16mem(CPU *cpu) {
   }
 }
 
+uint16_t fetch_word(CPU *cpu) {
+  const uint8_t lo = read_byte(cpu->gameboy, cpu->PC++);
+  const uint8_t hi = read_byte(cpu->gameboy, cpu->PC++);
+  return (uint16_t)hi << 8 | lo;
+}
+
+typedef enum { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 } Condition;
+bool check_condition(CPU *cpu, Condition cond) {
+  switch (cond) {
+  case COND_NZ:
+    return !is_z_set(cpu);
+  case COND_Z: // Z
+    return is_z_set(cpu);
+  case COND_NC: // NC
+    return !is_c_set(cpu);
+  case COND_C: // C
+    return is_c_set(cpu);
+  }
+}
+
+void push_stack(CPU *cpu, uint16_t val) {
+  write_byte(cpu->gameboy, --cpu->SP, val >> 8);
+  write_byte(cpu->gameboy, --cpu->SP, val & 0xFF);
+}
+
+uint16_t pop_stack(CPU *cpu) {
+  const uint8_t lo = read_byte(cpu->gameboy, cpu->SP++);
+  const uint8_t hi = read_byte(cpu->gameboy, cpu->SP++);
+  return (uint16_t)hi << 8 | lo;
+}
+
+//
 // Load Instructions
+//
 
 void ld_r8_r8(CPU *cpu) {
   set_r8(cpu, cpu->y_field, get_r8(cpu, cpu->z_field));
@@ -114,7 +160,10 @@ void ldh_a_mem_c(CPU *cpu) {
   cpu->r8[REG_A] = read_byte(cpu->gameboy, addr);
 }
 
-// 8-bit arithmetic
+//
+// 8-bit arithmetic instructions
+//
+
 void ADC(CPU *cpu, const uint8_t operand) {
   const uint8_t carry = is_c_set(cpu);
   const uint8_t A = cpu->r8[REG_A];
@@ -224,6 +273,10 @@ void sub_a_r8(CPU *cpu) { SUB(cpu, get_r8(cpu, cpu->z_field)); }
 
 void sub_a_n8(CPU *cpu) { SUB(cpu, fetch_byte(cpu)); }
 
+//
+// 16-bit arithmetic instructions
+//
+
 void add_hl_r16(CPU *cpu) {
   const uint16_t HL = get_r8_pair(cpu, REG_HL);
   const uint16_t operand = get_r16(cpu);
@@ -240,6 +293,10 @@ void add_hl_r16(CPU *cpu) {
 void dec_r16(CPU *cpu) { set_r16(cpu, get_r16(cpu) - 1); }
 
 void inc_r16(CPU *cpu) { set_r16(cpu, get_r16(cpu) + 1); }
+
+//
+// Bitwise logic instructions
+//
 
 void AND(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
@@ -298,6 +355,10 @@ void xor_a_r8(CPU *cpu) { XOR(cpu, get_r8(cpu, cpu->z_field)); }
 
 void xor_a_n8(CPU *cpu) { XOR(cpu, fetch_byte(cpu)); }
 
+//
+// Bit flag instructions
+//
+
 void bit_b3_r8(CPU *cpu) {
   set_z(cpu, !get_bit(get_r8(cpu, cpu->z_field), cpu->y_field));
   set_n(cpu, false);
@@ -317,6 +378,10 @@ void set_b3_r8(CPU *cpu) {
   set_bit(&operand, cpu->y_field, true);
   set_r8(cpu, dest, operand);
 }
+
+//
+// Bit shift instructions
+//
 
 void RL(CPU *cpu, uint8_t *operand) {}
 
@@ -370,29 +435,31 @@ void rlca(CPU *cpu) {
   cpu->r8[REG_A] = result;
 }
 
-void RR(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = (is_c_set(cpu) << 7) | (r8 >> 1);
+void RR(CPU *cpu, uint8_t *operand) {}
+
+void rr_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = (is_c_set(cpu) << 7) | (operand >> 1);
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
   set_h(cpu, false);
-  set_c(cpu, r8 & 1);
+  set_c(cpu, operand & 1);
 
-  *operand = result;
-}
-
-void rr_r8(CPU *cpu) { RR(cpu, r8(cpu)); }
-
-void rr_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  RR(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
+  set_r8(cpu, dest, result);
 }
 
 void rra(CPU *cpu) {
-  RR(cpu, &cpu->r8[REG_A]);
+  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t result = (is_c_set(cpu) << 7) | (A >> 1);
+
   set_z(cpu, false);
+  set_n(cpu, false);
+  set_h(cpu, false);
+  set_c(cpu, A & 1);
+
+  cpu->r8[REG_A] = result;
 }
 
 void RRC(CPU *cpu, uint8_t *operand) {
@@ -408,61 +475,60 @@ void RRC(CPU *cpu, uint8_t *operand) {
   *operand = result;
 }
 
-void rrc_r8(CPU *cpu) { RRC(cpu, r8(cpu)); }
+void rrc_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = ((operand & 1) << 7) | (operand >> 1);
 
-void rrc_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  RRC(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
+  set_z(cpu, result == 0);
+  set_n(cpu, false);
+  set_h(cpu, false);
+  set_c(cpu, operand & 1);
+
+  set_r8(cpu, dest, result);
 }
 
 void rrca(CPU *cpu) {
-  RRC(cpu, &cpu->r8[REG_A]);
+  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t result = ((A & 1) << 7) | (A >> 1);
+
   set_z(cpu, false);
+  set_n(cpu, false);
+  set_h(cpu, false);
+  set_c(cpu, A & 1);
+
+  cpu->r8[REG_A] = result;
 }
 
-void SLA(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = r8 << 1;
+void sla_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = operand << 1;
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
   set_h(cpu, false);
-  set_c(cpu, get_bit(r8, 7));
+  set_c(cpu, operand & 0x80);
 
-  *operand = result;
+  set_r8(cpu, dest, result);
 }
 
-void sla_r8(CPU *cpu) { SLA(cpu, r8(cpu)); }
-
-void sla_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  SLA(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
-}
-
-void SRA(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = (r8 & 0x80) | (r8 >> 1);
+void sra_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = (operand & 0x80) | (operand >> 1);
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
   set_h(cpu, false);
-  set_c(cpu, r8 & 1);
+  set_c(cpu, operand & 1);
 
-  *operand = result;
+  set_r8(cpu, dest, result);
 }
 
-void sra_r8(CPU *cpu) { SRA(cpu, r8(cpu)); }
-
-void sra_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  SRA(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
-}
-
-void SRL(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
+void srl_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t r8 = get_r8(cpu, dest);
   const uint8_t result = r8 >> 1;
 
   set_z(cpu, result == 0);
@@ -470,63 +536,52 @@ void SRL(CPU *cpu, uint8_t *operand) {
   set_h(cpu, false);
   set_c(cpu, r8 & 1);
 
-  *operand = result;
+  set_r8(cpu, dest, result);
 }
 
-void srl_r8(CPU *cpu) { SRL(cpu, r8(cpu)); }
+void SWAP(CPU *cpu, uint8_t *operand) {}
 
-void srl_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  SRL(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
-}
-
-void SWAP(CPU *cpu, uint8_t *operand) {
-  const uint8_t r8 = *operand;
-  const uint8_t result = (r8 << 4) | (r8 >> 4);
+void swap_r8(CPU *cpu) {
+  const uint8_t dest = cpu->z_field;
+  const uint8_t operand = get_r8(cpu, dest);
+  const uint8_t result = (operand << 4) | (operand >> 4);
 
   set_z(cpu, result == 0);
   set_n(cpu, false);
   set_h(cpu, false);
   set_c(cpu, false);
 
-  *operand = result;
+  set_r8(cpu, dest, result);
 }
 
-void swap_r8(CPU *cpu) { SWAP(cpu, r8(cpu)); }
-
-void swap_mem_hl(CPU *cpu) {
-  uint8_t hl_ind = read_hl(cpu);
-  SWAP(cpu, &hl_ind);
-  write_hl(cpu, hl_ind);
-}
+//
+// Jumps and subroutine instructions
+//
 
 void call_a16(CPU *cpu) {
   const uint16_t jmp_addr = fetch_word(cpu);
-  write_byte(cpu->gameboy, --cpu->SP, cpu->PC >> 8);
-  write_byte(cpu->gameboy, --cpu->SP, cpu->PC & 0xFF);
+  push_stack(cpu, cpu->PC);
   cpu->PC = jmp_addr;
 }
 
 void call_cc_a16(CPU *cpu) {
   const uint16_t jmp_addr = fetch_word(cpu);
-  if (check_cc(cpu)) {
-    write_byte(cpu->gameboy, --cpu->SP, cpu->PC >> 8);
-    write_byte(cpu->gameboy, --cpu->SP, cpu->PC & 0xFF);
+  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
+    push_stack(cpu, cpu->PC);
     cpu->PC = jmp_addr;
-    cpu->cycles_taken += 12;
+    cpu->gameboy->cycles += 12;
   }
 }
 
-void jp_hl(CPU *cpu) { cpu->PC = cpu->HL; }
+void jp_hl(CPU *cpu) { cpu->PC = get_r8_pair(cpu, REG_HL); }
 
 void jp_a16(CPU *cpu) { cpu->PC = fetch_word(cpu); }
 
 void jp_cc_a16(CPU *cpu) {
   const uint16_t jmp_addr = fetch_word(cpu);
-  if (check_cc(cpu)) {
+  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
     cpu->PC = jmp_addr;
-    cpu->cycles_taken += 4;
+    cpu->gameboy->cycles += 4;
   }
 }
 
@@ -534,41 +589,35 @@ void jr_e8(CPU *cpu) { cpu->PC += (int8_t)fetch_byte(cpu); }
 
 void jr_cc_e8(CPU *cpu) {
   const int8_t jmp_addr = (int8_t)fetch_byte(cpu);
-  if (check_cc(cpu)) {
+  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
     cpu->PC += jmp_addr;
-    cpu->cycles_taken += 4;
+    cpu->gameboy->cycles += 4;
   }
 }
 
-void ret(CPU *cpu) {
-  const uint8_t lo = read_byte(cpu->gameboy, cpu->SP++);
-  const uint8_t hi = read_byte(cpu->gameboy, cpu->SP++);
-  cpu->PC = (uint16_t)hi << 8 | lo;
-}
+void ret(CPU *cpu) { cpu->PC = pop_stack(cpu); }
 
 void ret_cc(CPU *cpu) {
-  if (check_cc(cpu)) {
-    const uint8_t lo = read_byte(cpu->gameboy, cpu->SP++);
-    const uint8_t hi = read_byte(cpu->gameboy, cpu->SP++);
-    cpu->PC = (uint16_t)hi << 8 | lo;
-    cpu->cycles_taken += 12;
+  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
+    cpu->PC = pop_stack(cpu);
+    cpu->gameboy->cycles += 12;
   }
 }
 
 void reti(CPU *cpu) {
-  const uint8_t lo = read_byte(cpu->gameboy, cpu->SP++);
-  const uint8_t hi = read_byte(cpu->gameboy, cpu->SP++);
-  cpu->PC = (uint16_t)hi << 8 | lo;
+  cpu->PC = pop_stack(cpu);
   cpu->IME = true;
 }
 
 void rst_vec(CPU *cpu) {
-  write_byte(cpu->gameboy, --cpu->SP, cpu->PC >> 8);
-  write_byte(cpu->gameboy, --cpu->SP, cpu->PC & 0xFF);
-  cpu->PC = (uint16_t)(op_y(cpu->opcode) * 8);
+  push_stack(cpu, cpu->PC);
+  cpu->PC = cpu->y_field * 8;
 }
 
+//
 // Carry flag instructions
+//
+
 void ccf(CPU *cpu) {
   set_n(cpu, false);
   set_h(cpu, false);
@@ -581,8 +630,11 @@ void scf(CPU *cpu) {
   set_c(cpu, true);
 }
 
+//
 // Stack manipulation instructions
-void ADD_SP_e8(CPU *cpu, uint16_t *dest) {
+//
+
+uint16_t ADD_SP_e8(CPU *cpu) {
   const uint16_t SP = cpu->SP;
   const uint8_t n8 = fetch_byte(cpu);
   const int32_t sum = SP + (int8_t)n8;
@@ -592,10 +644,10 @@ void ADD_SP_e8(CPU *cpu, uint16_t *dest) {
   set_h(cpu, (SP & 0xF) + (n8 & 0xF) > 0xF);
   set_c(cpu, sum > 0xFF);
 
-  *dest = (uint16_t)sum;
+  return sum;
 }
 
-void add_sp_e8(CPU *cpu) { ADD_SP_e8(cpu, &cpu->SP); }
+void add_sp_e8(CPU *cpu) { cpu->SP = ADD_SP_e8(cpu); }
 
 void ld_mem_n16_sp(CPU *cpu) {
   const uint16_t addr = fetch_word(cpu);
@@ -603,46 +655,38 @@ void ld_mem_n16_sp(CPU *cpu) {
   write_byte(cpu->gameboy, addr + 1, cpu->SP >> 8);
 }
 
-void ld_hl_sp_e8(CPU *cpu) { ADD_SP_e8(cpu, &cpu->HL); }
+void ld_hl_sp_e8(CPU *cpu) { set_r8_pair(cpu, REG_HL, ADD_SP_e8(cpu)); }
 
-void ld_sp_hl(CPU *cpu) { cpu->SP = cpu->HL; }
+void ld_sp_hl(CPU *cpu) { cpu->SP = get_r8_pair(cpu, REG_HL); }
 
-void pop_r16(CPU *cpu) {
-  const uint8_t lo = read_byte(cpu->gameboy, cpu->SP++);
-  const uint8_t hi = read_byte(cpu->gameboy, cpu->SP++);
-  *r16(cpu) = (uint16_t)hi << 8 | lo;
-}
+void pop_r16(CPU *cpu) { set_r16stk(cpu, pop_stack(cpu)); }
 
-void pop_af(CPU *cpu) {
-  cpu->F = read_byte(cpu->gameboy, cpu->SP++) & 0xF0;
-  cpu->r8[REG_A] = read_byte(cpu->gameboy, cpu->SP++);
-}
+void push_r16(CPU *cpu) { push_stack(cpu, get_r16stk(cpu)); }
 
-void push_r16(CPU *cpu) {
-  const uint16_t operand = *r16(cpu);
-  write_byte(cpu->gameboy, --cpu->SP, operand >> 8);
-  write_byte(cpu->gameboy, --cpu->SP, operand & 0xFF);
-}
-
-void push_af(CPU *cpu) {
-  write_byte(cpu->gameboy, --cpu->SP, cpu->r8[REG_A]);
-  write_byte(cpu->gameboy, --cpu->SP, cpu->F);
-}
-
+//
 // Interrupt-related instructions
+//
+
+void di(CPU *cpu) { cpu->IME = false; }
+
+void ei(CPU *cpu) { cpu->IME = true; }
+
 void halt(CPU *cpu) {
   // TODO: Proper halt behavior, halt bug.
-  cpu->state = CPU_HALTED;
+  cpu->gameboy->state = GB_HALTED;
 }
 
+//
 // Misc.
+//
+
 void daa(CPU *cpu) {
   const uint8_t A = cpu->r8[REG_A];
   uint8_t result = 0;
 
-  if (get_flag(cpu, FLAG_N)) {
+  if (is_n_set(cpu)) {
     uint8_t adjustment = 0;
-    if (get_flag(cpu, FLAG_H)) {
+    if (is_h_set(cpu)) {
       adjustment |= 0x6;
     }
     if (is_c_set(cpu)) {
@@ -651,7 +695,7 @@ void daa(CPU *cpu) {
     result = A - adjustment;
   } else {
     uint8_t adjustment = 0;
-    if (get_flag(cpu, FLAG_H) || (A & 0xF) > 0x9) {
+    if (is_h_set(cpu) || (A & 0xF) > 0x9) {
       adjustment |= 0x6;
     }
     if (is_c_set(cpu) || A > 0x99) {
@@ -668,30 +712,23 @@ void daa(CPU *cpu) {
 }
 
 void prefix(CPU *cpu) {
-  const uint8_t curr_op = fetch_byte(cpu);
-  cpu->opcode = curr_op;
+  const uint8_t opcode = fetch_byte(cpu);
+  cpu->y_field = (opcode >> 3) & 0x7;
+  cpu->z_field = opcode & 0x7;
 
-  Instruction ins = cb_optable[curr_op];
-  cpu->cycles_taken = ins.cycles;
-  ins.exec(cpu);
-
-#ifndef NDEBUG
-  log_ins(cpu, &ins);
-#endif
+  Instruction cb_instruction = cb_optable[opcode];
+  cpu->gameboy->cycles = cb_instruction.cycles;
+  cb_instruction.exec(cpu);
 }
 
 void nop(CPU *cpu) {};
 
 void stop_n8(CPU *cpu) {
   (void)fetch_byte(cpu);
-  cpu->state = CPU_STOPPED;
+  cpu->gameboy->state = GB_STOPPED;
 }
 
 void illegal(CPU *cpu) {
-  fprintf(stderr, "Illegal opcode encountered: 0x%X\n", cpu->opcode);
-  cpu->state = CPU_STOPPED;
+  fprintf(stderr, "Illegal opcode encountered");
+  cpu->gameboy->state = GB_STOPPED;
 }
-
-void di(CPU *cpu) { cpu->IME = false; }
-
-void ei(CPU *cpu) { cpu->IME = true; }
