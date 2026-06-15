@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "bitwise.h"
 #include "gameboy.h"
 #include <stdint.h>
 
@@ -27,42 +28,12 @@ uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx) {
 
 uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->gameboy, cpu->PC++); }
 
-void set_z(CPU *cpu, bool val) {
-  if (val) {
-    cpu->r8[REG_F] |= 0x80;
-  } else {
-    cpu->r8[REG_F] &= ~0x80;
-  }
-}
+void set_z(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 7, val); }
+void set_n(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 6, val); }
+void set_h(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 5, val); }
+void set_c(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 4, val); }
 
-void set_n(CPU *cpu, bool val) {
-  if (val) {
-    cpu->r8[REG_F] |= 0x40;
-  } else {
-    cpu->r8[REG_F] &= ~0x40;
-  }
-}
-
-void set_h(CPU *cpu, bool val) {
-  if (val) {
-    cpu->r8[REG_F] |= 0x20;
-  } else {
-    cpu->r8[REG_F] &= ~0x20;
-  }
-}
-
-void set_c(CPU *cpu, bool val) {
-  if (val) {
-    cpu->r8[REG_F] |= 0x10;
-  } else {
-    cpu->r8[REG_F] &= ~0x10;
-  }
-}
-
-bool is_z_set(CPU *cpu) { return cpu->r8[REG_F] & 0x80; }
-
-bool is_n_set(CPU *cpu) { return cpu->r8[REG_F] & 0x40; }
-
-bool is_h_set(CPU *cpu) { return cpu->r8[REG_F] & 0x20; }
-
-bool is_c_set(CPU *cpu) { return cpu->r8[REG_F] & 0x10; }
+bool is_z_set(CPU *cpu) { return get_bit(cpu->r8[REG_F], 7); }
+bool is_n_set(CPU *cpu) { return get_bit(cpu->r8[REG_F], 6); }
+bool is_h_set(CPU *cpu) { return get_bit(cpu->r8[REG_F], 5); }
+bool is_c_set(CPU *cpu) { return get_bit(cpu->r8[REG_F], 4); }
