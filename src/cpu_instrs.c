@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-//
-// Helper functions
-//
+/**
+ * Helper functions
+ */
 
 uint8_t fetch_byte(GameBoy *gameboy) {
   return read_byte(gameboy, gameboy->cpu.PC++);
@@ -113,9 +113,9 @@ uint16_t pop_off_stack(GameBoy *gameboy) {
   return (uint16_t)hi << 8 | lo;
 }
 
-//
-// 8-bit arithmetic instructions
-//
+/**
+ * 8-bit arithmetic instructions
+ */
 
 void ADD_n8(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
@@ -202,9 +202,9 @@ uint8_t INC_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-//
-// 16-bit arithmetic instructions
-//
+/**
+ * 16-bit arithmetic instructions
+ */
 
 void ADD_r16(CPU *cpu, uint16_t operand) {
   const uint16_t HL = get_r8_pair(cpu, REG_HL);
@@ -217,9 +217,9 @@ void ADD_r16(CPU *cpu, uint16_t operand) {
   set_r8_pair(cpu, REG_HL, sum);
 }
 
-//
-// Bitwise logic instructions
-//
+/**
+ * Bitwise logic instructions
+ */
 
 void AND_n8(CPU *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
@@ -260,15 +260,9 @@ void OR_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void CPL(CPU *cpu) {
-  cpu->r8[REG_A] = (uint8_t)~cpu->r8[REG_A];
-  set_n(cpu, true);
-  set_h(cpu, true);
-}
-
-//
-// Bit flag instructions
-//
+/**
+ * Bit flag instructions
+ */
 
 void BIT_b3_r8(CPU *cpu, uint8_t b3, uint8_t r8) {
   set_z(cpu, !get_bit(r8, b3));
@@ -276,9 +270,9 @@ void BIT_b3_r8(CPU *cpu, uint8_t b3, uint8_t r8) {
   set_h(cpu, true);
 }
 
-//
-// Bit shift instructions
-//
+/**
+ * Bit shift instructions
+ */
 
 uint8_t RL_r8(CPU *cpu, uint8_t operand) {
   const uint8_t result = operand << 1 | is_c_set(cpu);
@@ -369,57 +363,188 @@ uint8_t SWAP_r8(CPU *cpu, uint8_t operand) {
 }
 
 /**
+ * Misc.
+ */
+
+void DAA(CPU *cpu) {
+  const uint8_t A = cpu->r8[REG_A];
+  uint8_t result = 0;
+
+  if (is_n_set(cpu)) {
+    uint8_t adjustment = 0;
+    if (is_h_set(cpu)) {
+      adjustment |= 0x6;
+    }
+    if (is_c_set(cpu)) {
+      adjustment |= 0x60;
+    }
+    result = A - adjustment;
+  } else {
+    uint8_t adjustment = 0;
+    if (is_h_set(cpu) || (A & 0xF) > 0x9) {
+      adjustment |= 0x6;
+    }
+    if (is_c_set(cpu) || A > 0x99) {
+      adjustment |= 0x60;
+      set_c(cpu, true);
+    }
+    result = A + adjustment;
+  }
+
+  set_z(cpu, result == 0);
+  set_h(cpu, false);
+
+  cpu->r8[REG_A] = result;
+}
+
+/**
  * Instruction decoding
  */
 
-void execute_instruction(GameBoy *gameboy, uint8_t opcode) {
-  uint8_t x_field = (opcode >> 6) & 0x3;
-  uint8_t y_field = (opcode >> 3) & 0x7;
-  uint8_t z_field = opcode & 0x7;
+void execute_instruction(GameBoy *gb, uint8_t opcode) {
+  uint8_t x = (opcode >> 6) & 0x3;
+  uint8_t y = (opcode >> 3) & 0x7;
+  uint8_t z = opcode & 0x7;
 
-  switch (x_field) {
+  switch (x) {
   case 0: /* Block 0 */ {
+    switch (z) {
+    case 0: {
+      switch (z) {
+      case 0: /* NOP */
+        break;
+      case 1: /* LD [a16] SP */
+        write_byte(gb, fetch_word(gb), gb->cpu.SP);
+        break;
+      case 2: /* STOP */
+        gb->state = GB_STOPPED;
+        break;
+      case 3: /* JR e8 */
+        gb->cpu.PC += (int8_t)fetch_byte(gb);
+        break;
+      default: /* JR cc, e8 */ {
+        const int8_t offset = fetch_byte(gb);
+        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+          gb->cpu.PC += offset;
+          gb->cycles += 4;
+        }
+      } break;
+      }
+    } break;
+
+    case 1: {
+      if ((z & 1) == 0) /* LD r16, imm16 */
+        set_r16(&gb->cpu, y, fetch_word(gb));
+      else /* ADD HL, r16 */
+        ADD_r16(&gb->cpu, get_r16(&gb->cpu, y));
+    } break;
+
+    case 2: {
+      if ((z & 1) == 0) /* LD [r16mem], A */
+        write_byte(gb, get_r16mem(&gb->cpu, y), gb->cpu.r8[REG_A]);
+      else /* LD A, [r16mem] */
+        gb->cpu.r8[REG_A] = read_byte(gb, get_r16mem(&gb->cpu, y));
+    } break;
+
+    case 3: {
+      if ((z & 1) == 0) /* INC r16 */
+        set_r16(&gb->cpu, y, get_r16(&gb->cpu, y) + 1);
+      else /* DEC r16 */
+        set_r16(&gb->cpu, y, get_r16(&gb->cpu, y) - 1);
+    } break;
+
+    case 4: /* INC r8 */ {
+      set_r8(gb, y, INC_r8(&gb->cpu, get_r8(gb, y)));
+    } break;
+
+    case 5: /* DEC r8 */ {
+      set_r8(gb, y, DEC_r8(&gb->cpu, get_r8(gb, y)));
+    } break;
+
+    case 6: /* LD r8, imm8 */ {
+      set_r8(gb, y, fetch_byte(gb));
+    } break;
+
+    case 7: {
+      switch (z) {
+      case 0: /* RLCA */
+        gb->cpu.r8[REG_A] = RLC_r8(&gb->cpu, gb->cpu.r8[REG_A]);
+        set_z(&gb->cpu, false);
+        break;
+      case 1: /* RRCA */
+        gb->cpu.r8[REG_A] = RRC_r8(&gb->cpu, gb->cpu.r8[REG_A]);
+        set_z(&gb->cpu, false);
+        break;
+      case 2: /* RLA */
+        gb->cpu.r8[REG_A] = RL_r8(&gb->cpu, gb->cpu.r8[REG_A]);
+        set_z(&gb->cpu, false);
+        break;
+      case 3: /* RRA */
+        gb->cpu.r8[REG_A] = RR_r8(&gb->cpu, gb->cpu.r8[REG_A]);
+        set_z(&gb->cpu, false);
+        break;
+      case 4: /* DAA */
+        DAA(&gb->cpu);
+        break;
+      case 5: /* CPL */
+        gb->cpu.r8[REG_A] = ~gb->cpu.r8[REG_A];
+        set_n(&gb->cpu, true);
+        set_h(&gb->cpu, true);
+        break;
+      case 6: /* SCF */
+        set_n(&gb->cpu, false);
+        set_h(&gb->cpu, false);
+        set_c(&gb->cpu, true);
+        break;
+      case 7: /* CCF */
+        set_n(&gb->cpu, false);
+        set_h(&gb->cpu, false);
+        set_c(&gb->cpu, !is_c_set(&gb->cpu));
+        break;
+      }
+    } break;
+    }
   } break;
 
   case 1: /* Block 1: 8-bit register-to-register loads */ {
-    if (y_field == 6 && z_field == 6) /* HALT */
-      gameboy->state = GB_HALTED;
+    if (y == 6 && z == 6) /* HALT */
+      gb->state = GB_HALTED;
     else /* LD r8, r8 */
-      set_r8(gameboy, y_field, get_r8(gameboy, z_field));
+      set_r8(gb, y, get_r8(gb, z));
   } break;
 
   case 2: /* Block 2: 8-bit arithmetic */ {
-    switch (y_field) {
+    switch (y) {
     case 0: /* ADD r8 */
-      ADD_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      ADD_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 1: /* ADD r8 */
-      ADC_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      ADC_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 2: /* ADC r8 */
-      SUB_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      SUB_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 3: /* SUB r8 */
-      SBC_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      SBC_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 4: /* SBC r8 */
-      AND_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      AND_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 5: /* XOR r8 */
-      XOR_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      XOR_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 6: /* OR r8 */
-      OR_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      OR_n8(&gb->cpu, get_r8(gb, z));
       break;
 
     case 7: /* CP r8 */
-      CP_n8(&gameboy->cpu, get_r8(gameboy, z_field));
+      CP_n8(&gb->cpu, get_r8(gb, z));
       break;
     }
   } break;
@@ -427,51 +552,51 @@ void execute_instruction(GameBoy *gameboy, uint8_t opcode) {
   case 3: /* Block 3 */ {
     switch (opcode & 0x7) {
     case 6: {
-      switch (y_field) {
+      switch (y) {
       case 0: /* ADD imm8 */
-        ADD_n8(&gameboy->cpu, fetch_byte(gameboy));
+        ADD_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 1: /* ADC imm8 */
-        ADC_n8(&gameboy->cpu, fetch_byte(gameboy));
+        ADC_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 2: /* SUB imm8 */
-        SUB_n8(&gameboy->cpu, fetch_byte(gameboy));
+        SUB_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 3: /* SBC imm8 */
-        SBC_n8(&gameboy->cpu, fetch_byte(gameboy));
+        SBC_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 4: /* AND imm8 */
-        AND_n8(&gameboy->cpu, fetch_byte(gameboy));
+        AND_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 5: /* XOR imm8 */
-        XOR_n8(&gameboy->cpu, fetch_byte(gameboy));
+        XOR_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 6: /* OR imm8 */
-        OR_n8(&gameboy->cpu, fetch_byte(gameboy));
+        OR_n8(&gb->cpu, fetch_byte(gb));
         break;
 
       case 7: /* CP imm8 */
-        CP_n8(&gameboy->cpu, fetch_byte(gameboy));
+        CP_n8(&gb->cpu, fetch_byte(gb));
         break;
       }
     } break;
 
     case 7: /* RST tgt3 */ {
-      push_onto_stack(gameboy, gameboy->cpu.PC);
-      gameboy->cpu.PC = y_field * 8;
+      push_onto_stack(gb, gb->cpu.PC);
+      gb->cpu.PC = y * 8;
     } break;
     }
   } break;
   }
 }
 
-void execute_cb_instruction(GameBoy *gameboy, uint8_t opcode) {
+void execute_cb_instruction(GameBoy *gb, uint8_t opcode) {
   const uint8_t x = (opcode >> 6) & 0x3;
   const uint8_t y = (opcode >> 3) & 0x7;
   const uint8_t z = opcode & 0x7;
@@ -480,49 +605,49 @@ void execute_cb_instruction(GameBoy *gameboy, uint8_t opcode) {
   case 0: /* Block 0: Bit shift operations */ {
     switch (y) {
     case 0: /* RLC r8 */
-      set_r8(gameboy, z, RLC_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, RLC_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 1: /* RRC r8 */
-      set_r8(gameboy, z, RRC_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, RRC_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 2: /* RL r8 */
-      set_r8(gameboy, z, RL_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, RL_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 3: /* RR r8 */
-      set_r8(gameboy, z, RR_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, RR_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 4: /* SLA r8 */
-      set_r8(gameboy, z, SLA_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, SLA_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 5: /* SRA r8 */
-      set_r8(gameboy, z, SRA_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, SRA_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 6: /* SWAP r8 */
-      set_r8(gameboy, z, SWAP_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, SWAP_r8(&gb->cpu, get_r8(gb, z)));
       break;
 
     case 7: /* SRL r8 */
-      set_r8(gameboy, z, SRL_r8(&gameboy->cpu, get_r8(gameboy, z)));
+      set_r8(gb, z, SRL_r8(&gb->cpu, get_r8(gb, z)));
       break;
     }
   } break;
 
   case 1: /* Block 1: BIT b3 r8 */ {
-    BIT_b3_r8(&gameboy->cpu, y, get_r8(gameboy, z));
+    BIT_b3_r8(&gb->cpu, y, get_r8(gb, z));
   } break;
 
   case 2: /* Block 2: RES b3 r8 */ {
-    set_r8(gameboy, z, get_r8(gameboy, z) & ~(1 << y));
+    set_r8(gb, z, get_r8(gb, z) & ~(1 << y));
   } break;
 
   case 3: /* Block 3: SET b3 r8 */ {
-    set_r8(gameboy, z, get_r8(gameboy, z) | (1 << y));
+    set_r8(gb, z, get_r8(gb, z) | (1 << y));
   } break;
   }
 }
@@ -562,11 +687,6 @@ void jp_cc_a16(CPU *cpu) {
 void jr_e8(CPU *cpu) { cpu->PC += (int8_t)fetch_byte(cpu); }
 
 void jr_cc_e8(CPU *cpu) {
-  const int8_t jmp_addr = (int8_t)fetch_byte(cpu);
-  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
-    cpu->PC += jmp_addr;
-    cpu->gameboy->cycles += 4;
-  }
 }
 
 void ret(CPU *cpu) { cpu->PC = pop_stack(cpu); }
@@ -591,15 +711,9 @@ void rst_vec(CPU *cpu) {
 //
 
 void ccf(CPU *cpu) {
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, !is_c_set(cpu));
 }
 
 void scf(CPU *cpu) {
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, true);
 }
 
 //
@@ -651,37 +765,6 @@ void halt(CPU *cpu) {
 //
 // Misc.
 //
-
-void daa(CPU *cpu) {
-  const uint8_t A = cpu->r8[REG_A];
-  uint8_t result = 0;
-
-  if (is_n_set(cpu)) {
-    uint8_t adjustment = 0;
-    if (is_h_set(cpu)) {
-      adjustment |= 0x6;
-    }
-    if (is_c_set(cpu)) {
-      adjustment |= 0x60;
-    }
-    result = A - adjustment;
-  } else {
-    uint8_t adjustment = 0;
-    if (is_h_set(cpu) || (A & 0xF) > 0x9) {
-      adjustment |= 0x6;
-    }
-    if (is_c_set(cpu) || A > 0x99) {
-      adjustment |= 0x60;
-      set_c(cpu, true);
-    }
-    result = A + adjustment;
-  }
-
-  set_z(cpu, result == 0);
-  set_h(cpu, false);
-
-  cpu->r8[REG_A] = result;
-}
 
 void prefix(CPU *cpu) {
   const uint8_t opcode = fetch_byte(cpu);
