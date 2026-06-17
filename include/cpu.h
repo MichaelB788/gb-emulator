@@ -20,23 +20,17 @@ typedef enum {
 // hi = r8[i], and lo = r8[i + 1]
 typedef enum { REG_BC = 0, REG_DE = 2, REG_HL = 4 } R16_Idx;
 
-typedef struct GameBoy GameBoy;
 typedef struct CPU {
-  uint8_t r8[8];   // B, C, D, E, H, L, F, A
-  uint8_t y_field; // Bit field y of the ISA pattern [xx yyy zzz]
-  uint8_t z_field; // Bit field z of the ISA pattern [xx yyy zzz]
+  uint8_t r8[8]; // B, C, D, E, H, L, F, A
   bool IME;
   uint16_t PC;
   uint16_t SP;
-  GameBoy *gameboy;
 } CPU;
 
-void init_cpu(CPU *cpu, GameBoy *gameboy);
+void init_cpu(CPU *cpu);
 
 void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val);
 uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx);
-
-uint8_t fetch_byte(CPU *cpu);
 
 void set_z(CPU *cpu, bool val);
 void set_n(CPU *cpu, bool val);

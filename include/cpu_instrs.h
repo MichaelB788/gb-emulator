@@ -89,7 +89,7 @@ void xor_a_n8(CPU *cpu);
 // Bit flag instructions
 //
 
-void bit_b3_r8(CPU *cpu);
+void BIT_b3_r8(CPU *cpu);
 
 void res_b3_r8(CPU *cpu);
 
@@ -103,7 +103,7 @@ void rl_r8(CPU *cpu);
 
 void rla(CPU *cpu);
 
-void rlc_r8(CPU *cpu);
+void RLC_r8(CPU *cpu);
 
 void rlca(CPU *cpu);
 
@@ -123,6 +123,7 @@ void srl_r8(CPU *cpu);
 
 void swap_r8(CPU *cpu);
 
+/*
 //
 // Jumps and subroutine instructions
 //
@@ -196,3 +197,4 @@ void daa(CPU *cpu);
 void prefix(CPU *cpu);
 
 void illegal(CPU *cpu);
+*/

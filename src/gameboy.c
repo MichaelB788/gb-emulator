@@ -9,7 +9,7 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
   gameboy->cartridge = create_cartridge(path_to_rom);
   if (gameboy->cartridge) {
     gameboy->interrupt_enable = false;
-    init_cpu(&gameboy->cpu, gameboy);
+    init_cpu(&gameboy->cpu);
     return true;
   } else {
     gameboy->state = GB_STOPPED;
@@ -19,9 +19,7 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
 
 void run_gameboy(GameBoy *gameboy) {
   while (gameboy->state == GB_RUNNING) {
-    const uint8_t opcode = fetch_byte(&gameboy->cpu);
-    gameboy->cpu.y_field = (opcode >> 3) & 0x7;
-    gameboy->cpu.z_field = opcode & 0x7;
+    const uint8_t opcode = read_byte(gameboy, gameboy->cpu.PC++);
 
     const Instruction ins = optable[opcode];
     gameboy->cycles = ins.cycles;

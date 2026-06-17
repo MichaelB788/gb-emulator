@@ -27,3 +27,7 @@ void close_gameboy(GameBoy *gameboy);
 uint8_t read_byte(GameBoy *gameboy, uint16_t addr);
 
 void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val);
+
+void execute_instruction(GameBoy *gameboy, uint8_t opcode);
+
+void execute_cb_instruction(GameBoy *gameboy, uint8_t opcode);

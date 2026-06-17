@@ -1,10 +1,8 @@
 #include "cpu.h"
 #include "bitwise.h"
-#include "gameboy.h"
 #include <stdint.h>
 
-void init_cpu(CPU *cpu, GameBoy *gameboy) {
-  cpu->gameboy = gameboy;
+void init_cpu(CPU *cpu) {
   cpu->r8[REG_B] = 0xFF;
   cpu->r8[REG_C] = 0x13;
   cpu->r8[REG_D] = 0x00;
@@ -25,8 +23,6 @@ void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val) {
 uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx) {
   return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
 }
-
-uint8_t fetch_byte(CPU *cpu) { return read_byte(cpu->gameboy, cpu->PC++); }
 
 void set_z(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 7, val); }
 void set_n(CPU *cpu, bool val) { set_bit(&cpu->r8[REG_F], 6, val); }
