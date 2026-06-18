@@ -1,4 +1,3 @@
-#include "bitwise.h"
 #include "cpu.h"
 #include "gameboy.h"
 #include <stdbool.h>
@@ -91,13 +90,13 @@ enum condition { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 };
 bool check_condition(struct cpu *cpu, enum condition cond) {
   switch (cond) {
   case COND_NZ:
-    return !is_z_set(cpu);
+    return !is_flag_set(cpu, FLAG_Z);
   case COND_Z: // Z
-    return is_z_set(cpu);
+    return is_flag_set(cpu, FLAG_Z);
   case COND_NC: // NC
-    return !is_c_set(cpu);
+    return !is_flag_set(cpu, FLAG_C);
   case COND_C: // C
-    return is_c_set(cpu);
+    return is_flag_set(cpu, FLAG_C);
   }
 }
 
@@ -122,25 +121,25 @@ void ADD_n8(struct cpu *cpu, const uint8_t operand) {
   const uint16_t sum = A + operand;
   const uint8_t result = (uint8_t)sum;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, (A & 0xF) + (operand & 0xF) > 0xF);
-  set_c(cpu, sum > 0xFF);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (A & 0xF) + (operand & 0xF) > 0xF);
+  set_flag(cpu, FLAG_C, sum > 0xFF);
 
   cpu->r8[REG_A] = result;
 }
 
 void ADC_n8(struct cpu *cpu, const uint8_t operand) {
-  const uint8_t carry = is_c_set(cpu);
+  const uint8_t carry = is_flag_set(cpu, FLAG_C);
   const uint8_t A = cpu->r8[REG_A];
 
   const uint16_t sum = A + operand + carry;
   const uint8_t result = (uint8_t)sum;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, (A & 0xF) + (operand & 0xF) + carry > 0xF);
-  set_c(cpu, sum > 0xFF);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (A & 0xF) + (operand & 0xF) + carry > 0xF);
+  set_flag(cpu, FLAG_C, sum > 0xFF);
 
   cpu->r8[REG_A] = result;
 }
@@ -150,24 +149,24 @@ void SUB_n8(struct cpu *cpu, const uint8_t operand) {
 
   const uint8_t result = A - operand;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, true);
-  set_h(cpu, (A & 0xF) < (operand & 0xF));
-  set_c(cpu, A < operand);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
+  set_flag(cpu, FLAG_C, A < operand);
 
   cpu->r8[REG_A] = result;
 }
 
 void SBC_n8(struct cpu *cpu, const uint8_t operand) {
-  const uint8_t carry = is_c_set(cpu);
+  const uint8_t carry = is_flag_set(cpu, FLAG_C);
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A - (operand + carry);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, true);
-  set_h(cpu, (A & 0xF) < (operand & 0xF) + carry);
-  set_c(cpu, A < operand + carry);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF) + carry);
+  set_flag(cpu, FLAG_C, A < operand + carry);
 
   cpu->r8[REG_A] = result;
 }
@@ -175,18 +174,18 @@ void SBC_n8(struct cpu *cpu, const uint8_t operand) {
 void CP_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
-  set_z(cpu, A - operand == 0);
-  set_n(cpu, true);
-  set_h(cpu, (A & 0xF) < (operand & 0xF));
-  set_c(cpu, A < operand);
+  set_flag(cpu, FLAG_Z, A - operand == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
+  set_flag(cpu, FLAG_C, A < operand);
 }
 
 uint8_t DEC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand - 1;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, true);
-  set_h(cpu, (operand & 0xF) == 0x0);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, true);
+  set_flag(cpu, FLAG_H, (operand & 0xF) == 0x0);
 
   return result;
 }
@@ -194,9 +193,9 @@ uint8_t DEC_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t INC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand + 1;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, (operand & 0xF) == 0xF);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (operand & 0xF) == 0xF);
 
   return result;
 }
@@ -209,9 +208,9 @@ void ADD_r16(struct cpu *cpu, uint16_t operand) {
   const uint16_t HL = get_r8_pair(cpu, REG_HL);
   const uint32_t sum = HL + operand;
 
-  set_n(cpu, false);
-  set_h(cpu, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
-  set_c(cpu, sum > 0xFFFF);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
+  set_flag(cpu, FLAG_C, sum > 0xFFFF);
 
   set_r8_pair(cpu, REG_HL, sum);
 }
@@ -221,10 +220,10 @@ uint16_t ADD_SP_e8(struct gameboy *gb) {
   const uint8_t n8 = fetch_byte(gb);
   const int32_t sum = SP + (int8_t)n8;
 
-  set_z(&gb->cpu, false);
-  set_n(&gb->cpu, false);
-  set_h(&gb->cpu, (SP & 0xF) + (n8 & 0xF) > 0xF);
-  set_c(&gb->cpu, sum > 0xFF);
+  set_flag(&gb->cpu, FLAG_Z, false);
+  set_flag(&gb->cpu, FLAG_N, false);
+  set_flag(&gb->cpu, FLAG_H, (SP & 0xF) + (n8 & 0xF) > 0xF);
+  set_flag(&gb->cpu, FLAG_C, sum > 0xFF);
 
   return sum;
 }
@@ -238,10 +237,10 @@ void AND_n8(struct cpu *cpu, const uint8_t operand) {
 
   const uint8_t result = A & operand;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, true);
-  set_c(cpu, false);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, true);
+  set_flag(cpu, FLAG_C, false);
 
   cpu->r8[REG_A] = result;
 }
@@ -251,10 +250,10 @@ void XOR_n8(struct cpu *cpu, const uint8_t operand) {
 
   const uint8_t result = A ^ operand;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, false);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, false);
 
   cpu->r8[REG_A] = result;
 }
@@ -264,10 +263,10 @@ void OR_n8(struct cpu *cpu, const uint8_t operand) {
 
   const uint8_t result = A | operand;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, false);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, false);
 
   cpu->r8[REG_A] = result;
 }
@@ -277,9 +276,9 @@ void OR_n8(struct cpu *cpu, const uint8_t operand) {
  */
 
 void BIT_b3_r8(struct cpu *cpu, uint8_t b3, uint8_t r8) {
-  set_z(cpu, !get_bit(r8, b3));
-  set_n(cpu, false);
-  set_h(cpu, true);
+  set_flag(cpu, FLAG_Z, !((r8 >> b3) & 1));
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, true);
 }
 
 /**
@@ -287,34 +286,34 @@ void BIT_b3_r8(struct cpu *cpu, uint8_t b3, uint8_t r8) {
  */
 
 uint8_t RL_r8(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = operand << 1 | is_c_set(cpu);
+  const uint8_t result = operand << 1 | is_flag_set(cpu, FLAG_C);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 0x80);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 0x80);
 
   return result;
 }
 
 uint8_t RLC_r8(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = operand << 1 | is_c_set(cpu);
+  const uint8_t result = operand << 1 | is_flag_set(cpu, FLAG_C);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 0x80);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 0x80);
 
   return result;
 }
 
 uint8_t RR_r8(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = (is_c_set(cpu) << 7) | (operand >> 1);
+  const uint8_t result = (is_flag_set(cpu, FLAG_C) << 7) | (operand >> 1);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 1);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 1);
 
   return result;
 }
@@ -322,10 +321,10 @@ uint8_t RR_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t RRC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = ((operand & 1) << 7) | (operand >> 1);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 1);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 1);
 
   return result;
 }
@@ -333,10 +332,10 @@ uint8_t RRC_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t SLA_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 0x80);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 0x80);
 
   return result;
 }
@@ -344,10 +343,10 @@ uint8_t SLA_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t SRA_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand & 0x80) | (operand >> 1);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 1);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 1);
 
   return result;
 }
@@ -355,10 +354,10 @@ uint8_t SRA_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t SRL_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand >> 1;
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, operand & 1);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, operand & 1);
 
   return result;
 }
@@ -366,10 +365,10 @@ uint8_t SRL_r8(struct cpu *cpu, uint8_t operand) {
 uint8_t SWAP_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand << 4) | (operand >> 4);
 
-  set_z(cpu, result == 0);
-  set_n(cpu, false);
-  set_h(cpu, false);
-  set_c(cpu, false);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, false);
+  set_flag(cpu, FLAG_C, false);
 
   return result;
 }
@@ -382,29 +381,29 @@ void DAA(struct cpu *cpu) {
   const uint8_t A = cpu->r8[REG_A];
   uint8_t result = 0;
 
-  if (is_n_set(cpu)) {
+  if (is_flag_set(cpu, FLAG_N)) {
     uint8_t adjustment = 0;
-    if (is_h_set(cpu)) {
+    if (is_flag_set(cpu, FLAG_H)) {
       adjustment |= 0x6;
     }
-    if (is_c_set(cpu)) {
+    if (is_flag_set(cpu, FLAG_C)) {
       adjustment |= 0x60;
     }
     result = A - adjustment;
   } else {
     uint8_t adjustment = 0;
-    if (is_h_set(cpu) || (A & 0xF) > 0x9) {
+    if (is_flag_set(cpu, FLAG_H) || (A & 0xF) > 0x9) {
       adjustment |= 0x6;
     }
-    if (is_c_set(cpu) || A > 0x99) {
+    if (is_flag_set(cpu, FLAG_C) || A > 0x99) {
       adjustment |= 0x60;
-      set_c(cpu, true);
+      set_flag(cpu, FLAG_C, true);
     }
     result = A + adjustment;
   }
 
-  set_z(cpu, result == 0);
-  set_h(cpu, false);
+  set_flag(cpu, FLAG_Z, result == 0);
+  set_flag(cpu, FLAG_H, false);
 
   cpu->r8[REG_A] = result;
 }
@@ -481,37 +480,37 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       switch (z) {
       case 0: /* RLCA */
         gb->cpu.r8[REG_A] = RLC_r8(&gb->cpu, gb->cpu.r8[REG_A]);
-        set_z(&gb->cpu, false);
+        set_flag(&gb->cpu, FLAG_Z, false);
         break;
       case 1: /* RRCA */
         gb->cpu.r8[REG_A] = RRC_r8(&gb->cpu, gb->cpu.r8[REG_A]);
-        set_z(&gb->cpu, false);
+        set_flag(&gb->cpu, FLAG_Z, false);
         break;
       case 2: /* RLA */
         gb->cpu.r8[REG_A] = RL_r8(&gb->cpu, gb->cpu.r8[REG_A]);
-        set_z(&gb->cpu, false);
+        set_flag(&gb->cpu, FLAG_Z, false);
         break;
       case 3: /* RRA */
         gb->cpu.r8[REG_A] = RR_r8(&gb->cpu, gb->cpu.r8[REG_A]);
-        set_z(&gb->cpu, false);
+        set_flag(&gb->cpu, FLAG_Z, false);
         break;
       case 4: /* DAA */
         DAA(&gb->cpu);
         break;
       case 5: /* CPL */
         gb->cpu.r8[REG_A] = ~gb->cpu.r8[REG_A];
-        set_n(&gb->cpu, true);
-        set_h(&gb->cpu, true);
+        set_flag(&gb->cpu, FLAG_N, true);
+        set_flag(&gb->cpu, FLAG_H, true);
         break;
       case 6: /* SCF */
-        set_n(&gb->cpu, false);
-        set_h(&gb->cpu, false);
-        set_c(&gb->cpu, true);
+        set_flag(&gb->cpu, FLAG_N, false);
+        set_flag(&gb->cpu, FLAG_H, false);
+        set_flag(&gb->cpu, FLAG_C, true);
         break;
       case 7: /* CCF */
-        set_n(&gb->cpu, false);
-        set_h(&gb->cpu, false);
-        set_c(&gb->cpu, !is_c_set(&gb->cpu));
+        set_flag(&gb->cpu, FLAG_N, false);
+        set_flag(&gb->cpu, FLAG_H, false);
+        set_flag(&gb->cpu, FLAG_C, !is_flag_set(&gb->cpu, FLAG_C));
         break;
       }
     } break;

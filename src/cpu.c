@@ -1,5 +1,4 @@
 #include "cpu.h"
-#include "bitwise.h"
 #include <stdint.h>
 
 void init_cpu(struct cpu *cpu) {
@@ -24,12 +23,13 @@ uint16_t get_r8_pair(const struct cpu *cpu, enum r16_idx r16_idx) {
   return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
 }
 
-void set_z(struct cpu *cpu, bool val) { set_bit(&cpu->r8[REG_F], 7, val); }
-void set_n(struct cpu *cpu, bool val) { set_bit(&cpu->r8[REG_F], 6, val); }
-void set_h(struct cpu *cpu, bool val) { set_bit(&cpu->r8[REG_F], 5, val); }
-void set_c(struct cpu *cpu, bool val) { set_bit(&cpu->r8[REG_F], 4, val); }
-
-bool is_z_set(struct cpu *cpu) { return get_bit(cpu->r8[REG_F], 7); }
-bool is_n_set(struct cpu *cpu) { return get_bit(cpu->r8[REG_F], 6); }
-bool is_h_set(struct cpu *cpu) { return get_bit(cpu->r8[REG_F], 5); }
-bool is_c_set(struct cpu *cpu) { return get_bit(cpu->r8[REG_F], 4); }
+void set_flag(struct cpu *cpu, enum flag flag, bool val) {
+  if (val) {
+    cpu->r8[REG_F] |= flag;
+  } else {
+    cpu->r8[REG_F] &= ~flag;
+  }
+}
+bool is_flag_set(const struct cpu *cpu, enum flag flag) {
+  return cpu->r8[REG_F] & flag;
+}

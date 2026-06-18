@@ -32,12 +32,6 @@ void init_cpu(struct cpu *cpu);
 void set_r8_pair(struct cpu *cpu, enum r16_idx r16_idx, uint16_t val);
 uint16_t get_r8_pair(const struct cpu *cpu, enum r16_idx r16_idx);
 
-void set_z(struct cpu *cpu, bool val);
-void set_n(struct cpu *cpu, bool val);
-void set_h(struct cpu *cpu, bool val);
-void set_c(struct cpu *cpu, bool val);
-
-bool is_z_set(struct cpu *cpu);
-bool is_n_set(struct cpu *cpu);
-bool is_h_set(struct cpu *cpu);
-bool is_c_set(struct cpu *cpu);
+enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
+void set_flag(struct cpu *cpu, enum flag flag, bool val);
+bool is_flag_set(const struct cpu *cpu, enum flag flag);
