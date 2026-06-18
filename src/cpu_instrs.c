@@ -115,7 +115,7 @@ uint16_t pop_off_stack(struct gameboy *gb) {
  * 8-bit arithmetic instructions
  */
 
-void ADD_n8(struct cpu *cpu, const uint8_t operand) {
+void ADD_n8(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint16_t sum = A + operand;
@@ -129,7 +129,7 @@ void ADD_n8(struct cpu *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void ADC_n8(struct cpu *cpu, const uint8_t operand) {
+void ADC_n8(struct cpu *cpu, uint8_t operand) {
   const uint8_t carry = is_flag_set(cpu, FLAG_C);
   const uint8_t A = cpu->r8[REG_A];
 
@@ -144,7 +144,7 @@ void ADC_n8(struct cpu *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void SUB_n8(struct cpu *cpu, const uint8_t operand) {
+void SUB_n8(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A - operand;
@@ -157,7 +157,7 @@ void SUB_n8(struct cpu *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void SBC_n8(struct cpu *cpu, const uint8_t operand) {
+void SBC_n8(struct cpu *cpu, uint8_t operand) {
   const uint8_t carry = is_flag_set(cpu, FLAG_C);
   const uint8_t A = cpu->r8[REG_A];
 
@@ -166,12 +166,12 @@ void SBC_n8(struct cpu *cpu, const uint8_t operand) {
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, true);
   set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF) + carry);
-  set_flag(cpu, FLAG_C, A < operand + carry);
+  set_flag(cpu, FLAG_C, A < (uint16_t)(operand + carry));
 
   cpu->r8[REG_A] = result;
 }
 
-void CP_n8(struct cpu *cpu, const uint8_t operand) {
+void CP_n8(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   set_flag(cpu, FLAG_Z, A - operand == 0);
@@ -217,7 +217,7 @@ void ADD_r16(struct cpu *cpu, uint16_t operand) {
 
 uint16_t ADD_SP_e8(struct gameboy *gb) {
   const uint16_t SP = gb->cpu.SP;
-  const uint8_t n8 = fetch_byte(gb);
+  const int8_t n8 = fetch_byte(gb);
   const int32_t sum = SP + (int8_t)n8;
 
   set_flag(&gb->cpu, FLAG_Z, false);
@@ -297,7 +297,7 @@ uint8_t RL_r8(struct cpu *cpu, uint8_t operand) {
 }
 
 uint8_t RLC_r8(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = operand << 1 | is_flag_set(cpu, FLAG_C);
+  const uint8_t result = operand << 1 | ((operand >> 7) & 1);
 
   set_flag(cpu, FLAG_Z, result == 0);
   set_flag(cpu, FLAG_N, false);
@@ -530,19 +530,19 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       ADD_n8(&gb->cpu, get_r8(gb, z));
       break;
 
-    case 1: /* ADD r8 */
+    case 1: /* ADC r8 */
       ADC_n8(&gb->cpu, get_r8(gb, z));
       break;
 
-    case 2: /* ADC r8 */
+    case 2: /* SUB r8 */
       SUB_n8(&gb->cpu, get_r8(gb, z));
       break;
 
-    case 3: /* SUB r8 */
+    case 3: /* SBC r8 */
       SBC_n8(&gb->cpu, get_r8(gb, z));
       break;
 
-    case 4: /* SBC r8 */
+    case 4: /* AND r8 */
       AND_n8(&gb->cpu, get_r8(gb, z));
       break;
 
@@ -610,7 +610,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       } else if (y == 7) /* LD A, [a16]*/ {
         gb->cpu.r8[REG_A] = read_byte(gb, fetch_word(gb));
       }
-    }
+    } break;
 
     case 3: {
       if (y == 0) /* JP a16 */ {
