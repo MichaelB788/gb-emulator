@@ -3,41 +3,40 @@
 #include "gameboy.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 /**
  * Helper functions
  */
 
-uint8_t fetch_byte(GameBoy *gameboy) {
-  return read_byte(gameboy, gameboy->cpu.PC++);
-}
+uint8_t fetch_byte(GameBoy *gb) { return read_byte(gb, gb->cpu.PC++); }
 
-uint16_t fetch_word(GameBoy *gameboy) {
-  const uint8_t lo = read_byte(gameboy, gameboy->cpu.PC++);
-  const uint8_t hi = read_byte(gameboy, gameboy->cpu.PC++);
+uint16_t fetch_word(GameBoy *gb) {
+  const uint8_t lo = read_byte(gb, gb->cpu.PC++);
+  const uint8_t hi = read_byte(gb, gb->cpu.PC++);
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t read_hl(GameBoy *gameboy) {
-  return read_byte(gameboy, get_r8_pair(&gameboy->cpu, REG_HL));
+uint8_t read_hl(GameBoy *gb) {
+  return read_byte(gb, get_r8_pair(&gb->cpu, REG_HL));
 }
 
-void write_hl(GameBoy *gameboy, uint8_t val) {
-  write_byte(gameboy, get_r8_pair(&gameboy->cpu, REG_HL), val);
+void write_hl(GameBoy *gb, uint8_t val) {
+  write_byte(gb, get_r8_pair(&gb->cpu, REG_HL), val);
 }
 
-uint8_t get_r8(GameBoy *gameboy, uint8_t opcode_field) {
+uint8_t get_r8(GameBoy *gb, uint8_t opcode_field) {
   if (opcode_field == 6)
-    return read_hl(gameboy);
+    return read_hl(gb);
   else
-    return gameboy->cpu.r8[opcode_field];
+    return gb->cpu.r8[opcode_field];
 }
 
-void set_r8(GameBoy *gameboy, uint8_t opcode_field, uint8_t val) {
+void set_r8(GameBoy *gb, uint8_t opcode_field, uint8_t val) {
   if (opcode_field == 6)
-    write_hl(gameboy, val);
+    write_hl(gb, val);
   else
-    gameboy->cpu.r8[opcode_field] = val;
+    gb->cpu.r8[opcode_field] = val;
 }
 
 uint16_t get_r16(const CPU *cpu, uint8_t y_field) {
@@ -102,14 +101,14 @@ bool check_condition(CPU *cpu, Condition cond) {
   }
 }
 
-void push_onto_stack(GameBoy *gameboy, uint16_t val) {
-  write_byte(gameboy, --gameboy->cpu.SP, val >> 8);
-  write_byte(gameboy, --gameboy->cpu.SP, val & 0xFF);
+void push_onto_stack(GameBoy *gb, uint16_t val) {
+  write_byte(gb, --gb->cpu.SP, val >> 8);
+  write_byte(gb, --gb->cpu.SP, val & 0xFF);
 }
 
-uint16_t pop_off_stack(GameBoy *gameboy) {
-  const uint8_t lo = read_byte(gameboy, gameboy->cpu.SP++);
-  const uint8_t hi = read_byte(gameboy, gameboy->cpu.SP++);
+uint16_t pop_off_stack(GameBoy *gb) {
+  const uint8_t lo = read_byte(gb, gb->cpu.SP++);
+  const uint8_t hi = read_byte(gb, gb->cpu.SP++);
   return (uint16_t)hi << 8 | lo;
 }
 
@@ -215,6 +214,19 @@ void ADD_r16(CPU *cpu, uint16_t operand) {
   set_c(cpu, sum > 0xFFFF);
 
   set_r8_pair(cpu, REG_HL, sum);
+}
+
+uint16_t ADD_SP_e8(GameBoy *gb) {
+  const uint16_t SP = gb->cpu.SP;
+  const uint8_t n8 = fetch_byte(gb);
+  const int32_t sum = SP + (int8_t)n8;
+
+  set_z(&gb->cpu, false);
+  set_n(&gb->cpu, false);
+  set_h(&gb->cpu, (SP & 0xF) + (n8 & 0xF) > 0xF);
+  set_c(&gb->cpu, sum > 0xFF);
+
+  return sum;
 }
 
 /**
@@ -397,6 +409,11 @@ void DAA(CPU *cpu) {
   cpu->r8[REG_A] = result;
 }
 
+void ILLEGAL(GameBoy *gameboy, uint8_t opcode) {
+  gameboy->state = GB_STOPPED;
+  fprintf(stderr, "Illegal instruction: 0x%2X\n", opcode);
+}
+
 /**
  * Instruction decoding
  */
@@ -410,37 +427,32 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
   case 0: /* Block 0 */ {
     switch (z) {
     case 0: {
-      switch (z) {
-      case 0: /* NOP */
-        break;
-      case 1: /* LD [a16] SP */
+      if (y == 0) /* NOP */ {
+        return;
+      } else if (y == 1) /* LD [a16] SP */ {
         write_byte(gb, fetch_word(gb), gb->cpu.SP);
-        break;
-      case 2: /* STOP */
+      } else if (y == 2) /* STOP */ {
         gb->state = GB_STOPPED;
-        break;
-      case 3: /* JR e8 */
+      } else if (y == 3) /* JR e8 */ {
         gb->cpu.PC += (int8_t)fetch_byte(gb);
-        break;
-      default: /* JR cc, e8 */ {
+      } else if (y > 3) /* JR cc, e8 */ {
         const int8_t offset = fetch_byte(gb);
         if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
           gb->cpu.PC += offset;
           gb->cycles += 4;
         }
-      } break;
       }
     } break;
 
     case 1: {
-      if ((z & 1) == 0) /* LD r16, imm16 */
+      if ((y & 1) == 0) /* LD r16, imm16 */
         set_r16(&gb->cpu, y, fetch_word(gb));
       else /* ADD HL, r16 */
         ADD_r16(&gb->cpu, get_r16(&gb->cpu, y));
     } break;
 
     case 2: {
-      if ((z & 1) == 0) /* LD [r16mem], A */
+      if ((y & 1) == 0) /* LD [r16mem], A */
         write_byte(gb, get_r16mem(&gb->cpu, y), gb->cpu.r8[REG_A]);
       else /* LD A, [r16mem] */
         gb->cpu.r8[REG_A] = read_byte(gb, get_r16mem(&gb->cpu, y));
@@ -550,7 +562,96 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
   } break;
 
   case 3: /* Block 3 */ {
-    switch (opcode & 0x7) {
+    switch (z) {
+    case 0: {
+      if (y < 4) /* RET cc */ {
+        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+          gb->cpu.PC = pop_off_stack(gb);
+          gb->cycles += 12;
+        }
+      } else if (y == 4) /* LDH [a8], A */ {
+        write_byte(gb, 0xFF00 | fetch_byte(gb), gb->cpu.r8[REG_A]);
+      } else if (y == 5) /* ADD SP, e8 */ {
+        gb->cpu.SP = ADD_SP_e8(gb);
+      } else if (y == 6) /* LDH A, [a8] */ {
+        gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | fetch_byte(gb));
+      } else if (y == 7) /* LD HL, SP + e8 */ {
+        set_r8_pair(&gb->cpu, REG_HL, ADD_SP_e8(gb));
+      }
+    } break;
+
+    case 1: {
+      if ((y & 1) == 0) /* POP r16stk */ {
+        set_r16stk(&gb->cpu, y, pop_off_stack(gb));
+      } else if (y == 1) /* RET */ {
+        gb->cpu.PC = pop_off_stack(gb);
+      } else if (y == 3) /* RETI */ {
+        gb->cpu.PC = pop_off_stack(gb);
+        gb->cpu.IME = true;
+      } else if (y == 5) /* JP HL */ {
+        gb->cpu.PC = get_r8_pair(&gb->cpu, REG_HL);
+      } else if (y == 7) /* LD SP, HL */ {
+        gb->cpu.SP = get_r8_pair(&gb->cpu, REG_HL);
+      }
+    } break;
+
+    case 2: {
+      if (y < 4) /* JP cc, a16 */ {
+        const uint16_t jmp_addr = fetch_word(gb);
+        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+          gb->cpu.PC = jmp_addr;
+          gb->cycles += 4;
+        }
+      } else if (y == 4) /* LDH [C], A */ {
+        write_byte(gb, 0xFF00 | gb->cpu.r8[REG_C], gb->cpu.r8[REG_A]);
+      } else if (y == 5) /* LD [a16], A */ {
+        write_byte(gb, fetch_word(gb), gb->cpu.r8[REG_A]);
+      } else if (y == 6) /* LDH A, [C] */ {
+        gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | gb->cpu.r8[REG_C]);
+      } else if (y == 7) /* LD A, [a16]*/ {
+        gb->cpu.r8[REG_A] = read_byte(gb, fetch_word(gb));
+      }
+    }
+
+    case 3: {
+      if (y == 0) /* JP a16 */ {
+        gb->cpu.PC = fetch_word(gb);
+      } else if (y == 1) /* PREFIX */ {
+        execute_cb_instruction(gb, fetch_byte(gb));
+      } else if (y == 6) /* DI */ {
+        gb->cpu.IME = false;
+      } else if (y == 7) /* EI*/ {
+        gb->cpu.IME = true;
+      } else {
+        ILLEGAL(gb, opcode);
+      }
+    } break;
+
+    case 4: {
+      if (y < 4) /* CALL cc a16 */ {
+        const uint16_t jmp_addr = fetch_word(gb);
+        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+          push_onto_stack(gb, gb->cpu.PC);
+          gb->cpu.PC = jmp_addr;
+          gb->cycles += 12;
+        }
+      } else {
+        ILLEGAL(gb, opcode);
+      }
+    } break;
+
+    case 5: {
+      if ((y & 1) == 0) /* PUSH r16stk */ {
+        push_onto_stack(gb, get_r16stk(&gb->cpu, y));
+      } else if (y == 1) /* CALL a16 */ {
+        const uint16_t jmp_addr = fetch_word(gb);
+        push_onto_stack(gb, gb->cpu.PC);
+        gb->cpu.PC = jmp_addr;
+      } else {
+        ILLEGAL(gb, opcode);
+      }
+    } break;
+
     case 6: {
       switch (y) {
       case 0: /* ADD imm8 */
@@ -651,140 +752,3 @@ void execute_cb_instruction(GameBoy *gb, uint8_t opcode) {
   } break;
   }
 }
-
-/*
-//
-// Jumps and subroutine instructions
-//
-
-void call_a16(GameBoy *gameboy) {
-  const uint16_t jmp_addr = fetch_word(gameboy);
-  push_stack(gameboy, gameboy->cpu.PC);
-  gameboy->cpu.PC = jmp_addr;
-}
-
-void call_cc_a16(GameBoy *gameboy, bool cond) {
-  const uint16_t jmp_addr = fetch_word(gameboy);
-  if (cond) {
-    push_stack(gameboy, gameboy->cpu.PC);
-    gameboy->cpu.PC = jmp_addr;
-    gameboy->cycles += 12;
-  }
-}
-
-void jp_hl(CPU *cpu) { cpu->PC = get_r8_pair(cpu, REG_HL); }
-
-void jp_a16(CPU *cpu) { cpu->PC = fetch_word(cpu); }
-
-void jp_cc_a16(CPU *cpu) {
-  const uint16_t jmp_addr = fetch_word(cpu);
-  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
-    cpu->PC = jmp_addr;
-    cpu->gameboy->cycles += 4;
-  }
-}
-
-void jr_e8(CPU *cpu) { cpu->PC += (int8_t)fetch_byte(cpu); }
-
-void jr_cc_e8(CPU *cpu) {
-}
-
-void ret(CPU *cpu) { cpu->PC = pop_stack(cpu); }
-
-void ret_cc(CPU *cpu) {
-  if (check_condition(cpu, (Condition)(cpu->y_field & 0x3))) {
-    cpu->PC = pop_stack(cpu);
-    cpu->gameboy->cycles += 12;
-  }
-}
-
-void reti(CPU *cpu) {
-  cpu->PC = pop_stack(cpu);
-  cpu->IME = true;
-}
-
-void rst_vec(CPU *cpu) {
-}
-
-//
-// Carry flag instructions
-//
-
-void ccf(CPU *cpu) {
-}
-
-void scf(CPU *cpu) {
-}
-
-//
-// Stack manipulation instructions
-//
-
-uint16_t ADD_SP_e8(CPU *cpu) {
-  const uint16_t SP = cpu->SP;
-  const uint8_t n8 = fetch_byte(cpu);
-  const int32_t sum = SP + (int8_t)n8;
-
-  set_z(cpu, false);
-  set_n(cpu, false);
-  set_h(cpu, (SP & 0xF) + (n8 & 0xF) > 0xF);
-  set_c(cpu, sum > 0xFF);
-
-  return sum;
-}
-
-void add_sp_e8(CPU *cpu) { cpu->SP = ADD_SP_e8(cpu); }
-
-void ld_mem_n16_sp(CPU *cpu) {
-  const uint16_t addr = fetch_word(cpu);
-  write_byte(cpu->gameboy, addr, cpu->SP & 0xFF);
-  write_byte(cpu->gameboy, addr + 1, cpu->SP >> 8);
-}
-
-void ld_hl_sp_e8(CPU *cpu) { set_r8_pair(cpu, REG_HL, ADD_SP_e8(cpu)); }
-
-void ld_sp_hl(CPU *cpu) { cpu->SP = get_r8_pair(cpu, REG_HL); }
-
-void pop_r16(CPU *cpu) { set_r16stk(cpu, pop_stack(cpu)); }
-
-void push_r16(CPU *cpu) { push_stack(cpu, get_r16stk(cpu)); }
-
-//
-// Interrupt-related instructions
-//
-
-void di(CPU *cpu) { cpu->IME = false; }
-
-void ei(CPU *cpu) { cpu->IME = true; }
-
-void halt(CPU *cpu) {
-  // TODO: Proper halt behavior, halt bug.
-  cpu->gameboy->state = GB_HALTED;
-}
-
-//
-// Misc.
-//
-
-void prefix(CPU *cpu) {
-  const uint8_t opcode = fetch_byte(cpu);
-  cpu->y_field = (opcode >> 3) & 0x7;
-  cpu->z_field = opcode & 0x7;
-
-  Instruction cb_instruction = cb_optable[opcode];
-  cpu->gameboy->cycles = cb_instruction.cycles;
-  cb_instruction.exec(cpu);
-}
-
-void nop(CPU *cpu) {};
-
-void stop_n8(CPU *cpu) {
-  (void)fetch_byte(cpu);
-  cpu->gameboy->state = GB_STOPPED;
-}
-
-void illegal(CPU *cpu) {
-  fprintf(stderr, "Illegal opcode encountered");
-  cpu->gameboy->state = GB_STOPPED;
-}
-*/

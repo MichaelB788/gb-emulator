@@ -1,7 +1,6 @@
 #include "gameboy.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "optable.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -17,13 +16,9 @@ bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
   }
 }
 
-void run_gameboy(GameBoy *gameboy) {
-  while (gameboy->state == GB_RUNNING) {
-    const uint8_t opcode = read_byte(gameboy, gameboy->cpu.PC++);
-
-    const Instruction ins = optable[opcode];
-    gameboy->cycles = ins.cycles;
-    ins.exec(&gameboy->cpu);
+void run_gameboy(GameBoy *gb) {
+  while (gb->state == GB_RUNNING) {
+    execute_instruction(gb, read_byte(gb, gb->cpu.PC++));
   }
 }
 
