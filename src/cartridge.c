@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void init_mapper(Cartridge *cart) {
+void init_mapper(struct cartridge *cart) {
   switch (cart->mapper) {
   case ROM_MAPPER:
     break;
@@ -18,7 +18,7 @@ void init_mapper(Cartridge *cart) {
   }
 }
 
-bool read_header(FILE *rom_file, Cartridge *cart) {
+bool read_header(FILE *rom_file, struct cartridge *cart) {
   uint8_t header[0x150] = {0};
   if (fread(header, 1, 0x150, rom_file) != 0x150) {
     perror("Could not read file content into header");
@@ -38,7 +38,7 @@ bool read_header(FILE *rom_file, Cartridge *cart) {
   return true;
 }
 
-bool initialize_rom(FILE *rom_file, Cartridge *cart) {
+bool initialize_rom(FILE *rom_file, struct cartridge *cart) {
   rewind(rom_file);
   cart->rom = malloc(cart->rom_size);
   if (!cart->rom) {
@@ -52,7 +52,7 @@ bool initialize_rom(FILE *rom_file, Cartridge *cart) {
   return true;
 }
 
-bool initialize_ram(Cartridge *cart) {
+bool initialize_ram(struct cartridge *cart) {
   if (cart->ram_size > 0) {
     cart->ram = malloc(cart->ram_size);
     if (!cart->ram) {
@@ -63,14 +63,14 @@ bool initialize_ram(Cartridge *cart) {
   return true;
 }
 
-Cartridge *create_cartridge(const char *path_to_rom) {
+struct cartridge *create_cartridge(const char *path_to_rom) {
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not open file");
     return NULL;
   }
 
-  Cartridge *cart = malloc(sizeof(Cartridge));
+  struct cartridge *cart = malloc(sizeof(struct cartridge));
   if (read_header(rom_file, cart) && initialize_rom(rom_file, cart) &&
       initialize_ram(cart)) {
     fclose(rom_file);
@@ -82,7 +82,7 @@ Cartridge *create_cartridge(const char *path_to_rom) {
   }
 }
 
-void destroy_cartridge(Cartridge *cart) {
+void destroy_cartridge(struct cartridge *cart) {
   if (cart) {
     free(cart->rom);
     free(cart->ram);
@@ -90,7 +90,7 @@ void destroy_cartridge(Cartridge *cart) {
   }
 }
 
-uint8_t read_rom(const Cartridge *cart, const uint16_t addr) {
+uint8_t read_rom(const struct cartridge *cart, const uint16_t addr) {
   switch (cart->mapper) {
   case ROM_MAPPER:
     return cart->rom[addr];
@@ -100,7 +100,7 @@ uint8_t read_rom(const Cartridge *cart, const uint16_t addr) {
   }
 }
 
-void write_rom(Cartridge *cart, const uint16_t addr, const uint8_t val) {
+void write_rom(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
   switch (cart->mapper) {
   case ROM_MAPPER:
     // ROM is read only, so this is a no-op.
@@ -112,7 +112,7 @@ void write_rom(Cartridge *cart, const uint16_t addr, const uint8_t val) {
   }
 }
 
-uint8_t read_ram(Cartridge *cart, const uint16_t addr) {
+uint8_t read_ram(struct cartridge *cart, const uint16_t addr) {
   if (cart->ram_size > 0) {
     switch (cart->mapper) {
     case ROM_MAPPER:
@@ -127,7 +127,7 @@ uint8_t read_ram(Cartridge *cart, const uint16_t addr) {
   return 0xFF;
 }
 
-void write_ram(Cartridge *cart, const uint16_t addr, const uint8_t val) {
+void write_ram(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
   if (cart->ram_size > 0) {
     switch (cart->mapper) {
     // Mappers with no ram.

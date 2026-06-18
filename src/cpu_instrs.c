@@ -9,74 +9,74 @@
  * Helper functions
  */
 
-uint8_t fetch_byte(GameBoy *gb) { return read_byte(gb, gb->cpu.PC++); }
+uint8_t fetch_byte(struct gameboy *gb) { return read_byte(gb, gb->cpu.PC++); }
 
-uint16_t fetch_word(GameBoy *gb) {
+uint16_t fetch_word(struct gameboy *gb) {
   const uint8_t lo = read_byte(gb, gb->cpu.PC++);
   const uint8_t hi = read_byte(gb, gb->cpu.PC++);
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t read_hl(GameBoy *gb) {
+uint8_t read_hl(struct gameboy *gb) {
   return read_byte(gb, get_r8_pair(&gb->cpu, REG_HL));
 }
 
-void write_hl(GameBoy *gb, uint8_t val) {
+void write_hl(struct gameboy *gb, uint8_t val) {
   write_byte(gb, get_r8_pair(&gb->cpu, REG_HL), val);
 }
 
-uint8_t get_r8(GameBoy *gb, uint8_t opcode_field) {
+uint8_t get_r8(struct gameboy *gb, uint8_t opcode_field) {
   if (opcode_field == 6)
     return read_hl(gb);
   else
     return gb->cpu.r8[opcode_field];
 }
 
-void set_r8(GameBoy *gb, uint8_t opcode_field, uint8_t val) {
+void set_r8(struct gameboy *gb, uint8_t opcode_field, uint8_t val) {
   if (opcode_field == 6)
     write_hl(gb, val);
   else
     gb->cpu.r8[opcode_field] = val;
 }
 
-uint16_t get_r16(const CPU *cpu, uint8_t y_field) {
+uint16_t get_r16(const struct cpu *cpu, uint8_t y_field) {
   const uint16_t src = y_field >> 1;
   if (src == 3)
     return cpu->SP;
   else
-    return get_r8_pair(cpu, (R16_Idx)src);
+    return get_r8_pair(cpu, (enum r16_idx)src);
 }
 
-void set_r16(CPU *cpu, uint8_t y_field, uint16_t val) {
+void set_r16(struct cpu *cpu, uint8_t y_field, uint16_t val) {
   const uint16_t dest = y_field >> 1;
   if (dest == 3)
     cpu->SP = val;
   else
-    set_r8_pair(cpu, (R16_Idx)dest, val);
+    set_r8_pair(cpu, (enum r16_idx)dest, val);
 }
 
-uint16_t get_r16stk(const CPU *cpu, uint8_t y_field) {
+uint16_t get_r16stk(const struct cpu *cpu, uint8_t y_field) {
   const uint16_t src = y_field >> 1;
   if (src == 3)
     return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
   else
-    return get_r8_pair(cpu, (R16_Idx)src);
+    return get_r8_pair(cpu, (enum r16_idx)src);
 }
 
-void set_r16stk(CPU *cpu, uint8_t y_field, uint16_t val) {
+void set_r16stk(struct cpu *cpu, uint8_t y_field, uint16_t val) {
   const uint16_t dest = y_field >> 1;
   if (dest == 3) {
     cpu->r8[REG_A] = val >> 8;
     cpu->r8[REG_F] = val & 0xF0;
   } else {
-    set_r8_pair(cpu, (R16_Idx)dest, val);
+    set_r8_pair(cpu, (enum r16_idx)dest, val);
   }
 }
 
-uint16_t get_r16mem(CPU *cpu, uint8_t y_field) {
+uint16_t get_r16mem(struct cpu *cpu, uint8_t y_field) {
   const uint8_t r16mem = y_field >> 1;
   if (r16mem == 0 || r16mem == 1) /* BC or DE */ {
-    return get_r8_pair(cpu, (R16_Idx)r16mem);
+    return get_r8_pair(cpu, (enum r16_idx)r16mem);
   } else {
     const uint16_t ret = get_r8_pair(cpu, REG_HL);
     if (r16mem == 2) /* HLI */
@@ -87,8 +87,8 @@ uint16_t get_r16mem(CPU *cpu, uint8_t y_field) {
   }
 }
 
-typedef enum { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 } Condition;
-bool check_condition(CPU *cpu, Condition cond) {
+enum condition { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 };
+bool check_condition(struct cpu *cpu, enum condition cond) {
   switch (cond) {
   case COND_NZ:
     return !is_z_set(cpu);
@@ -101,12 +101,12 @@ bool check_condition(CPU *cpu, Condition cond) {
   }
 }
 
-void push_onto_stack(GameBoy *gb, uint16_t val) {
+void push_onto_stack(struct gameboy *gb, uint16_t val) {
   write_byte(gb, --gb->cpu.SP, val >> 8);
   write_byte(gb, --gb->cpu.SP, val & 0xFF);
 }
 
-uint16_t pop_off_stack(GameBoy *gb) {
+uint16_t pop_off_stack(struct gameboy *gb) {
   const uint8_t lo = read_byte(gb, gb->cpu.SP++);
   const uint8_t hi = read_byte(gb, gb->cpu.SP++);
   return (uint16_t)hi << 8 | lo;
@@ -116,7 +116,7 @@ uint16_t pop_off_stack(GameBoy *gb) {
  * 8-bit arithmetic instructions
  */
 
-void ADD_n8(CPU *cpu, const uint8_t operand) {
+void ADD_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint16_t sum = A + operand;
@@ -130,7 +130,7 @@ void ADD_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void ADC_n8(CPU *cpu, const uint8_t operand) {
+void ADC_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t carry = is_c_set(cpu);
   const uint8_t A = cpu->r8[REG_A];
 
@@ -145,7 +145,7 @@ void ADC_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void SUB_n8(CPU *cpu, const uint8_t operand) {
+void SUB_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A - operand;
@@ -158,7 +158,7 @@ void SUB_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void SBC_n8(CPU *cpu, const uint8_t operand) {
+void SBC_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t carry = is_c_set(cpu);
   const uint8_t A = cpu->r8[REG_A];
 
@@ -172,7 +172,7 @@ void SBC_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void CP_n8(CPU *cpu, const uint8_t operand) {
+void CP_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   set_z(cpu, A - operand == 0);
@@ -181,7 +181,7 @@ void CP_n8(CPU *cpu, const uint8_t operand) {
   set_c(cpu, A < operand);
 }
 
-uint8_t DEC_r8(CPU *cpu, uint8_t operand) {
+uint8_t DEC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand - 1;
 
   set_z(cpu, result == 0);
@@ -191,7 +191,7 @@ uint8_t DEC_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t INC_r8(CPU *cpu, uint8_t operand) {
+uint8_t INC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand + 1;
 
   set_z(cpu, result == 0);
@@ -205,7 +205,7 @@ uint8_t INC_r8(CPU *cpu, uint8_t operand) {
  * 16-bit arithmetic instructions
  */
 
-void ADD_r16(CPU *cpu, uint16_t operand) {
+void ADD_r16(struct cpu *cpu, uint16_t operand) {
   const uint16_t HL = get_r8_pair(cpu, REG_HL);
   const uint32_t sum = HL + operand;
 
@@ -216,7 +216,7 @@ void ADD_r16(CPU *cpu, uint16_t operand) {
   set_r8_pair(cpu, REG_HL, sum);
 }
 
-uint16_t ADD_SP_e8(GameBoy *gb) {
+uint16_t ADD_SP_e8(struct gameboy *gb) {
   const uint16_t SP = gb->cpu.SP;
   const uint8_t n8 = fetch_byte(gb);
   const int32_t sum = SP + (int8_t)n8;
@@ -233,7 +233,7 @@ uint16_t ADD_SP_e8(GameBoy *gb) {
  * Bitwise logic instructions
  */
 
-void AND_n8(CPU *cpu, const uint8_t operand) {
+void AND_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A & operand;
@@ -246,7 +246,7 @@ void AND_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void XOR_n8(CPU *cpu, const uint8_t operand) {
+void XOR_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A ^ operand;
@@ -259,7 +259,7 @@ void XOR_n8(CPU *cpu, const uint8_t operand) {
   cpu->r8[REG_A] = result;
 }
 
-void OR_n8(CPU *cpu, const uint8_t operand) {
+void OR_n8(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
 
   const uint8_t result = A | operand;
@@ -276,7 +276,7 @@ void OR_n8(CPU *cpu, const uint8_t operand) {
  * Bit flag instructions
  */
 
-void BIT_b3_r8(CPU *cpu, uint8_t b3, uint8_t r8) {
+void BIT_b3_r8(struct cpu *cpu, uint8_t b3, uint8_t r8) {
   set_z(cpu, !get_bit(r8, b3));
   set_n(cpu, false);
   set_h(cpu, true);
@@ -286,7 +286,7 @@ void BIT_b3_r8(CPU *cpu, uint8_t b3, uint8_t r8) {
  * Bit shift instructions
  */
 
-uint8_t RL_r8(CPU *cpu, uint8_t operand) {
+uint8_t RL_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1 | is_c_set(cpu);
 
   set_z(cpu, result == 0);
@@ -297,7 +297,7 @@ uint8_t RL_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t RLC_r8(CPU *cpu, uint8_t operand) {
+uint8_t RLC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1 | is_c_set(cpu);
 
   set_z(cpu, result == 0);
@@ -308,7 +308,7 @@ uint8_t RLC_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t RR_r8(CPU *cpu, uint8_t operand) {
+uint8_t RR_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (is_c_set(cpu) << 7) | (operand >> 1);
 
   set_z(cpu, result == 0);
@@ -319,7 +319,7 @@ uint8_t RR_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t RRC_r8(CPU *cpu, uint8_t operand) {
+uint8_t RRC_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = ((operand & 1) << 7) | (operand >> 1);
 
   set_z(cpu, result == 0);
@@ -330,7 +330,7 @@ uint8_t RRC_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t SLA_r8(CPU *cpu, uint8_t operand) {
+uint8_t SLA_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1;
 
   set_z(cpu, result == 0);
@@ -341,7 +341,7 @@ uint8_t SLA_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t SRA_r8(CPU *cpu, uint8_t operand) {
+uint8_t SRA_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand & 0x80) | (operand >> 1);
 
   set_z(cpu, result == 0);
@@ -352,7 +352,7 @@ uint8_t SRA_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t SRL_r8(CPU *cpu, uint8_t operand) {
+uint8_t SRL_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand >> 1;
 
   set_z(cpu, result == 0);
@@ -363,7 +363,7 @@ uint8_t SRL_r8(CPU *cpu, uint8_t operand) {
   return result;
 }
 
-uint8_t SWAP_r8(CPU *cpu, uint8_t operand) {
+uint8_t SWAP_r8(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand << 4) | (operand >> 4);
 
   set_z(cpu, result == 0);
@@ -378,7 +378,7 @@ uint8_t SWAP_r8(CPU *cpu, uint8_t operand) {
  * Misc.
  */
 
-void DAA(CPU *cpu) {
+void DAA(struct cpu *cpu) {
   const uint8_t A = cpu->r8[REG_A];
   uint8_t result = 0;
 
@@ -409,7 +409,7 @@ void DAA(CPU *cpu) {
   cpu->r8[REG_A] = result;
 }
 
-void ILLEGAL(GameBoy *gameboy, uint8_t opcode) {
+void ILLEGAL(struct gameboy *gameboy, uint8_t opcode) {
   gameboy->state = GB_STOPPED;
   fprintf(stderr, "Illegal instruction: 0x%2X\n", opcode);
 }
@@ -418,7 +418,7 @@ void ILLEGAL(GameBoy *gameboy, uint8_t opcode) {
  * Instruction decoding
  */
 
-void execute_instruction(GameBoy *gb, uint8_t opcode) {
+void execute_instruction(struct gameboy *gb, uint8_t opcode) {
   uint8_t x = (opcode >> 6) & 0x3;
   uint8_t y = (opcode >> 3) & 0x7;
   uint8_t z = opcode & 0x7;
@@ -437,7 +437,7 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
         gb->cpu.PC += (int8_t)fetch_byte(gb);
       } else if (y > 3) /* JR cc, e8 */ {
         const int8_t offset = fetch_byte(gb);
-        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+        if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC += offset;
           gb->cycles += 4;
         }
@@ -565,7 +565,7 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
     switch (z) {
     case 0: {
       if (y < 4) /* RET cc */ {
-        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+        if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC = pop_off_stack(gb);
           gb->cycles += 12;
         }
@@ -598,7 +598,7 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
     case 2: {
       if (y < 4) /* JP cc, a16 */ {
         const uint16_t jmp_addr = fetch_word(gb);
-        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+        if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC = jmp_addr;
           gb->cycles += 4;
         }
@@ -630,7 +630,7 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
     case 4: {
       if (y < 4) /* CALL cc a16 */ {
         const uint16_t jmp_addr = fetch_word(gb);
-        if (check_condition(&gb->cpu, (Condition)(y & 0x3))) {
+        if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           push_onto_stack(gb, gb->cpu.PC);
           gb->cpu.PC = jmp_addr;
           gb->cycles += 12;
@@ -697,7 +697,7 @@ void execute_instruction(GameBoy *gb, uint8_t opcode) {
   }
 }
 
-void execute_cb_instruction(GameBoy *gb, uint8_t opcode) {
+void execute_cb_instruction(struct gameboy *gb, uint8_t opcode) {
   const uint8_t x = (opcode >> 6) & 0x3;
   const uint8_t y = (opcode >> 3) & 0x7;
   const uint8_t z = opcode & 0x7;

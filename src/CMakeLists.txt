@@ -10,7 +10,7 @@ add_library(GB_Core
   cpu.c
   gameboy.c
   cpu_instrs.c
-  io.c
+  io_registers.c
   mbc1.c
 )
 

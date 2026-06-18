@@ -4,55 +4,55 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-bool init_gameboy(GameBoy *gameboy, const char *path_to_rom) {
-  gameboy->cartridge = create_cartridge(path_to_rom);
-  if (gameboy->cartridge) {
-    gameboy->interrupt_enable = false;
-    init_cpu(&gameboy->cpu);
+bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
+  gb->cartridge = create_cartridge(path_to_rom);
+  if (gb->cartridge) {
+    gb->interrupt_enable = false;
+    init_cpu(&gb->cpu);
     return true;
   } else {
-    gameboy->state = GB_STOPPED;
+    gb->state = GB_STOPPED;
     return false;
   }
 }
 
-void run_gameboy(GameBoy *gb) {
+void run_gameboy(struct gameboy *gb) {
   while (gb->state == GB_RUNNING) {
     execute_instruction(gb, read_byte(gb, gb->cpu.PC++));
   }
 }
 
-void close_gameboy(GameBoy *gameboy) {
-  if (gameboy) {
-    destroy_cartridge(gameboy->cartridge);
+void close_gameboy(struct gameboy *gb) {
+  if (gb) {
+    destroy_cartridge(gb->cartridge);
   }
 }
 
-uint8_t read_byte(GameBoy *gameboy, uint16_t addr) {
+uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    return read_rom(gameboy->cartridge, addr);
+    return read_rom(gb->cartridge, addr);
   }
 
   if (0x8000 <= addr && addr <= 0x9FFF) { // TODO: VRAM
     fprintf(stderr, "Error: Attempt to read VRAM\n");
-    gameboy->state = GB_STOPPED;
+    gb->state = GB_STOPPED;
   }
 
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return read_ram(gameboy->cartridge, addr);
+    return read_ram(gb->cartridge, addr);
   }
 
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
-    return gameboy->wram[addr - 0xC000];
+    return gb->wram[addr - 0xC000];
   }
 
   if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
-    return gameboy->wram[addr - 0xE000];
+    return gb->wram[addr - 0xE000];
   }
 
   if (0xFE00 <= addr && addr <= 0xFE9F) /* TODO: OAM */ {
     fprintf(stderr, "Error: Attempt to read OAM\n");
-    gameboy->state = GB_STOPPED;
+    gb->state = GB_STOPPED;
   }
 
   if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
@@ -61,47 +61,47 @@ uint8_t read_byte(GameBoy *gameboy, uint16_t addr) {
   }
 
   if (0xFF00 <= addr && addr <= 0xFF7F) /* IO Registers */ {
-    return read_io(&gameboy->io, addr);
+    return read_io(&gb->io, addr);
   }
 
   if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
-    return gameboy->hram[addr - 0xFF80];
+    return gb->hram[addr - 0xFF80];
   }
 
   /* TODO: IE */
-  return gameboy->interrupt_enable;
+  return gb->interrupt_enable;
 }
 
-void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val) {
+void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    write_rom(gameboy->cartridge, addr, val);
+    write_rom(gb->cartridge, addr, val);
     return;
   }
 
   if (0x8000 <= addr && addr <= 0x9FFF) { // TODO: VRAM
     fprintf(stderr, "Error: Attempt to read VRAM\n");
-    gameboy->state = GB_STOPPED;
+    gb->state = GB_STOPPED;
     return;
   }
 
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    write_ram(gameboy->cartridge, addr, val);
+    write_ram(gb->cartridge, addr, val);
     return;
   }
 
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
-    gameboy->wram[addr - 0xC000] = val;
+    gb->wram[addr - 0xC000] = val;
     return;
   }
 
   if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
-    gameboy->wram[addr - 0xE000] = val;
+    gb->wram[addr - 0xE000] = val;
     return;
   }
 
   if (0xFE00 <= addr && addr <= 0xFE9F) /* TODO: OAM */ {
     fprintf(stderr, "Error: Attempt to read OAM\n");
-    gameboy->state = GB_STOPPED;
+    gb->state = GB_STOPPED;
     return;
   }
 
@@ -111,15 +111,15 @@ void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val) {
   }
 
   if (0xFF00 <= addr && addr <= 0xFF7F) /* IO Registers */ {
-    write_io(&gameboy->io, addr, val);
+    write_io(&gb->io, addr, val);
     return;
   }
 
   if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
-    gameboy->hram[addr - 0xFF80] = val;
+    gb->hram[addr - 0xFF80] = val;
     return;
   }
 
   /* TODO: IE */
-  gameboy->interrupt_enable = val;
+  gb->interrupt_enable = val;
 }

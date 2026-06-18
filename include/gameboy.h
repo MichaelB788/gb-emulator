@@ -2,32 +2,32 @@
 #include "byte_sizes.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "io.h"
+#include "io_registers.h"
 #include <stdint.h>
 
-typedef enum { GB_RUNNING, GB_STOPPED, GB_HALTED } GameBoyState;
+enum gb_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 
-typedef struct GameBoy {
-  CPU cpu;
-  IO io;
+struct gameboy {
+  struct cpu cpu;
+  struct io_registers io;
   bool interrupt_enable;
-  GameBoyState state;
+  enum gb_state state;
   uint8_t cycles;
   uint8_t wram[KiB_8];
   uint8_t hram[127];
-  Cartridge *cartridge;
-} GameBoy;
+  struct cartridge *cartridge;
+};
 
-bool init_gameboy(GameBoy *gameboy, const char *path_to_rom);
+bool init_gameboy(struct gameboy *gb, const char *path_to_rom);
 
-void run_gameboy(GameBoy *gameboy);
+void run_gameboy(struct gameboy *gb);
 
-void close_gameboy(GameBoy *gameboy);
+void close_gameboy(struct gameboy *gb);
 
-uint8_t read_byte(GameBoy *gameboy, uint16_t addr);
+uint8_t read_byte(struct gameboy *gb, uint16_t addr);
 
-void write_byte(GameBoy *gameboy, uint16_t addr, uint8_t val);
+void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val);
 
-void execute_instruction(GameBoy *gameboy, uint8_t opcode);
+void execute_instruction(struct gameboy *gb, uint8_t opcode);
 
-void execute_cb_instruction(GameBoy *gameboy, uint8_t opcode);
+void execute_cb_instruction(struct gameboy *gb, uint8_t opcode);

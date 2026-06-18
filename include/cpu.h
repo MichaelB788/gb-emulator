@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 // ISA indicies for the regular 8-bit registers.
-typedef enum {
+enum {
   REG_B = 0,
   REG_C = 1,
   REG_D = 2,
@@ -14,30 +14,30 @@ typedef enum {
   REG_F = 6 // Typically this index would map to [HL], but since [HL] is a
             // memory access rather than an actual register, this index points
             // to the flags register instead.
-} R8_Idx;
+};
 
 // Offsets to form the regular 8-bit register pairs, such that
 // hi = r8[i], and lo = r8[i + 1]
-typedef enum { REG_BC = 0, REG_DE = 2, REG_HL = 4 } R16_Idx;
+enum r16_idx { REG_BC = 0, REG_DE = 2, REG_HL = 4 };
 
-typedef struct CPU {
+struct cpu {
   uint8_t r8[8]; // B, C, D, E, H, L, F, A
   bool IME;
   uint16_t PC;
   uint16_t SP;
-} CPU;
+};
 
-void init_cpu(CPU *cpu);
+void init_cpu(struct cpu *cpu);
 
-void set_r8_pair(CPU *cpu, R16_Idx r16_idx, uint16_t val);
-uint16_t get_r8_pair(const CPU *cpu, R16_Idx r16_idx);
+void set_r8_pair(struct cpu *cpu, enum r16_idx r16_idx, uint16_t val);
+uint16_t get_r8_pair(const struct cpu *cpu, enum r16_idx r16_idx);
 
-void set_z(CPU *cpu, bool val);
-void set_n(CPU *cpu, bool val);
-void set_h(CPU *cpu, bool val);
-void set_c(CPU *cpu, bool val);
+void set_z(struct cpu *cpu, bool val);
+void set_n(struct cpu *cpu, bool val);
+void set_h(struct cpu *cpu, bool val);
+void set_c(struct cpu *cpu, bool val);
 
-bool is_z_set(CPU *cpu);
-bool is_n_set(CPU *cpu);
-bool is_h_set(CPU *cpu);
-bool is_c_set(CPU *cpu);
+bool is_z_set(struct cpu *cpu);
+bool is_n_set(struct cpu *cpu);
+bool is_h_set(struct cpu *cpu);
+bool is_c_set(struct cpu *cpu);

@@ -1,8 +1,8 @@
-#include "io.h"
+#include "io_registers.h"
 #include <stdint.h>
 #include <stdio.h>
 
-uint8_t read_io(IO *io, uint16_t addr) {
+uint8_t read_io(struct io_registers *io, uint16_t addr) {
   switch (addr) {
   case 0xFF00: // Joypad
     return io->joypad;
@@ -15,7 +15,7 @@ uint8_t read_io(IO *io, uint16_t addr) {
   }
 }
 
-void write_io(IO *io, uint16_t addr, uint8_t val) {
+void write_io(struct io_registers *io, uint16_t addr, uint8_t val) {
   switch (addr) {
   case 0xFF00: // Joypad
     io->joypad = val & 0x30;

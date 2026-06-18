@@ -7,11 +7,11 @@ int main() {
   const char *test_rom = "/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb";
   strcat(full_path, test_rom);
 
-  GameBoy gameboy = {0};
-  if (init_gameboy(&gameboy, full_path)) {
-    run_gameboy(&gameboy);
+  struct gameboy gb = {0};
+  if (init_gameboy(&gb, full_path)) {
+    run_gameboy(&gb);
   }
-  close_gameboy(&gameboy);
+  close_gameboy(&gb);
 
   printf("Hello world\n");
 }
