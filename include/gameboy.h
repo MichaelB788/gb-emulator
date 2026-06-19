@@ -20,8 +20,6 @@ struct gameboy {
 
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom);
 
-void run_gameboy(struct gameboy *gb);
-
 void close_gameboy(struct gameboy *gb);
 
 uint8_t read_byte(struct gameboy *gb, uint16_t addr);

@@ -1,4 +1,4 @@
 build/
 .cache/
 .idea/
-cpu_trace.txt
+log.txt

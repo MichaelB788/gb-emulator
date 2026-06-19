@@ -2,6 +2,7 @@
 #include "cartridge.h"
 #include "cpu.h"
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
@@ -13,12 +14,6 @@ bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
   } else {
     gb->state = GB_STOPPED;
     return false;
-  }
-}
-
-void run_gameboy(struct gameboy *gb) {
-  while (gb->state == GB_RUNNING) {
-    execute_instruction(gb, read_byte(gb, gb->cpu.PC++));
   }
 }
 
