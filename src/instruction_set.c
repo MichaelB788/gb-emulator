@@ -418,6 +418,7 @@ void ILLEGAL(struct gameboy *gameboy, uint8_t opcode) {
  */
 
 void execute_instruction(struct gameboy *gb, uint8_t opcode) {
+  gb->path_taken = false;
   uint8_t x = (opcode >> 6) & 0x3;
   uint8_t y = (opcode >> 3) & 0x7;
   uint8_t z = opcode & 0x7;
@@ -438,7 +439,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
         const int8_t offset = fetch_byte(gb);
         if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC += offset;
-          gb->cycles += 4;
+          gb->path_taken = true;
         }
       }
     } break;
@@ -566,7 +567,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       if (y < 4) /* RET cc */ {
         if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC = pop_off_stack(gb);
-          gb->cycles += 12;
+          gb->path_taken = true;
         }
       } else if (y == 4) /* LDH [a8], A */ {
         write_byte(gb, 0xFF00 | fetch_byte(gb), gb->cpu.r8[REG_A]);
@@ -599,7 +600,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
         const uint16_t jmp_addr = fetch_word(gb);
         if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           gb->cpu.PC = jmp_addr;
-          gb->cycles += 4;
+          gb->path_taken = true;
         }
       } else if (y == 4) /* LDH [C], A */ {
         write_byte(gb, 0xFF00 | gb->cpu.r8[REG_C], gb->cpu.r8[REG_A]);
@@ -632,7 +633,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
         if (check_condition(&gb->cpu, (enum condition)(y & 0x3))) {
           push_onto_stack(gb, gb->cpu.PC);
           gb->cpu.PC = jmp_addr;
-          gb->cycles += 12;
+          gb->path_taken = true;
         }
       } else {
         ILLEGAL(gb, opcode);

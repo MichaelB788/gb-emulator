@@ -8,13 +8,16 @@
 enum gb_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 
 struct gameboy {
+  enum gb_state state;
+  bool interrupt_enable;
+  bool path_taken;
+
   struct cpu cpu;
   struct io_registers io;
-  bool interrupt_enable;
-  enum gb_state state;
-  uint8_t cycles;
+
   uint8_t wram[KiB_8];
   uint8_t hram[127];
+
   struct cartridge *cartridge;
 };
 
