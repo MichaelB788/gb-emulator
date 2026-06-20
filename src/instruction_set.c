@@ -39,43 +39,43 @@ void set_r8(struct gameboy *gb, uint8_t opcode_field, uint8_t val) {
 }
 
 uint16_t get_r16(const struct cpu *cpu, uint8_t y_field) {
-  const uint16_t src = y_field >> 1;
+  uint16_t src = y_field >> 1;
   if (src == 3)
     return cpu->SP;
   else
-    return get_r8_pair(cpu, (enum r16_idx)src);
+    return get_r8_pair(cpu, (enum r16_offset)(src * 2));
 }
 
 void set_r16(struct cpu *cpu, uint8_t y_field, uint16_t val) {
-  const uint16_t dest = y_field >> 1;
+  uint16_t dest = y_field >> 1;
   if (dest == 3)
     cpu->SP = val;
   else
-    set_r8_pair(cpu, (enum r16_idx)dest, val);
+    set_r8_pair(cpu, (enum r16_offset)(dest * 2), val);
 }
 
 uint16_t get_r16stk(const struct cpu *cpu, uint8_t y_field) {
-  const uint16_t src = y_field >> 1;
+  uint16_t src = y_field >> 1;
   if (src == 3)
     return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
   else
-    return get_r8_pair(cpu, (enum r16_idx)src);
+    return get_r8_pair(cpu, (enum r16_offset)(src * 2));
 }
 
 void set_r16stk(struct cpu *cpu, uint8_t y_field, uint16_t val) {
-  const uint16_t dest = y_field >> 1;
+  uint16_t dest = y_field >> 1;
   if (dest == 3) {
     cpu->r8[REG_A] = val >> 8;
     cpu->r8[REG_F] = val & 0xF0;
   } else {
-    set_r8_pair(cpu, (enum r16_idx)dest, val);
+    set_r8_pair(cpu, (enum r16_offset)(dest * 2), val);
   }
 }
 
 uint16_t get_r16mem(struct cpu *cpu, uint8_t y_field) {
-  const uint8_t r16mem = y_field >> 1;
+  uint8_t r16mem = y_field >> 1;
   if (r16mem == 0 || r16mem == 1) /* BC or DE */ {
-    return get_r8_pair(cpu, (enum r16_idx)r16mem);
+    return get_r8_pair(cpu, (enum r16_offset)(r16mem * 2));
   } else {
     const uint16_t ret = get_r8_pair(cpu, REG_HL);
     if (r16mem == 2) /* HLI */

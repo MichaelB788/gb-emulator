@@ -18,7 +18,7 @@ enum {
 
 // Offsets to form the regular 8-bit register pairs, such that
 // hi = r8[i], and lo = r8[i + 1]
-enum r16_idx { REG_BC = 0, REG_DE = 2, REG_HL = 4 };
+enum r16_offset { REG_BC = 0, REG_DE = 2, REG_HL = 4 };
 
 struct cpu {
   uint8_t r8[8]; // B, C, D, E, H, L, F, A
@@ -29,8 +29,8 @@ struct cpu {
 
 void init_cpu(struct cpu *cpu);
 
-void set_r8_pair(struct cpu *cpu, enum r16_idx r16_idx, uint16_t val);
-uint16_t get_r8_pair(const struct cpu *cpu, enum r16_idx r16_idx);
+void set_r8_pair(struct cpu *cpu, enum r16_offset r16_idx, uint16_t val);
+uint16_t get_r8_pair(const struct cpu *cpu, enum r16_offset r16_idx);
 
 enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
 void set_flag(struct cpu *cpu, enum flag flag, bool val);
