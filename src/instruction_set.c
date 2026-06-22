@@ -39,46 +39,46 @@ void set_r8(struct gameboy *gb, uint8_t opcode_field, uint8_t val) {
 }
 
 uint16_t get_r16(const struct cpu *cpu, uint8_t y_field) {
-  uint16_t src = y_field >> 1;
-  if (src == 3)
+  const uint8_t src = y_field & 0b110;
+  if (src == 0b110)
     return cpu->SP;
   else
-    return get_r8_pair(cpu, (enum r16_offset)(src * 2));
+    return get_r8_pair(cpu, (enum r16_offset)src);
 }
 
 void set_r16(struct cpu *cpu, uint8_t y_field, uint16_t val) {
-  uint16_t dest = y_field >> 1;
-  if (dest == 3)
+  const uint8_t dest = y_field & 0b110;
+  if (dest == 0b110)
     cpu->SP = val;
   else
-    set_r8_pair(cpu, (enum r16_offset)(dest * 2), val);
+    set_r8_pair(cpu, (enum r16_offset)dest, val);
 }
 
 uint16_t get_r16stk(const struct cpu *cpu, uint8_t y_field) {
-  uint16_t src = y_field >> 1;
-  if (src == 3)
+  const uint8_t src = y_field & 0b110;
+  if (src == 0b110)
     return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
   else
-    return get_r8_pair(cpu, (enum r16_offset)(src * 2));
+    return get_r8_pair(cpu, (enum r16_offset)src);
 }
 
 void set_r16stk(struct cpu *cpu, uint8_t y_field, uint16_t val) {
-  uint16_t dest = y_field >> 1;
-  if (dest == 3) {
+  const uint8_t dest = y_field & 0b110;
+  if (dest == 0b110) {
     cpu->r8[REG_A] = val >> 8;
     cpu->r8[REG_F] = val & 0xF0;
   } else {
-    set_r8_pair(cpu, (enum r16_offset)(dest * 2), val);
+    set_r8_pair(cpu, (enum r16_offset)dest, val);
   }
 }
 
 uint16_t get_r16mem(struct cpu *cpu, uint8_t y_field) {
-  uint8_t r16mem = y_field >> 1;
-  if (r16mem == 0 || r16mem == 1) /* BC or DE */ {
-    return get_r8_pair(cpu, (enum r16_offset)(r16mem * 2));
+  const uint8_t r16mem = y_field & 0b110;
+  if (r16mem == 0b00 || r16mem == 0b10) /* BC or DE */ {
+    return get_r8_pair(cpu, (enum r16_offset)r16mem);
   } else {
     const uint16_t ret = get_r8_pair(cpu, REG_HL);
-    if (r16mem == 2) /* HLI */
+    if (r16mem == 0b100) /* HLI */
       set_r8_pair(cpu, REG_HL, ret + 1);
     else /* HLD */
       set_r8_pair(cpu, REG_HL, ret - 1);
@@ -218,7 +218,7 @@ void ADD_r16(struct cpu *cpu, uint16_t operand) {
 uint16_t ADD_SP_e8(struct gameboy *gb) {
   const uint16_t SP = gb->cpu.SP;
   const int8_t e8 = fetch_byte(gb);
-  const uint16_t sum = SP + (int8_t)e8;
+  const uint16_t sum = SP + e8;
 
   set_flag(&gb->cpu, FLAG_Z, false);
   set_flag(&gb->cpu, FLAG_N, false);

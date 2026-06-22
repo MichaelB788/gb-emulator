@@ -16,10 +16,19 @@ enum {
             // to the flags register instead.
 };
 
-// Offsets to form the regular 8-bit register pairs, such that
-// hi = r8[i], and lo = r8[i + 1]
-enum r16_offset { REG_BC = 0, REG_DE = 2, REG_HL = 4 };
+/**
+ * Offsets to form the regular 8-bit register pairs, such that
+ * hi = r8[i], and lo = r8[i + 1]
+ *
+ * Note: 16-bit registers are derived from the y-field, yet the offset can be
+ * deduced simply by ignoring the first bit, the binary representations
+ * exemplify this.
+ */
+enum r16_offset { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 };
 
+/**
+ * The GameBoy's CPU
+ */
 struct cpu {
   uint8_t r8[8]; // B, C, D, E, H, L, F, A
   bool IME;
@@ -30,8 +39,12 @@ struct cpu {
 void init_cpu(struct cpu *cpu);
 
 void set_r8_pair(struct cpu *cpu, enum r16_offset r16_idx, uint16_t val);
+
 uint16_t get_r8_pair(const struct cpu *cpu, enum r16_offset r16_idx);
 
+// Flags used by the CPU. The values mask the bit corresponding to the flag.
 enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
+
 void set_flag(struct cpu *cpu, enum flag flag, bool val);
+
 bool is_flag_set(const struct cpu *cpu, enum flag flag);
