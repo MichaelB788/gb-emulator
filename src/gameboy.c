@@ -52,6 +52,7 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
 
   if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to read Prohibited space\n");
+    gb->state = GB_STOPPED;
     return 0xFF;
   }
 
@@ -94,13 +95,14 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
   }
 
   if (0xFE00 <= addr && addr <= 0xFE9F) /* TODO: OAM */ {
-    fprintf(stderr, "Error: Attempt to read OAM\n");
+    fprintf(stderr, "Warn: Attempt to write OAM\n");
     gb->state = GB_STOPPED;
     return;
   }
 
   if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
-    fprintf(stderr, "Warn: Attempt to read Prohibited space\n");
+    fprintf(stderr, "Warn: Attempt to write Prohibited space\n");
+    gb->state = GB_STOPPED;
     return;
   }
 
