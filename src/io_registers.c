@@ -8,8 +8,6 @@ uint8_t read_io(struct io_registers *io, uint16_t addr) {
     return io->joypad;
   case 0xFF01: // Serial transfer data
     return io->serial_data;
-  case 0xFF02: // Serial transfer control
-    return io->serial_control;
   default:
     return 0xFF;
   }
@@ -24,7 +22,6 @@ void write_io(struct io_registers *io, uint16_t addr, uint8_t val) {
     io->serial_data = val;
     break;
   case 0xFF02: // Serial transfer control
-    io->serial_control = val;
     if ((val & 0x80) > 0) {
       putchar(io->serial_data);
       fflush(stdout);

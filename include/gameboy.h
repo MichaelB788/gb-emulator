@@ -15,6 +15,7 @@ struct gameboy {
   struct cpu cpu;
   struct io_registers io;
 
+  uint8_t vram[KiB_8];
   uint8_t wram[KiB_8];
   uint8_t hram[127];
 
