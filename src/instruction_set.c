@@ -217,12 +217,12 @@ void ADD_r16(struct cpu *cpu, uint16_t operand) {
 
 uint16_t ADD_SP_e8(struct gameboy *gb) {
   const uint16_t SP = gb->cpu.SP;
-  const int8_t n8 = fetch_byte(gb);
-  const int32_t sum = SP + (int8_t)n8;
+  const int8_t e8 = fetch_byte(gb);
+  const uint16_t sum = SP + (int8_t)e8;
 
   set_flag(&gb->cpu, FLAG_Z, false);
   set_flag(&gb->cpu, FLAG_N, false);
-  set_flag(&gb->cpu, FLAG_H, (SP & 0xF) + (n8 & 0xF) > 0xF);
+  set_flag(&gb->cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
   set_flag(&gb->cpu, FLAG_C, sum > 0xFF);
 
   return sum;
@@ -430,7 +430,9 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       if (y == 0) /* NOP */ {
         return;
       } else if (y == 1) /* LD [a16] SP */ {
-        write_byte(gb, fetch_word(gb), gb->cpu.SP);
+        const uint16_t address = fetch_word(gb);
+        write_byte(gb, address, gb->cpu.SP >> 8);
+        write_byte(gb, address + 1, gb->cpu.SP & 0xFF);
       } else if (y == 2) /* STOP */ {
         gb->state = GB_STOPPED;
       } else if (y == 3) /* JR e8 */ {
