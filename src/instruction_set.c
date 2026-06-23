@@ -215,15 +215,14 @@ void ADD_r16(struct cpu *cpu, uint16_t operand) {
   set_r8_pair(cpu, REG_HL, sum);
 }
 
-uint16_t ADD_SP_e8(struct gameboy *gb) {
-  const uint16_t SP = gb->cpu.SP;
-  const int8_t e8 = fetch_byte(gb);
+uint16_t ADD_SP_e8(struct cpu *cpu, int8_t e8) {
+  const uint16_t SP = cpu->SP;
   const uint16_t sum = SP + e8;
 
-  set_flag(&gb->cpu, FLAG_Z, false);
-  set_flag(&gb->cpu, FLAG_N, false);
-  set_flag(&gb->cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
-  set_flag(&gb->cpu, FLAG_C, sum > 0xFF);
+  set_flag(cpu, FLAG_Z, false);
+  set_flag(cpu, FLAG_N, false);
+  set_flag(cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
+  set_flag(cpu, FLAG_C, sum > 0xFF);
 
   return sum;
 }
@@ -461,7 +460,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
     } break;
 
     case 3: {
-      if ((z & 1) == 0) /* INC r16 */
+      if ((y & 1) == 0) /* INC r16 */
         set_r16(&gb->cpu, y, get_r16(&gb->cpu, y) + 1);
       else /* DEC r16 */
         set_r16(&gb->cpu, y, get_r16(&gb->cpu, y) - 1);
@@ -574,11 +573,11 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       } else if (y == 4) /* LDH [a8], A */ {
         write_byte(gb, 0xFF00 | fetch_byte(gb), gb->cpu.r8[REG_A]);
       } else if (y == 5) /* ADD SP, e8 */ {
-        gb->cpu.SP = ADD_SP_e8(gb);
+        gb->cpu.SP = ADD_SP_e8(&gb->cpu, fetch_byte(gb));
       } else if (y == 6) /* LDH A, [a8] */ {
         gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | fetch_byte(gb));
       } else if (y == 7) /* LD HL, SP + e8 */ {
-        set_r8_pair(&gb->cpu, REG_HL, ADD_SP_e8(gb));
+        set_r8_pair(&gb->cpu, REG_HL, ADD_SP_e8(&gb->cpu, fetch_byte(gb)));
       }
     } break;
 
