@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 // ISA indicies for the regular 8-bit registers.
-typedef enum {
+enum reg8 {
   REG_B = 0,
   REG_C = 1,
   REG_D = 2,
@@ -14,7 +14,7 @@ typedef enum {
   REG_F = 6 // Typically this index would map to [HL], but since [HL] is a
             // memory access rather than an actual register, this index points
             // to the flags register instead.
-} reg_t;
+};
 
 /**
  * Offsets to form the regular 8-bit register pairs, such that
@@ -24,7 +24,7 @@ typedef enum {
  * deduced simply by ignoring the first bit, the binary representations
  * exemplify this.
  */
-typedef enum { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 } regpair_t;
+enum regpair { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 };
 
 /**
  * The GameBoy's CPU
@@ -38,9 +38,9 @@ struct cpu {
 
 void init_cpu(struct cpu *cpu);
 
-void set_regpair(struct cpu *cpu, regpair_t reg, uint16_t val);
+void set_regpair(struct cpu *cpu, enum regpair reg, uint16_t val);
 
-uint16_t get_regpair(const struct cpu *cpu, regpair_t reg);
+uint16_t get_regpair(const struct cpu *cpu, enum regpair reg);
 
 void set_hl(struct cpu *cpu, uint16_t val);
 

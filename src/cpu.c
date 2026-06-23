@@ -14,12 +14,12 @@ void init_cpu(struct cpu *cpu) {
   cpu->SP = 0xFFFE;
 }
 
-void set_regpair(struct cpu *cpu, regpair_t rp, uint16_t val) {
+void set_regpair(struct cpu *cpu, enum regpair rp, uint16_t val) {
   cpu->r8[rp] = val >> 8;
   cpu->r8[rp + 1] = val & 0xFF;
 }
 
-uint16_t get_regpair(const struct cpu *cpu, regpair_t rp) {
+uint16_t get_regpair(const struct cpu *cpu, enum regpair rp) {
   return (uint16_t)cpu->r8[rp] << 8 | cpu->r8[rp + 1];
 }
 
