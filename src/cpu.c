@@ -42,3 +42,5 @@ void set_flag(struct cpu *cpu, enum flag flag, bool val) {
 bool is_flag_set(const struct cpu *cpu, enum flag flag) {
   return cpu->r8[REG_F] & flag;
 }
+
+bool get_carry(const struct cpu *cpu) { return cpu->r8[REG_F] & FLAG_C; }

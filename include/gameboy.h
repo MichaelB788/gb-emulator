@@ -9,7 +9,7 @@ typedef enum { GB_RUNNING, GB_STOPPED, GB_HALTED } gb_state_t;
 
 struct gameboy {
   gb_state_t state;
-  uint8_t instruction_register;
+  uint8_t opcode;
   bool interrupt_enable;
   bool path_taken;
 

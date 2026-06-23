@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 // ISA indicies for the regular 8-bit registers.
-enum {
+typedef enum {
   REG_B = 0,
   REG_C = 1,
   REG_D = 2,
@@ -14,7 +14,7 @@ enum {
   REG_F = 6 // Typically this index would map to [HL], but since [HL] is a
             // memory access rather than an actual register, this index points
             // to the flags register instead.
-};
+} reg_t;
 
 /**
  * Offsets to form the regular 8-bit register pairs, such that
@@ -52,3 +52,5 @@ enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
 void set_flag(struct cpu *cpu, enum flag flag, bool val);
 
 bool is_flag_set(const struct cpu *cpu, enum flag flag);
+
+bool get_carry(const struct cpu *cpu);
