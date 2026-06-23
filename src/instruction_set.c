@@ -17,11 +17,11 @@ uint16_t fetch_word(struct gameboy *gb) {
 }
 
 uint8_t read_hl(struct gameboy *gb) {
-  return read_byte(gb, get_r8_pair(&gb->cpu, REG_HL));
+  return read_byte(gb, get_regpair(&gb->cpu, REG_HL));
 }
 
 void write_hl(struct gameboy *gb, uint8_t val) {
-  write_byte(gb, get_r8_pair(&gb->cpu, REG_HL), val);
+  write_byte(gb, get_regpair(&gb->cpu, REG_HL), val);
 }
 
 uint8_t get_r8(struct gameboy *gb, uint8_t opcode_field) {
@@ -43,7 +43,7 @@ uint16_t get_r16(const struct cpu *cpu, uint8_t y_field) {
   if (src == 0b110)
     return cpu->SP;
   else
-    return get_r8_pair(cpu, (enum r16_offset)src);
+    return get_regpair(cpu, (enum r16_offset)src);
 }
 
 void set_r16(struct cpu *cpu, uint8_t y_field, uint16_t val) {
@@ -51,7 +51,7 @@ void set_r16(struct cpu *cpu, uint8_t y_field, uint16_t val) {
   if (dest == 0b110)
     cpu->SP = val;
   else
-    set_r8_pair(cpu, (enum r16_offset)dest, val);
+    set_regpair(cpu, (enum r16_offset)dest, val);
 }
 
 uint16_t get_r16stk(const struct cpu *cpu, uint8_t y_field) {
@@ -59,7 +59,7 @@ uint16_t get_r16stk(const struct cpu *cpu, uint8_t y_field) {
   if (src == 0b110)
     return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
   else
-    return get_r8_pair(cpu, (enum r16_offset)src);
+    return get_regpair(cpu, (enum r16_offset)src);
 }
 
 void set_r16stk(struct cpu *cpu, uint8_t y_field, uint16_t val) {
@@ -68,20 +68,20 @@ void set_r16stk(struct cpu *cpu, uint8_t y_field, uint16_t val) {
     cpu->r8[REG_A] = val >> 8;
     cpu->r8[REG_F] = val & 0xF0;
   } else {
-    set_r8_pair(cpu, (enum r16_offset)dest, val);
+    set_regpair(cpu, (enum r16_offset)dest, val);
   }
 }
 
 uint16_t get_r16mem(struct cpu *cpu, uint8_t y_field) {
   const uint8_t r16mem = y_field & 0b110;
   if (r16mem == 0b00 || r16mem == 0b10) /* BC or DE */ {
-    return get_r8_pair(cpu, (enum r16_offset)r16mem);
+    return get_regpair(cpu, (enum r16_offset)r16mem);
   } else {
-    const uint16_t ret = get_r8_pair(cpu, REG_HL);
+    const uint16_t ret = get_regpair(cpu, REG_HL);
     if (r16mem == 0b100) /* HLI */
-      set_r8_pair(cpu, REG_HL, ret + 1);
+      set_regpair(cpu, REG_HL, ret + 1);
     else /* HLD */
-      set_r8_pair(cpu, REG_HL, ret - 1);
+      set_regpair(cpu, REG_HL, ret - 1);
     return ret;
   }
 }
@@ -205,14 +205,14 @@ uint8_t INC_r8(struct cpu *cpu, uint8_t operand) {
  */
 
 void ADD_r16(struct cpu *cpu, uint16_t operand) {
-  const uint16_t HL = get_r8_pair(cpu, REG_HL);
+  const uint16_t HL = get_regpair(cpu, REG_HL);
   const uint32_t sum = HL + operand;
 
   set_flag(cpu, FLAG_N, false);
   set_flag(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
   set_flag(cpu, FLAG_C, sum > 0xFFFF);
 
-  set_r8_pair(cpu, REG_HL, sum);
+  set_regpair(cpu, REG_HL, sum);
 }
 
 uint16_t ADD_SP_e8(struct cpu *cpu, int8_t e8) {
@@ -577,7 +577,7 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
       } else if (y == 6) /* LDH A, [a8] */ {
         gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | fetch_byte(gb));
       } else if (y == 7) /* LD HL, SP + e8 */ {
-        set_r8_pair(&gb->cpu, REG_HL, ADD_SP_e8(&gb->cpu, fetch_byte(gb)));
+        set_regpair(&gb->cpu, REG_HL, ADD_SP_e8(&gb->cpu, fetch_byte(gb)));
       }
     } break;
 
@@ -590,9 +590,9 @@ void execute_instruction(struct gameboy *gb, uint8_t opcode) {
         gb->cpu.PC = pop_off_stack(gb);
         gb->cpu.IME = true;
       } else if (y == 5) /* JP HL */ {
-        gb->cpu.PC = get_r8_pair(&gb->cpu, REG_HL);
+        gb->cpu.PC = get_regpair(&gb->cpu, REG_HL);
       } else if (y == 7) /* LD SP, HL */ {
-        gb->cpu.SP = get_r8_pair(&gb->cpu, REG_HL);
+        gb->cpu.SP = get_regpair(&gb->cpu, REG_HL);
       }
     } break;
 
