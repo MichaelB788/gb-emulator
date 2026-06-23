@@ -5,10 +5,10 @@
 #include "io_registers.h"
 #include <stdint.h>
 
-enum gb_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
+typedef enum { GB_RUNNING, GB_STOPPED, GB_HALTED } gb_state_t;
 
 struct gameboy {
-  enum gb_state state;
+  gb_state_t state;
   uint8_t instruction_register;
   bool interrupt_enable;
   bool path_taken;

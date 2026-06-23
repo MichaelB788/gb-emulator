@@ -24,7 +24,7 @@ enum {
  * deduced simply by ignoring the first bit, the binary representations
  * exemplify this.
  */
-enum r16_offset { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 };
+typedef enum { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 } regpair_t;
 
 /**
  * The GameBoy's CPU
@@ -38,9 +38,13 @@ struct cpu {
 
 void init_cpu(struct cpu *cpu);
 
-void set_r8_pair(struct cpu *cpu, enum r16_offset r16_idx, uint16_t val);
+void set_regpair(struct cpu *cpu, regpair_t reg, uint16_t val);
 
-uint16_t get_r8_pair(const struct cpu *cpu, enum r16_offset r16_idx);
+uint16_t get_regpair(const struct cpu *cpu, regpair_t reg);
+
+void set_hl(struct cpu *cpu, uint16_t val);
+
+uint16_t get_hl(struct cpu *cpu);
 
 // Flags used by the CPU. The values mask the bit corresponding to the flag.
 enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };

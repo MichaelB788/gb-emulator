@@ -14,13 +14,22 @@ void init_cpu(struct cpu *cpu) {
   cpu->SP = 0xFFFE;
 }
 
-void set_r8_pair(struct cpu *cpu, enum r16_offset r16_idx, uint16_t val) {
-  cpu->r8[r16_idx] = val >> 8;
-  cpu->r8[r16_idx + 1] = val & 0xFF;
+void set_regpair(struct cpu *cpu, regpair_t rp, uint16_t val) {
+  cpu->r8[rp] = val >> 8;
+  cpu->r8[rp + 1] = val & 0xFF;
 }
 
-uint16_t get_r8_pair(const struct cpu *cpu, enum r16_offset r16_idx) {
-  return (uint16_t)cpu->r8[r16_idx] << 8 | cpu->r8[r16_idx + 1];
+uint16_t get_regpair(const struct cpu *cpu, regpair_t rp) {
+  return (uint16_t)cpu->r8[rp] << 8 | cpu->r8[rp + 1];
+}
+
+void set_hl(struct cpu *cpu, uint16_t val) {
+  cpu->r8[REG_HL] = val >> 8;
+  cpu->r8[REG_HL + 1] = val & 0xFF;
+}
+
+uint16_t get_hl(struct cpu *cpu) {
+  return (uint16_t)cpu->r8[REG_HL] << 8 | cpu->r8[REG_HL];
 }
 
 void set_flag(struct cpu *cpu, enum flag flag, bool val) {
