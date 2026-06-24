@@ -1,6 +1,6 @@
 #pragma once
-#include "cpu.h"
 #include "gameboy.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 /// Helper functions
@@ -11,11 +11,17 @@ uint8_t field_z(uint8_t opcode);
 
 uint8_t fetch_n8(struct gameboy *gb);
 
+uint16_t fetch_n16(struct gameboy *gb);
+
 uint8_t read_hl(struct gameboy *gb);
 
 void write_hl(struct gameboy *gb, uint8_t val);
 
-uint16_t fetch_n16(struct gameboy *gb);
+uint16_t get_r16(const struct cpu *cpu, uint8_t opcode);
+
+void set_r16(struct cpu *cpu, uint8_t opcode, uint16_t val);
+
+uint16_t get_r16_ind(struct cpu *cpu, uint8_t opcode);
 
 enum condition_code { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 };
 bool test_condition(struct cpu *cpu, enum condition_code cond);
@@ -24,7 +30,7 @@ void push_onto_stack(struct gameboy *gb, uint16_t val);
 
 uint16_t pop_off_stack(struct gameboy *gb);
 
-/// Arithmetic implementations
+/// 8-bit arithmetic implementations
 
 void add_impl(struct cpu *cpu, uint8_t operand, bool carry);
 
@@ -35,6 +41,12 @@ void cp_impl(struct cpu *cpu, uint8_t operand);
 uint8_t inc_n8_impl(struct cpu *cpu, uint8_t operand);
 
 uint8_t dec_n8_impl(struct cpu *cpu, uint8_t operand);
+
+/// 16-bit arithmetic implementations
+
+void add_r16_impl(struct cpu *cpu, uint16_t operand);
+
+uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8);
 
 /// Bitwise implementations
 
@@ -86,19 +98,15 @@ int ldh_n8_ind_a(struct gameboy *gb);
 
 int ldh_c_ind_a(struct gameboy *gb);
 
+int ld_a_r16_ind(struct gameboy *gb);
+
+int ld_a_n16_ind(struct gameboy *gb);
+
+int ldh_a_n8_ind(struct gameboy *gb);
+
 int ldh_a_c_ind(struct gameboy *gb);
 
-int ld_hli_ind_a(struct gameboy *gb);
-
-int ld_hld_ind_a(struct gameboy *gb);
-
-int ld_a_hli_ind(struct gameboy *gb);
-
-int ld_a_hld_ind(struct gameboy *gb);
-
-/**
- * 8-bit arithmetic instructions
- */
+/// 8-bit arithmetic instructions
 
 int adc_r8(struct gameboy *gb);
 
@@ -138,8 +146,30 @@ int dec_r8(struct gameboy *gb);
 
 int dec_hl_ind(struct gameboy *gb);
 
+/// 16-bit arithmetic instructions
+
+int add_hl_r16(struct gameboy *gb);
+
+int inc_r16(struct gameboy *gb);
+
+int dec_r16(struct gameboy *gb);
+
+/// Jumps and subroutine instructions
+
+int rst_vec(struct gameboy *gb);
+
+/// Stack manipulation instructions
+
+int pop_r16stk(struct gameboy *gb);
+
+int push_r16stk(struct gameboy *gb);
+
 /// Misc.
 
-void daa(struct cpu *cpu);
+int nop(struct gameboy *gb);
 
-void illegal(struct gameboy *gb);
+int halt(struct gameboy *gb);
+
+int daa(struct gameboy *gb);
+
+int illegal(struct gameboy *gb);

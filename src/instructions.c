@@ -1,5 +1,6 @@
 #include "instructions.h"
 #include "cpu.h"
+#include "gameboy.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,16 +13,64 @@ uint8_t field_z(uint8_t opcode) { return opcode & 0b111; }
 
 uint8_t fetch_n8(struct gameboy *gb) { return read_byte(gb, gb->cpu.PC++); }
 
+uint16_t fetch_n16(struct gameboy *gb) {
+  const uint8_t lo = read_byte(gb, gb->cpu.PC++);
+  const uint8_t hi = read_byte(gb, gb->cpu.PC++);
+  return (uint16_t)hi << 8 | lo;
+}
+
 uint8_t read_hl(struct gameboy *gb) { return read_byte(gb, get_hl(&gb->cpu)); }
 
 void write_hl(struct gameboy *gb, uint8_t val) {
   write_byte(gb, get_hl(&gb->cpu), val);
 }
 
-uint16_t fetch_n16(struct gameboy *gb) {
-  const uint8_t lo = read_byte(gb, gb->cpu.PC++);
-  const uint8_t hi = read_byte(gb, gb->cpu.PC++);
-  return (uint16_t)hi << 8 | lo;
+uint16_t get_r16(const struct cpu *cpu, uint8_t opcode) {
+  const uint8_t r16 = field_y(opcode) & 0b110;
+  if (r16 == 0b110)
+    return cpu->SP;
+  else
+    return get_regpair(cpu, r16);
+}
+
+void set_r16(struct cpu *cpu, uint8_t opcode, uint16_t val) {
+  const uint8_t r16 = field_y(opcode) & 0b110;
+  if (r16 == 0b110)
+    cpu->SP = val;
+  else
+    set_regpair(cpu, r16, val);
+}
+
+uint16_t get_r16_ind(struct cpu *cpu, uint8_t opcode) {
+  const uint8_t r16_ind = field_y(opcode) & 0b110;
+  if (r16_ind == 0 || r16_ind == 1) {
+    return get_regpair(cpu, r16_ind);
+  } else {
+    const uint16_t ret = get_hl(cpu);
+    if (r16_ind == 3)
+      set_hl(cpu, ret + 1);
+    else
+      set_hl(cpu, ret - 1);
+    return ret;
+  }
+}
+
+uint16_t get_r16stk(const struct cpu *cpu, uint8_t opcode) {
+  const uint8_t r16 = field_y(opcode) & 0b110;
+  if (r16 == 0b110)
+    return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
+  else
+    return get_regpair(cpu, r16);
+}
+
+void set_r16stk(struct cpu *cpu, uint8_t opcode, uint16_t val) {
+  const uint8_t r16 = field_y(opcode) & 0b110;
+  if (r16 == 0b110) {
+    cpu->r8[REG_A] = val >> 8;
+    cpu->r8[REG_F] = val & 0xF0;
+  } else {
+    set_regpair(cpu, r16, val);
+  }
 }
 
 bool test_condition(struct cpu *cpu, enum condition_code cond) {
@@ -279,8 +328,7 @@ int ld_r8_n8(struct gameboy *gb) {
 }
 
 int ld_r16_n16(struct gameboy *gb) {
-  const enum regpair dest = field_y(gb->opcode) & 0b110;
-  set_regpair(&gb->cpu, dest, fetch_n16(gb));
+  set_r16(&gb->cpu, gb->opcode, fetch_n16(gb));
   return 12;
 }
 
@@ -302,8 +350,7 @@ int ld_r8_hl_ind(struct gameboy *gb) {
 }
 
 int ld_r16_ind_a(struct gameboy *gb) {
-  const enum regpair src = field_y(gb->opcode) & 0b110;
-  write_byte(gb, get_regpair(&gb->cpu, src), gb->cpu.r8[REG_A]);
+  write_byte(gb, get_r16_ind(&gb->cpu, gb->opcode), gb->cpu.r8[REG_A]);
   return 8;
 }
 
@@ -322,36 +369,23 @@ int ldh_c_ind_a(struct gameboy *gb) {
   return 8;
 }
 
+int ld_a_r16_ind(struct gameboy *gb) {
+  gb->cpu.r8[REG_A] = read_byte(gb, get_r16_ind(&gb->cpu, gb->opcode));
+  return 8;
+}
+
+int ld_a_n16_ind(struct gameboy *gb) {
+  gb->cpu.r8[REG_A] = read_byte(gb, fetch_n16(gb));
+  return 16;
+}
+
+int ldh_a_n8_ind(struct gameboy *gb) {
+  gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | fetch_n8(gb));
+  return 12;
+}
+
 int ldh_a_c_ind(struct gameboy *gb) {
   gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | gb->cpu.r8[REG_C]);
-  return 8;
-}
-
-int ld_hli_ind_a(struct gameboy *gb) {
-  const uint16_t HL = get_hl(&gb->cpu);
-  write_byte(gb, HL, gb->cpu.r8[REG_A]);
-  set_hl(&gb->cpu, HL + 1);
-  return 8;
-}
-
-int ld_hld_ind_a(struct gameboy *gb) {
-  const uint16_t HL = get_hl(&gb->cpu);
-  write_byte(gb, HL, gb->cpu.r8[REG_A]);
-  set_hl(&gb->cpu, HL - 1);
-  return 8;
-}
-
-int ld_a_hli_ind(struct gameboy *gb) {
-  const uint16_t HL = get_hl(&gb->cpu);
-  gb->cpu.r8[REG_A] = read_byte(gb, HL);
-  set_hl(&gb->cpu, HL + 1);
-  return 8;
-}
-
-int ld_a_hld_ind(struct gameboy *gb) {
-  const uint16_t HL = get_hl(&gb->cpu);
-  gb->cpu.r8[REG_A] = read_byte(gb, HL);
-  set_hl(&gb->cpu, HL - 1);
   return 8;
 }
 
@@ -459,9 +493,55 @@ int dec_hl_ind(struct gameboy *gb) {
   return 12;
 }
 
+int add_hl_r16(struct gameboy *gb) {
+  add_r16_impl(&gb->cpu, get_r16(&gb->cpu, gb->opcode));
+  return 8;
+}
+
+int inc_r16(struct gameboy *gb) {
+  const uint8_t op = gb->opcode;
+  set_r16(&gb->cpu, op, get_r16(&gb->cpu, op) + 1);
+  return 8;
+}
+
+int dec_r16(struct gameboy *gb) {
+  const uint8_t op = gb->opcode;
+  set_r16(&gb->cpu, op, get_r16(&gb->cpu, op) - 1);
+  return 8;
+}
+
+/// Jumps and subroutine instructions
+
+int rst_vec(struct gameboy *gb) {
+  const uint16_t jmp_addr = gb->opcode & 0x38;
+  push_onto_stack(gb, gb->cpu.PC);
+  gb->cpu.PC = jmp_addr;
+  return 16;
+}
+
+/// Stack manipulation instructions
+
+int pop_r16stk(struct gameboy *gb) {
+  set_r16stk(&gb->cpu, gb->opcode, pop_off_stack(gb));
+  return 12;
+}
+
+int push_r16stk(struct gameboy *gb) {
+  push_onto_stack(gb, get_r16stk(&gb->cpu, gb->opcode));
+  return 16;
+}
+
 /// Misc.
 
-void daa(struct cpu *cpu) {
+int nop(struct gameboy *gb) { return 4; }
+
+int halt(struct gameboy *gb) {
+  gb->state = GB_HALTED;
+  return 4;
+}
+
+int daa(struct gameboy *gb) {
+  struct cpu *cpu = &gb->cpu;
   const uint8_t A = cpu->r8[REG_A];
   uint8_t result = 0;
 
@@ -490,9 +570,11 @@ void daa(struct cpu *cpu) {
   set_flag(cpu, FLAG_H, false);
 
   cpu->r8[REG_A] = result;
+  return 4;
 }
 
-void illegal(struct gameboy *gb) {
+int illegal(struct gameboy *gb) {
   fprintf(stderr, "Illegal instruction: 0x%2X\n", gb->opcode);
   gb->state = GB_STOPPED;
+  return 0;
 }
