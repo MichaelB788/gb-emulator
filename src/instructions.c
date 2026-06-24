@@ -97,7 +97,7 @@ uint16_t pop_off_stack(struct gameboy *gb) {
   return (uint16_t)hi << 8 | lo;
 }
 
-/// Arithmetic implementations
+/// 8-bit arithmetic implementations
 
 void add_impl(struct cpu *cpu, uint8_t operand, bool carry) {
   const uint8_t A = cpu->r8[REG_A];
@@ -155,6 +155,8 @@ uint8_t dec_n8_impl(struct cpu *cpu, uint8_t operand) {
   return result;
 }
 
+/// 16-bit arithmetic instructions
+
 void add_r16_impl(struct cpu *cpu, uint16_t operand) {
   const uint16_t HL = get_regpair(cpu, REG_HL);
   const uint32_t sum = HL + operand;
@@ -178,7 +180,7 @@ uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
   return sum;
 }
 
-/// Bitwise implementations
+/// Bitwise logic implementations
 
 void and_impl(struct cpu *cpu, const uint8_t operand) {
   const uint8_t A = cpu->r8[REG_A];
@@ -215,6 +217,8 @@ void or_impl(struct cpu *cpu, const uint8_t operand) {
 
   cpu->r8[REG_A] = result;
 }
+
+/// Bit flag implementations
 
 void bit_b3_impl(struct cpu *cpu, uint8_t b3, uint8_t r8) {
   set_flag(cpu, FLAG_Z, !((r8 >> b3) & 1));
@@ -508,6 +512,97 @@ int dec_r16(struct gameboy *gb) {
   const uint8_t op = gb->opcode;
   set_r16(&gb->cpu, op, get_r16(&gb->cpu, op) - 1);
   return 8;
+}
+
+/// Bitwise logic instructions
+
+int and_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  and_impl(&gb->cpu, gb->cpu.r8[reg]);
+  return 4;
+}
+
+int and_hl_ind(struct gameboy *gb) {
+  and_impl(&gb->cpu, read_hl(gb));
+  return 8;
+}
+
+int and_n8(struct gameboy *gb) {
+  and_impl(&gb->cpu, fetch_n8(gb));
+  return 8;
+}
+
+int or_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  or_impl(&gb->cpu, gb->cpu.r8[reg]);
+  return 4;
+}
+
+int or_hl_ind(struct gameboy *gb) {
+  or_impl(&gb->cpu, read_hl(gb));
+  return 8;
+}
+
+int or_n8(struct gameboy *gb) {
+  or_impl(&gb->cpu, fetch_n8(gb));
+  return 8;
+}
+
+int xor_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  xor_impl(&gb->cpu, gb->cpu.r8[reg]);
+  return 4;
+}
+
+int xor_hl_ind(struct gameboy *gb) {
+  xor_impl(&gb->cpu, read_hl(gb));
+  return 8;
+}
+
+int xor_n8(struct gameboy *gb) {
+  xor_impl(&gb->cpu, fetch_n8(gb));
+  return 8;
+}
+
+/// Bit flag instructions
+
+int bit_b3_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  const uint8_t b3 = field_y(gb->opcode);
+  bit_b3_impl(&gb->cpu, b3, gb->cpu.r8[reg]);
+  return 8;
+}
+
+int bit_b3_hl_ind(struct gameboy *gb) {
+  const uint8_t b3 = field_y(gb->opcode);
+  bit_b3_impl(&gb->cpu, b3, read_hl(gb));
+  return 12;
+}
+
+int res_b3_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  const uint8_t b3 = field_y(gb->opcode);
+  gb->cpu.r8[reg] &= ~(1 << b3);
+  return 8;
+}
+
+int res_b3_hl_ind(struct gameboy *gb) {
+  const uint8_t b3 = field_y(gb->opcode);
+  write_hl(gb, read_hl(gb) & ~(1 << b3));
+  return 16;
+}
+
+int set_b3_r8(struct gameboy *gb) {
+  const enum reg8 reg = field_z(gb->opcode);
+  const uint8_t b3 = field_y(gb->opcode);
+  gb->cpu.r8[reg] |= 1 << b3;
+  return 8;
+}
+
+int set_b3_hl_ind(struct gameboy *gb) {
+  const uint8_t b3 = field_y(gb->opcode);
+  write_hl(gb, read_hl(gb) | 1 << b3);
+  return 16;
 }
 
 /// Jumps and subroutine instructions

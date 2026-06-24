@@ -48,13 +48,15 @@ void add_r16_impl(struct cpu *cpu, uint16_t operand);
 
 uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8);
 
-/// Bitwise implementations
+/// Bitwise logic implementations
 
 void and_impl(struct cpu *cpu, const uint8_t operand);
 
 void xor_impl(struct cpu *cpu, const uint8_t operand);
 
 void or_impl(struct cpu *cpu, const uint8_t operand);
+
+/// Bit flag implementations
 
 void bit_b3_impl(struct cpu *cpu, uint8_t b3, uint8_t r8);
 
@@ -153,6 +155,40 @@ int add_hl_r16(struct gameboy *gb);
 int inc_r16(struct gameboy *gb);
 
 int dec_r16(struct gameboy *gb);
+
+/// Bitwise logic instructions
+
+int and_r8(struct gameboy *gb);
+
+int and_hl_ind(struct gameboy *gb);
+
+int and_n8(struct gameboy *gb);
+
+int or_r8(struct gameboy *gb);
+
+int or_hl_ind(struct gameboy *gb);
+
+int or_n8(struct gameboy *gb);
+
+int xor_r8(struct gameboy *gb);
+
+int xor_hl_ind(struct gameboy *gb);
+
+int xor_n8(struct gameboy *gb);
+
+/// Bit flag instructions
+
+int bit_b3_r8(struct gameboy *gb);
+
+int bit_b3_hl_ind(struct gameboy *gb);
+
+int res_b3_r8(struct gameboy *gb);
+
+int res_b3_hl_ind(struct gameboy *gb);
+
+int set_b3_r8(struct gameboy *gb);
+
+int set_b3_hl_ind(struct gameboy *gb);
 
 /// Jumps and subroutine instructions
 
