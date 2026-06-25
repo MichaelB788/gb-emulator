@@ -24,11 +24,11 @@ void set_r16(struct cpu *cpu, uint8_t opcode, uint16_t val);
 uint16_t get_r16_ind(struct cpu *cpu, uint8_t opcode);
 
 enum condition_code { COND_NZ = 0, COND_Z = 1, COND_NC = 2, COND_C = 3 };
-bool test_condition(struct cpu *cpu, enum condition_code cond);
+bool check_condition(struct cpu *cpu, enum condition_code cond);
 
-void push_onto_stack(struct gameboy *gb, uint16_t val);
+void push_n16(struct gameboy *gb, uint16_t val);
 
-uint16_t pop_off_stack(struct gameboy *gb);
+uint16_t pop_n16(struct gameboy *gb);
 
 /// 8-bit arithmetic implementations
 
@@ -176,6 +176,8 @@ int xor_hl_ind(struct gameboy *gb);
 
 int xor_n8(struct gameboy *gb);
 
+int cpl(struct gameboy *gb);
+
 /// Bit flag instructions
 
 int bit_b3_r8(struct gameboy *gb);
@@ -190,22 +192,108 @@ int set_b3_r8(struct gameboy *gb);
 
 int set_b3_hl_ind(struct gameboy *gb);
 
+/// Bit shfit instructions
+
+int rl_r8(struct gameboy *gb);
+
+int rl_hl_ind(struct gameboy *gb);
+
+int rla(struct gameboy *gb);
+
+int rlc_r8(struct gameboy *gb);
+
+int rlc_hl_ind(struct gameboy *gb);
+
+int rlca(struct gameboy *gb);
+
+int rr_r8(struct gameboy *gb);
+
+int rr_hl_ind(struct gameboy *gb);
+
+int rra(struct gameboy *gb);
+
+int rrc_r8(struct gameboy *gb);
+
+int rrc_hl_ind(struct gameboy *gb);
+
+int rrca(struct gameboy *gb);
+
+int sla_r8(struct gameboy *gb);
+
+int sla_hl_ind(struct gameboy *gb);
+
+int sra_r8(struct gameboy *gb);
+
+int sra_hl_ind(struct gameboy *gb);
+
+int srl_r8(struct gameboy *gb);
+
+int srl_hl_ind(struct gameboy *gb);
+
+int swap_r8(struct gameboy *gb);
+
+int swap_hl_ind(struct gameboy *gb);
+
 /// Jumps and subroutine instructions
+
+int call_n16(struct gameboy *gb);
+
+int call_cc_n16(struct gameboy *gb);
+
+int jp_hl(struct gameboy *gb);
+
+int jp_n16(struct gameboy *gb);
+
+int jp_cc_n16(struct gameboy *gb);
+
+int jr_e8(struct gameboy *gb);
+
+int jr_cc_e8(struct gameboy *gb);
+
+int ret_cc(struct gameboy *gb);
+
+int ret(struct gameboy *gb);
+
+int reti(struct gameboy *gb);
 
 int rst_vec(struct gameboy *gb);
 
+/// Carry flag instructions
+
+int ccf(struct gameboy *gb);
+
+int scf(struct gameboy *gb);
+
 /// Stack manipulation instructions
+
+int add_sp_e8(struct gameboy *gb);
+
+int ld_hl_sp_e8(struct gameboy *gb);
+
+int ld_n16_ind_sp(struct gameboy *gb);
+
+int ld_sp_hl(struct gameboy *gb);
 
 int pop_r16stk(struct gameboy *gb);
 
 int push_r16stk(struct gameboy *gb);
 
-/// Misc.
+/// Interrupt-related instructions
 
-int nop(struct gameboy *gb);
+int di(struct gameboy *gb);
+
+int ei(struct gameboy *gb);
 
 int halt(struct gameboy *gb);
 
+/// Misc.
+
 int daa(struct gameboy *gb);
+
+int nop(struct gameboy *gb);
+
+int stop(struct gameboy *gb);
+
+int prefix(struct gameboy *gb);
 
 int illegal(struct gameboy *gb);

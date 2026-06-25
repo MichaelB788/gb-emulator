@@ -5,8 +5,10 @@
 static int (*const unprefixed_ins[256])(struct gameboy *) = {
     /// Block 0
 
-    // TODO: 1
     [0x00] = &nop,
+    [0x10] = &stop,
+    [0x20] = &jr_cc_e8,
+    [0x30] = &jr_cc_e8,
 
     [0x01] = &ld_r16_n16,
     [0x11] = &ld_r16_n16,
@@ -38,7 +40,15 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
     [0x26] = &ld_r8_n8,
     [0x36] = &ld_hl_ind_n8,
 
-    // TODO: 7, 8
+    [0x07] = &rlca,
+    [0x17] = &rla,
+    [0x27] = &daa,
+    [0x37] = &scf,
+
+    [0x08] = &ld_n16_ind_sp,
+    [0x18] = &jr_e8,
+    [0x28] = &jr_cc_e8,
+    [0x38] = &jr_cc_e8,
 
     [0x09] = &add_hl_r16,
     [0x19] = &add_hl_r16,
@@ -70,7 +80,10 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
     [0x2E] = &ld_r8_n8,
     [0x3E] = &ld_r8_n8,
 
-    // TODO: F
+    [0x0F] = &rrca,
+    [0x1F] = &rra,
+    [0x2F] = &cpl,
+    [0x3F] = &ccf,
 
     /// Block 1: 8-bit register-to-register loads
 
@@ -207,6 +220,8 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
 
     /// Block 3
 
+    [0xC0] = &ret_cc,
+    [0xD0] = &ret_cc,
     [0xE0] = &ldh_n8_ind_a,
     [0xF0] = &ldh_a_n8_ind,
 
@@ -215,8 +230,20 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
     [0xE1] = &pop_r16stk,
     [0xF1] = &pop_r16stk,
 
+    [0xC2] = &jp_cc_n16,
+    [0xD2] = &jp_cc_n16,
     [0xE2] = &ldh_c_ind_a,
     [0xF2] = &ldh_a_c_ind,
+
+    [0xC3] = &jp_n16,
+    [0xD3] = &illegal,
+    [0xE3] = &illegal,
+    [0xF3] = &di,
+
+    [0xC4] = &call_cc_n16,
+    [0xD4] = &call_cc_n16,
+    [0xE4] = &illegal,
+    [0xF4] = &illegal,
 
     [0xC5] = &push_r16stk,
     [0xD5] = &push_r16stk,
@@ -233,8 +260,35 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
     [0xE7] = &rst_vec,
     [0xF7] = &rst_vec,
 
+    [0xC8] = &ret_cc,
+    [0xD8] = &ret_cc,
+    [0xE8] = &add_sp_e8,
+    [0xF8] = &ld_hl_sp_e8,
+
+    [0xC9] = &ret,
+    [0xD9] = &reti,
+    [0xE9] = &jp_hl,
+    [0xF9] = &ld_sp_hl,
+
+    [0xCA] = &jp_cc_n16,
+    [0xDA] = &jp_cc_n16,
     [0xEA] = &ld_n16_ind_a,
     [0xFA] = &ld_a_n16_ind,
+
+    [0xCB] = &prefix,
+    [0xDB] = &illegal,
+    [0xEB] = &illegal,
+    [0xFB] = &ei,
+
+    [0xCC] = &call_cc_n16,
+    [0xDC] = &call_cc_n16,
+    [0xEC] = &illegal,
+    [0xFC] = &illegal,
+
+    [0xCD] = &call_n16,
+    [0xDD] = &illegal,
+    [0xED] = &illegal,
+    [0xFD] = &illegal,
 
     [0xCE] = &adc_n8,
     [0xDE] = &sbc_n8,
@@ -249,6 +303,71 @@ static int (*const unprefixed_ins[256])(struct gameboy *) = {
 
 static int (*const cbprefixed_ins[256])(struct gameboy *) = {
     /// Block 0
+
+    [0x00] = &rlc_r8,
+    [0x01] = &rlc_r8,
+    [0x02] = &rlc_r8,
+    [0x03] = &rlc_r8,
+    [0x04] = &rlc_r8,
+    [0x05] = &rlc_r8,
+    [0x06] = &rlc_hl_ind,
+    [0x07] = &rlc_r8,
+    [0x08] = &rrc_r8,
+    [0x09] = &rrc_r8,
+    [0x0A] = &rrc_r8,
+    [0x0B] = &rrc_r8,
+    [0x0C] = &rrc_r8,
+    [0x0D] = &rrc_r8,
+    [0x0E] = &rrc_hl_ind,
+    [0x0F] = &rrc_r8,
+    [0x10] = &rl_r8,
+    [0x11] = &rl_r8,
+    [0x12] = &rl_r8,
+    [0x13] = &rl_r8,
+    [0x14] = &rl_r8,
+    [0x15] = &rl_r8,
+    [0x16] = &rl_hl_ind,
+    [0x17] = &rl_r8,
+    [0x18] = &rr_r8,
+    [0x19] = &rr_r8,
+    [0x1A] = &rr_r8,
+    [0x1B] = &rr_r8,
+    [0x1C] = &rr_r8,
+    [0x1D] = &rr_r8,
+    [0x1E] = &rr_hl_ind,
+    [0x1F] = &rr_r8,
+    [0x20] = &sla_r8,
+    [0x21] = &sla_r8,
+    [0x22] = &sla_r8,
+    [0x23] = &sla_r8,
+    [0x24] = &sla_r8,
+    [0x25] = &sla_r8,
+    [0x26] = &sla_hl_ind,
+    [0x27] = &sla_r8,
+    [0x28] = &sra_r8,
+    [0x29] = &sra_r8,
+    [0x2A] = &sra_r8,
+    [0x2B] = &sra_r8,
+    [0x2C] = &sra_r8,
+    [0x2D] = &sra_r8,
+    [0x2E] = &sra_hl_ind,
+    [0x2F] = &sra_r8,
+    [0x30] = &swap_r8,
+    [0x31] = &swap_r8,
+    [0x32] = &swap_r8,
+    [0x33] = &swap_r8,
+    [0x34] = &swap_r8,
+    [0x35] = &swap_r8,
+    [0x36] = &swap_hl_ind,
+    [0x37] = &swap_r8,
+    [0x38] = &srl_r8,
+    [0x39] = &srl_r8,
+    [0x3A] = &srl_r8,
+    [0x3B] = &srl_r8,
+    [0x3C] = &srl_r8,
+    [0x3D] = &srl_r8,
+    [0x3E] = &srl_hl_ind,
+    [0x3F] = &srl_r8,
 
     /// Block 1: BIT b3 r8
 
