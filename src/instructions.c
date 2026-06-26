@@ -166,7 +166,7 @@ void add_r16_impl(struct cpu *cpu, uint16_t operand) {
   set_flag(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
   set_flag(cpu, FLAG_C, sum > 0xFFFF);
 
-  set_regpair(cpu, REG_HL, sum);
+  set_hl(cpu, sum);
 }
 
 uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
@@ -345,7 +345,7 @@ int ld_hl_ind_r8(struct gameboy *gb) {
 
 int ld_hl_ind_n8(struct gameboy *gb) {
   write_hl(gb, fetch_n8(gb));
-  return 8;
+  return 12;
 }
 
 int ld_r8_hl_ind(struct gameboy *gb) {
@@ -879,9 +879,9 @@ int daa(struct gameboy *gb) {
   struct cpu *cpu = &gb->cpu;
   const uint8_t A = cpu->r8[REG_A];
   uint8_t result = 0;
+  uint8_t adjustment = 0;
 
   if (is_flag_set(cpu, FLAG_N)) {
-    uint8_t adjustment = 0;
     if (is_flag_set(cpu, FLAG_H)) {
       adjustment |= 0x6;
     }
@@ -890,7 +890,6 @@ int daa(struct gameboy *gb) {
     }
     result = A - adjustment;
   } else {
-    uint8_t adjustment = 0;
     if (is_flag_set(cpu, FLAG_H) || (A & 0xF) > 0x9) {
       adjustment |= 0x6;
     }
