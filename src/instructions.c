@@ -78,11 +78,11 @@ bool check_condition(struct cpu *cpu, enum condition_code cond) {
   switch (cond) {
   case COND_NZ:
     return !is_flag_set(cpu, FLAG_Z);
-  case COND_Z: // Z
+  case COND_Z:
     return is_flag_set(cpu, FLAG_Z);
-  case COND_NC: // NC
+  case COND_NC:
     return !is_flag_set(cpu, FLAG_C);
-  case COND_C: // C
+  case COND_C:
     return is_flag_set(cpu, FLAG_C);
   }
 }
@@ -176,7 +176,7 @@ uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
   set_flag(cpu, FLAG_Z, false);
   set_flag(cpu, FLAG_N, false);
   set_flag(cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
-  set_flag(cpu, FLAG_C, sum > 0xFF);
+  set_flag(cpu, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
 
   return sum;
 }
@@ -921,7 +921,7 @@ int prefix(struct gameboy *gb) {
 }
 
 int illegal(struct gameboy *gb) {
-  fprintf(stderr, "Illegal instruction: 0x%2X\n", gb->opcode);
+  fprintf(stderr, "Illegal instruction: 0x%02X\n", gb->opcode);
   gb->state = GB_STOPPED;
   return 0;
 }
