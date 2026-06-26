@@ -3,15 +3,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void log_instruction(const struct cpu *cpu,
-                     const struct opcode_info *opcode_info, uint16_t pc_prev,
-                     FILE *output) {
+void log_instruction(const struct cpu *cpu, const uint8_t opcode,
+                     uint16_t pc_prev, FILE *output) {
   fprintf(output,
           "[%02X] B:%02x C:%02x D:%02x E:%02x H:%02x L:%02x A:%02x F:%02x "
           "PC:%04x SP:%04x %s\n",
-          opcode_info->opcode, cpu->r8[REG_B], cpu->r8[REG_C], cpu->r8[REG_D],
+          opcode, cpu->r8[REG_B], cpu->r8[REG_C], cpu->r8[REG_D],
           cpu->r8[REG_E], cpu->r8[REG_H], cpu->r8[REG_L], cpu->r8[REG_A],
-          cpu->r8[REG_F], pc_prev, cpu->SP, opcode_info->mnemonic);
+          cpu->r8[REG_F], pc_prev, cpu->SP, unprefixed_mnemonic[opcode]);
   fflush(output);
 }
 
@@ -28,11 +27,10 @@ int main() {
   struct gameboy gb = {0};
   if (init_gameboy(&gb, full_path)) {
     while (gb.state == GB_RUNNING) {
-      const uint16_t pc_prev = gb.cpu.PC;
-      const struct opcode_info opcode_info =
-          unprefixed[read_byte(&gb, gb.cpu.PC++)];
-      log_instruction(&gb.cpu, &opcode_info, pc_prev, log_file);
-      execute_instruction(&gb, opcode_info.opcode);
+      gb.opcode = read_byte(&gb, gb.cpu.PC);
+      log_instruction(&gb.cpu, gb.opcode, gb.cpu.PC, log_file);
+      gb.cpu.PC++;
+      int cycles = unprefixed_ins[gb.opcode](&gb);
     }
     close_gameboy(&gb);
   }

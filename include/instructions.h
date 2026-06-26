@@ -1,7 +1,9 @@
 #pragma once
-#include "gameboy.h"
 #include <stdbool.h>
 #include <stdint.h>
+
+struct gameboy;
+struct cpu;
 
 /// Helper functions
 

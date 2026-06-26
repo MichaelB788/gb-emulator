@@ -44,11 +44,11 @@ void set_r16(struct cpu *cpu, uint8_t opcode, uint16_t val) {
 
 uint16_t get_r16_ind(struct cpu *cpu, uint8_t opcode) {
   const uint8_t r16_ind_idx = field_y(opcode) & 0b110;
-  if (r16_ind_idx == 0 || r16_ind_idx == 1) {
+  if (r16_ind_idx == 0b000 || r16_ind_idx == 0b010) {
     return get_regpair(cpu, r16_ind_idx);
   } else {
     const uint16_t ret = get_hl(cpu);
-    if (r16_ind_idx == 3)
+    if (r16_ind_idx == 0b100)
       set_hl(cpu, ret + 1);
     else
       set_hl(cpu, ret - 1);
@@ -159,7 +159,7 @@ uint8_t dec_n8_impl(struct cpu *cpu, uint8_t operand) {
 /// 16-bit arithmetic instructions
 
 void add_r16_impl(struct cpu *cpu, uint16_t operand) {
-  const uint16_t HL = get_regpair(cpu, REG_HL);
+  const uint16_t HL = get_hl(cpu);
   const uint32_t sum = HL + operand;
 
   set_flag(cpu, FLAG_N, false);
@@ -477,7 +477,7 @@ int cp_n8(struct gameboy *gb) {
 }
 
 int inc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const enum reg8 i = field_y(gb->opcode);
   gb->cpu.r8[i] = inc_n8_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -488,7 +488,7 @@ int inc_hl_ind(struct gameboy *gb) {
 }
 
 int dec_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const enum reg8 i = field_y(gb->opcode);
   gb->cpu.r8[i] = dec_n8_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }

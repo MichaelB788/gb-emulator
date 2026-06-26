@@ -24,12 +24,12 @@ uint16_t get_regpair(const struct cpu *cpu, enum regpair rp) {
 }
 
 void set_hl(struct cpu *cpu, uint16_t val) {
-  cpu->r8[REG_HL] = val >> 8;
-  cpu->r8[REG_HL + 1] = val & 0xFF;
+  cpu->r8[REG_H] = val >> 8;
+  cpu->r8[REG_L] = val & 0xFF;
 }
 
 uint16_t get_hl(struct cpu *cpu) {
-  return (uint16_t)cpu->r8[REG_HL] << 8 | cpu->r8[REG_HL];
+  return (uint16_t)cpu->r8[REG_H] << 8 | cpu->r8[REG_L];
 }
 
 void set_flag(struct cpu *cpu, enum flag flag, bool val) {
