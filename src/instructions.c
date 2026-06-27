@@ -59,7 +59,7 @@ uint16_t get_r16_ind(struct cpu *cpu, uint8_t opcode) {
 uint16_t get_r16stk(const struct cpu *cpu, uint8_t opcode) {
   const uint8_t r16_stk_idx = field_y(opcode) & 0b110;
   if (r16_stk_idx == 0b110)
-    return (uint16_t)cpu->r8[REG_A] << 8 | cpu->r8[REG_F];
+    return (uint16_t)cpu->A << 8 | cpu->F;
   else
     return get_regpair(cpu, r16_stk_idx);
 }
@@ -67,8 +67,8 @@ uint16_t get_r16stk(const struct cpu *cpu, uint8_t opcode) {
 void set_r16stk(struct cpu *cpu, uint8_t opcode, uint16_t val) {
   const uint8_t r16_stk_idx = field_y(opcode) & 0b110;
   if (r16_stk_idx == 0b110) {
-    cpu->r8[REG_A] = val >> 8;
-    cpu->r8[REG_F] = val & 0xF0;
+    cpu->A = val >> 8;
+    cpu->F = val & 0xF0;
   } else {
     set_regpair(cpu, r16_stk_idx, val);
   }
@@ -77,13 +77,13 @@ void set_r16stk(struct cpu *cpu, uint8_t opcode, uint16_t val) {
 bool check_condition(struct cpu *cpu, enum condition_code cond) {
   switch (cond) {
   case COND_NZ:
-    return !is_flag_set(cpu, FLAG_Z);
+    return !is_flag_set(cpu->F, FLAG_Z);
   case COND_Z:
-    return is_flag_set(cpu, FLAG_Z);
+    return is_flag_set(cpu->F, FLAG_Z);
   case COND_NC:
-    return !is_flag_set(cpu, FLAG_C);
+    return !get_carry(cpu->F);
   case COND_C:
-    return is_flag_set(cpu, FLAG_C);
+    return get_carry(cpu->F);
   }
 }
 
@@ -101,47 +101,47 @@ uint16_t pop_n16(struct gameboy *gb) {
 /// 8-bit arithmetic implementations
 
 void add_impl(struct cpu *cpu, uint8_t operand, bool carry) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
 
   const uint16_t sum = A + operand + carry;
   const uint8_t result = (uint8_t)sum;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, (A & 0xF) + (operand & 0xF) + carry > 0xF);
-  set_flag(cpu, FLAG_C, sum > 0xFF);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, (A & 0xF) + (operand & 0xF) + carry > 0xF);
+  set_flag(&cpu->F, FLAG_C, sum > 0xFF);
 
-  cpu->r8[REG_A] = result;
+  cpu->A = result;
 }
 
 void sub_impl(struct cpu *cpu, uint8_t operand, bool carry) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
 
   const uint8_t result = A - (operand + carry);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, true);
-  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF) + carry);
-  set_flag(cpu, FLAG_C, A < (uint16_t)(operand + carry));
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, true);
+  set_flag(&cpu->F, FLAG_H, (A & 0xF) < (operand & 0xF) + carry);
+  set_flag(&cpu->F, FLAG_C, A < (uint16_t)(operand + carry));
 
-  cpu->r8[REG_A] = result;
+  cpu->A = result;
 }
 
 void cp_impl(struct cpu *cpu, uint8_t operand) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
 
-  set_flag(cpu, FLAG_Z, A - operand == 0);
-  set_flag(cpu, FLAG_N, true);
-  set_flag(cpu, FLAG_H, (A & 0xF) < (operand & 0xF));
-  set_flag(cpu, FLAG_C, A < operand);
+  set_flag(&cpu->F, FLAG_Z, A - operand == 0);
+  set_flag(&cpu->F, FLAG_N, true);
+  set_flag(&cpu->F, FLAG_H, (A & 0xF) < (operand & 0xF));
+  set_flag(&cpu->F, FLAG_C, A < operand);
 }
 
 uint8_t inc_n8_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand + 1;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, (operand & 0xF) == 0xF);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, (operand & 0xF) == 0xF);
 
   return result;
 }
@@ -149,9 +149,9 @@ uint8_t inc_n8_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t dec_n8_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand - 1;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, true);
-  set_flag(cpu, FLAG_H, (operand & 0xF) == 0x0);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, true);
+  set_flag(&cpu->F, FLAG_H, (operand & 0xF) == 0x0);
 
   return result;
 }
@@ -162,9 +162,9 @@ void add_r16_impl(struct cpu *cpu, uint16_t operand) {
   const uint16_t HL = get_hl(cpu);
   const uint32_t sum = HL + operand;
 
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
-  set_flag(cpu, FLAG_C, sum > 0xFFFF);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
+  set_flag(&cpu->F, FLAG_C, sum > 0xFFFF);
 
   set_hl(cpu, sum);
 }
@@ -173,10 +173,10 @@ uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
   const uint16_t SP = cpu->SP;
   const uint16_t sum = SP + e8;
 
-  set_flag(cpu, FLAG_Z, false);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
-  set_flag(cpu, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
+  set_flag(&cpu->F, FLAG_Z, false);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
+  set_flag(&cpu->F, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
 
   return sum;
 }
@@ -184,58 +184,58 @@ uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
 /// Bitwise logic implementations
 
 void and_impl(struct cpu *cpu, const uint8_t operand) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
   const uint8_t result = A & operand;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, true);
-  set_flag(cpu, FLAG_C, false);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, true);
+  set_flag(&cpu->F, FLAG_C, false);
 
-  cpu->r8[REG_A] = result;
+  cpu->A = result;
 }
 
 void xor_impl(struct cpu *cpu, const uint8_t operand) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
   const uint8_t result = A ^ operand;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, false);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, false);
 
-  cpu->r8[REG_A] = result;
+  cpu->A = result;
 }
 
 void or_impl(struct cpu *cpu, const uint8_t operand) {
-  const uint8_t A = cpu->r8[REG_A];
+  const uint8_t A = cpu->A;
   const uint8_t result = A | operand;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, false);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, false);
 
-  cpu->r8[REG_A] = result;
+  cpu->A = result;
 }
 
 /// Bit flag implementations
 
 void bit_b3_impl(struct cpu *cpu, uint8_t b3, uint8_t r8) {
-  set_flag(cpu, FLAG_Z, !((r8 >> b3) & 1));
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, true);
+  set_flag(&cpu->F, FLAG_Z, !((r8 >> b3) & 1));
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, true);
 }
 
 /// Bit-shift implementations
 
 uint8_t rl_impl(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = operand << 1 | is_flag_set(cpu, FLAG_C);
+  const uint8_t result = operand << 1 | get_carry(cpu->F);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 0x80);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 0x80);
 
   return result;
 }
@@ -243,21 +243,21 @@ uint8_t rl_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t rlc_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1 | ((operand >> 7) & 1);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 0x80);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 0x80);
 
   return result;
 }
 
 uint8_t rr_impl(struct cpu *cpu, uint8_t operand) {
-  const uint8_t result = (is_flag_set(cpu, FLAG_C) << 7) | (operand >> 1);
+  const uint8_t result = (get_carry(cpu->F) << 7) | (operand >> 1);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 1);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 1);
 
   return result;
 }
@@ -265,10 +265,10 @@ uint8_t rr_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t rrc_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = ((operand & 1) << 7) | (operand >> 1);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 1);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 1);
 
   return result;
 }
@@ -276,10 +276,10 @@ uint8_t rrc_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t sla_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand << 1;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 0x80);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 0x80);
 
   return result;
 }
@@ -287,10 +287,10 @@ uint8_t sla_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t sra_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand & 0x80) | (operand >> 1);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 1);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 1);
 
   return result;
 }
@@ -298,10 +298,10 @@ uint8_t sra_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t srl_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = operand >> 1;
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, operand & 1);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, operand & 1);
 
   return result;
 }
@@ -309,25 +309,59 @@ uint8_t srl_impl(struct cpu *cpu, uint8_t operand) {
 uint8_t swap_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t result = (operand << 4) | (operand >> 4);
 
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_N, false);
-  set_flag(cpu, FLAG_H, false);
-  set_flag(cpu, FLAG_C, false);
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_N, false);
+  set_flag(&cpu->F, FLAG_H, false);
+  set_flag(&cpu->F, FLAG_C, false);
 
   return result;
+}
+
+/// DAA implementation
+
+void daa_impl(struct cpu *cpu) {
+  const uint8_t A = cpu->A;
+  const uint8_t F = cpu->F;
+
+  uint8_t result = 0;
+  uint8_t adjustment = 0;
+
+  if (is_flag_set(F, FLAG_N)) {
+    if (is_flag_set(F, FLAG_H)) {
+      adjustment |= 0x6;
+    }
+    if (get_carry(F)) {
+      adjustment |= 0x60;
+    }
+    result = A - adjustment;
+  } else {
+    if (is_flag_set(F, FLAG_H) || (A & 0xF) > 0x9) {
+      adjustment |= 0x6;
+    }
+    if (get_carry(F) || A > 0x99) {
+      adjustment |= 0x60;
+      set_flag(&cpu->F, FLAG_C, true);
+    }
+    result = A + adjustment;
+  }
+
+  set_flag(&cpu->F, FLAG_Z, result == 0);
+  set_flag(&cpu->F, FLAG_H, false);
+
+  cpu->A = result;
 }
 
 /// Load instructions
 
 int ld_r8_r8(struct gameboy *gb) {
-  const enum reg8 dest_i = field_y(gb->opcode);
-  const enum reg8 src_i = field_z(gb->opcode);
+  const uint8_t dest_i = field_y(gb->opcode);
+  const uint8_t src_i = field_z(gb->opcode);
   gb->cpu.r8[dest_i] = gb->cpu.r8[src_i];
   return 4;
 }
 
 int ld_r8_n8(struct gameboy *gb) {
-  const enum reg8 dest_i = field_y(gb->opcode);
+  const uint8_t dest_i = field_y(gb->opcode);
   gb->cpu.r8[dest_i] = fetch_n8(gb);
   return 8;
 }
@@ -338,7 +372,7 @@ int ld_r16_n16(struct gameboy *gb) {
 }
 
 int ld_hl_ind_r8(struct gameboy *gb) {
-  const enum reg8 src_i = field_z(gb->opcode);
+  const uint8_t src_i = field_z(gb->opcode);
   write_hl(gb, gb->cpu.r8[src_i]);
   return 8;
 }
@@ -349,71 +383,71 @@ int ld_hl_ind_n8(struct gameboy *gb) {
 }
 
 int ld_r8_hl_ind(struct gameboy *gb) {
-  const enum reg8 dest_i = field_y(gb->opcode);
+  const uint8_t dest_i = field_y(gb->opcode);
   gb->cpu.r8[dest_i] = read_hl(gb);
   return 8;
 }
 
 int ld_r16_ind_a(struct gameboy *gb) {
-  write_byte(gb, get_r16_ind(&gb->cpu, gb->opcode), gb->cpu.r8[REG_A]);
+  write_byte(gb, get_r16_ind(&gb->cpu, gb->opcode), gb->cpu.A);
   return 8;
 }
 
 int ld_n16_ind_a(struct gameboy *gb) {
-  write_byte(gb, fetch_n16(gb), gb->cpu.r8[REG_A]);
+  write_byte(gb, fetch_n16(gb), gb->cpu.A);
   return 16;
 }
 
 int ldh_n8_ind_a(struct gameboy *gb) {
-  write_byte(gb, 0xFF00 | fetch_n8(gb), gb->cpu.r8[REG_A]);
+  write_byte(gb, 0xFF00 | fetch_n8(gb), gb->cpu.A);
   return 12;
 }
 
 int ldh_c_ind_a(struct gameboy *gb) {
-  write_byte(gb, 0xFF00 | gb->cpu.r8[REG_C], gb->cpu.r8[REG_A]);
+  write_byte(gb, 0xFF00 | gb->cpu.C, gb->cpu.A);
   return 8;
 }
 
 int ld_a_r16_ind(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = read_byte(gb, get_r16_ind(&gb->cpu, gb->opcode));
+  gb->cpu.A = read_byte(gb, get_r16_ind(&gb->cpu, gb->opcode));
   return 8;
 }
 
 int ld_a_n16_ind(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = read_byte(gb, fetch_n16(gb));
+  gb->cpu.A = read_byte(gb, fetch_n16(gb));
   return 16;
 }
 
 int ldh_a_n8_ind(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | fetch_n8(gb));
+  gb->cpu.A = read_byte(gb, 0xFF00 | fetch_n8(gb));
   return 12;
 }
 
 int ldh_a_c_ind(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = read_byte(gb, 0xFF00 | gb->cpu.r8[REG_C]);
+  gb->cpu.A = read_byte(gb, 0xFF00 | gb->cpu.C);
   return 8;
 }
 
 /// 8-bit arithmetic instructions
 
 int adc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
-  add_impl(&gb->cpu, gb->cpu.r8[i], get_carry(&gb->cpu));
+  const uint8_t i = field_z(gb->opcode);
+  add_impl(&gb->cpu, gb->cpu.r8[i], get_carry(gb->cpu.F));
   return 4;
 }
 
 int adc_hl_ind(struct gameboy *gb) {
-  add_impl(&gb->cpu, read_hl(gb), get_carry(&gb->cpu));
+  add_impl(&gb->cpu, read_hl(gb), get_carry(gb->cpu.F));
   return 8;
 }
 
 int adc_n8(struct gameboy *gb) {
-  add_impl(&gb->cpu, fetch_n8(gb), get_carry(&gb->cpu));
+  add_impl(&gb->cpu, fetch_n8(gb), get_carry(gb->cpu.F));
   return 8;
 }
 
 int add_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   add_impl(&gb->cpu, gb->cpu.r8[i], 0);
   return 4;
 }
@@ -429,23 +463,23 @@ int add_n8(struct gameboy *gb) {
 }
 
 int sbc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
-  sub_impl(&gb->cpu, gb->cpu.r8[i], get_carry(&gb->cpu));
+  const uint8_t i = field_z(gb->opcode);
+  sub_impl(&gb->cpu, gb->cpu.r8[i], get_carry(gb->cpu.F));
   return 4;
 }
 
 int sbc_hl_ind(struct gameboy *gb) {
-  sub_impl(&gb->cpu, read_hl(gb), get_carry(&gb->cpu));
+  sub_impl(&gb->cpu, read_hl(gb), get_carry(gb->cpu.F));
   return 8;
 }
 
 int sbc_n8(struct gameboy *gb) {
-  sub_impl(&gb->cpu, fetch_n8(gb), get_carry(&gb->cpu));
+  sub_impl(&gb->cpu, fetch_n8(gb), get_carry(gb->cpu.F));
   return 8;
 }
 
 int sub_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   sub_impl(&gb->cpu, gb->cpu.r8[i], 0);
   return 4;
 }
@@ -461,7 +495,7 @@ int sub_n8(struct gameboy *gb) {
 }
 
 int cp_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   cp_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -477,7 +511,7 @@ int cp_n8(struct gameboy *gb) {
 }
 
 int inc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_y(gb->opcode);
+  const uint8_t i = field_y(gb->opcode);
   gb->cpu.r8[i] = inc_n8_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -488,7 +522,7 @@ int inc_hl_ind(struct gameboy *gb) {
 }
 
 int dec_r8(struct gameboy *gb) {
-  const enum reg8 i = field_y(gb->opcode);
+  const uint8_t i = field_y(gb->opcode);
   gb->cpu.r8[i] = dec_n8_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -518,7 +552,7 @@ int dec_r16(struct gameboy *gb) {
 /// Bitwise logic instructions
 
 int and_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   and_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -534,7 +568,7 @@ int and_n8(struct gameboy *gb) {
 }
 
 int or_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   or_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -550,7 +584,7 @@ int or_n8(struct gameboy *gb) {
 }
 
 int xor_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   xor_impl(&gb->cpu, gb->cpu.r8[i]);
   return 4;
 }
@@ -566,16 +600,16 @@ int xor_n8(struct gameboy *gb) {
 }
 
 int cpl(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = ~(gb->cpu.r8[REG_A]);
-  set_flag(&gb->cpu, FLAG_N, true);
-  set_flag(&gb->cpu, FLAG_H, true);
+  gb->cpu.A = ~(gb->cpu.A);
+  set_flag(&gb->cpu.F, FLAG_N, true);
+  set_flag(&gb->cpu.F, FLAG_H, true);
   return 4;
 }
 
 /// Bit flag instructions
 
 int bit_b3_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   const uint8_t b3 = field_y(gb->opcode);
   bit_b3_impl(&gb->cpu, b3, gb->cpu.r8[i]);
   return 8;
@@ -588,7 +622,7 @@ int bit_b3_hl_ind(struct gameboy *gb) {
 }
 
 int res_b3_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   const uint8_t b3 = field_y(gb->opcode);
   gb->cpu.r8[i] &= ~(1 << b3);
   return 8;
@@ -601,7 +635,7 @@ int res_b3_hl_ind(struct gameboy *gb) {
 }
 
 int set_b3_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   const uint8_t b3 = field_y(gb->opcode);
   gb->cpu.r8[i] |= 1 << b3;
   return 8;
@@ -616,7 +650,7 @@ int set_b3_hl_ind(struct gameboy *gb) {
 /// Bit shfit instructions
 
 int rl_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = rl_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -627,12 +661,12 @@ int rl_hl_ind(struct gameboy *gb) {
 }
 
 int rla(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = rl_impl(&gb->cpu, gb->cpu.r8[REG_A]);
+  gb->cpu.A = rl_impl(&gb->cpu, gb->cpu.A);
   return 4;
 }
 
 int rlc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = rlc_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -643,12 +677,12 @@ int rlc_hl_ind(struct gameboy *gb) {
 }
 
 int rlca(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = rlc_impl(&gb->cpu, gb->cpu.r8[REG_A]);
+  gb->cpu.A = rlc_impl(&gb->cpu, gb->cpu.A);
   return 4;
 }
 
 int rr_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = rr_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -659,12 +693,12 @@ int rr_hl_ind(struct gameboy *gb) {
 }
 
 int rra(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = rr_impl(&gb->cpu, gb->cpu.r8[REG_A]);
+  gb->cpu.A = rr_impl(&gb->cpu, gb->cpu.A);
   return 4;
 }
 
 int rrc_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = rrc_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -675,12 +709,12 @@ int rrc_hl_ind(struct gameboy *gb) {
 }
 
 int rrca(struct gameboy *gb) {
-  gb->cpu.r8[REG_A] = rrc_impl(&gb->cpu, gb->cpu.r8[REG_A]);
+  gb->cpu.A = rrc_impl(&gb->cpu, gb->cpu.A);
   return 4;
 }
 
 int sla_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = sla_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -691,7 +725,7 @@ int sla_hl_ind(struct gameboy *gb) {
 }
 
 int sra_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = sra_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -702,7 +736,7 @@ int sra_hl_ind(struct gameboy *gb) {
 }
 
 int srl_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = srl_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -713,7 +747,7 @@ int srl_hl_ind(struct gameboy *gb) {
 }
 
 int swap_r8(struct gameboy *gb) {
-  const enum reg8 i = field_z(gb->opcode);
+  const uint8_t i = field_z(gb->opcode);
   gb->cpu.r8[i] = swap_impl(&gb->cpu, gb->cpu.r8[i]);
   return 8;
 }
@@ -809,16 +843,16 @@ int rst_vec(struct gameboy *gb) {
 /// Carry flag instructions
 
 int ccf(struct gameboy *gb) {
-  set_flag(&gb->cpu, FLAG_N, false);
-  set_flag(&gb->cpu, FLAG_H, false);
-  set_flag(&gb->cpu, FLAG_C, ~is_flag_set(&gb->cpu, FLAG_C));
+  set_flag(&gb->cpu.F, FLAG_N, false);
+  set_flag(&gb->cpu.F, FLAG_H, false);
+  set_flag(&gb->cpu.F, FLAG_C, ~get_carry(gb->cpu.F));
   return 4;
 }
 
 int scf(struct gameboy *gb) {
-  set_flag(&gb->cpu, FLAG_N, false);
-  set_flag(&gb->cpu, FLAG_H, false);
-  set_flag(&gb->cpu, FLAG_C, true);
+  set_flag(&gb->cpu.F, FLAG_N, false);
+  set_flag(&gb->cpu.F, FLAG_H, false);
+  set_flag(&gb->cpu.F, FLAG_C, true);
   return 4;
 }
 
@@ -876,34 +910,7 @@ int halt(struct gameboy *gb) {
 /// Misc.
 
 int daa(struct gameboy *gb) {
-  struct cpu *cpu = &gb->cpu;
-  const uint8_t A = cpu->r8[REG_A];
-  uint8_t result = 0;
-  uint8_t adjustment = 0;
-
-  if (is_flag_set(cpu, FLAG_N)) {
-    if (is_flag_set(cpu, FLAG_H)) {
-      adjustment |= 0x6;
-    }
-    if (is_flag_set(cpu, FLAG_C)) {
-      adjustment |= 0x60;
-    }
-    result = A - adjustment;
-  } else {
-    if (is_flag_set(cpu, FLAG_H) || (A & 0xF) > 0x9) {
-      adjustment |= 0x6;
-    }
-    if (is_flag_set(cpu, FLAG_C) || A > 0x99) {
-      adjustment |= 0x60;
-      set_flag(cpu, FLAG_C, true);
-    }
-    result = A + adjustment;
-  }
-
-  set_flag(cpu, FLAG_Z, result == 0);
-  set_flag(cpu, FLAG_H, false);
-
-  cpu->r8[REG_A] = result;
+  daa_impl(&gb->cpu);
   return 4;
 }
 

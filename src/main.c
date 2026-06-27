@@ -8,9 +8,8 @@ void log_instruction(const struct cpu *cpu, const uint8_t opcode,
   fprintf(output,
           "[%02X] B:%02x C:%02x D:%02x E:%02x H:%02x L:%02x A:%02x F:%02x "
           "PC:%04x SP:%04x %s\n",
-          opcode, cpu->r8[REG_B], cpu->r8[REG_C], cpu->r8[REG_D],
-          cpu->r8[REG_E], cpu->r8[REG_H], cpu->r8[REG_L], cpu->r8[REG_A],
-          cpu->r8[REG_F], pc_prev, cpu->SP, unprefixed_mnemonic[opcode]);
+          opcode, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L, cpu->A,
+          cpu->F, pc_prev, cpu->SP, unprefixed_mnemonic[opcode]);
   fflush(output);
 }
 

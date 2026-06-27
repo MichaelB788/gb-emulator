@@ -80,6 +80,10 @@ uint8_t srl_impl(struct cpu *cpu, uint8_t operand);
 
 uint8_t swap_impl(struct cpu *cpu, uint8_t operand);
 
+/// DAA implementation
+
+void daa_impl(struct cpu *cpu);
+
 /// Load instructions
 
 int ld_r8_r8(struct gameboy *gb);

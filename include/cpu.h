@@ -2,19 +2,26 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-// ISA indicies for the regular 8-bit registers.
-enum reg8 {
-  REG_B = 0,
-  REG_C = 1,
-  REG_D = 2,
-  REG_E = 3,
-  REG_H = 4,
-  REG_L = 5,
-  REG_A = 7,
-  REG_F = 6 // Typically this index would map to [HL], but since [HL] is a
-            // memory access rather than an actual register, this index points
-            // to the flags register instead.
+/**
+ * The GameBoy's CPU
+ */
+struct cpu {
+  union {
+    struct {
+      uint8_t B, C, D, E, H, L, F, A;
+    };
+    uint8_t r8[8];
+  };
+  bool IME;
+  uint16_t PC;
+  uint16_t SP;
 };
+
+void init_cpu(struct cpu *cpu);
+
+void set_hl(struct cpu *cpu, uint16_t val);
+
+uint16_t get_hl(struct cpu *cpu);
 
 /**
  * Offsets to form the regular 8-bit register pairs, such that
@@ -26,31 +33,15 @@ enum reg8 {
  */
 enum regpair { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 };
 
-/**
- * The GameBoy's CPU
- */
-struct cpu {
-  uint8_t r8[8]; // B, C, D, E, H, L, F, A
-  bool IME;
-  uint16_t PC;
-  uint16_t SP;
-};
+void set_regpair(struct cpu *cpu, enum regpair rp, uint16_t val);
 
-void init_cpu(struct cpu *cpu);
-
-void set_regpair(struct cpu *cpu, enum regpair reg, uint16_t val);
-
-uint16_t get_regpair(const struct cpu *cpu, enum regpair reg);
-
-void set_hl(struct cpu *cpu, uint16_t val);
-
-uint16_t get_hl(struct cpu *cpu);
+uint16_t get_regpair(const struct cpu *cpu, enum regpair rp);
 
 // Flags used by the CPU. The values mask the bit corresponding to the flag.
 enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
 
-void set_flag(struct cpu *cpu, enum flag flag, bool val);
+void set_flag(uint8_t *reg_f, enum flag flag, bool val);
 
-bool is_flag_set(const struct cpu *cpu, enum flag flag);
+bool is_flag_set(uint8_t reg_f, enum flag flag);
 
-bool get_carry(const struct cpu *cpu);
+bool get_carry(uint8_t reg_f);
