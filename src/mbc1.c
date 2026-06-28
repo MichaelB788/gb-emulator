@@ -13,10 +13,10 @@ void init_mbc1(struct mbc1 *mbc1) {
 }
 
 uint8_t mbc1_read_rom(const struct cartridge *cart, const uint16_t addr) {
-  if (cart->mbc1.rom_bank <= 1) {
+  if (addr < 0x4000) {
     return cart->rom[addr];
   } else {
-    return cart->rom[addr + (KiB_16 * cart->mbc1.rom_bank)];
+    return cart->rom[(KiB_16 * cart->mbc1.rom_bank) + (addr - 0x4000)];
   }
 }
 
