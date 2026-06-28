@@ -1,3 +1,6 @@
 [submodule "extern/gb-test-roms"]
 	path = extern/gb-test-roms
 	url = https://github.com/retrio/gb-test-roms.git
+[submodule "extern/gameboy-doctor"]
+	path = extern/gameboy-doctor
+	url = https://github.com/robert/gameboy-doctor.git
