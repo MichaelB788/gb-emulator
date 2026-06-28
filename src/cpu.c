@@ -2,14 +2,14 @@
 #include <stdint.h>
 
 void init_cpu(struct cpu *cpu) {
-  cpu->B = 0xFF;
+  cpu->A = 0x01;
+  cpu->F = 0xB0;
+  cpu->B = 0x00;
   cpu->C = 0x13;
   cpu->D = 0x00;
-  cpu->E = 0xC1;
-  cpu->H = 0x84;
-  cpu->L = 0x03;
-  cpu->A = 0x01;
-  cpu->F = 0x00;
+  cpu->E = 0xD8;
+  cpu->H = 0x01;
+  cpu->L = 0x4D;
   cpu->PC = 0x0100;
   cpu->SP = 0xFFFE;
 }

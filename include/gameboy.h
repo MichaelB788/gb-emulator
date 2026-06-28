@@ -2,7 +2,7 @@
 #include "byte_sizes.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "io_registers.h"
+#include "io_regs.h"
 #include <stdint.h>
 
 enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
@@ -10,11 +10,10 @@ enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 struct gameboy {
   enum gameboy_state state;
   uint8_t opcode;
-  bool interrupt_enable;
   bool path_taken;
 
   struct cpu cpu;
-  struct io_registers io;
+  struct io_regs io_ports;
 
   uint8_t vram[KiB_8];
   uint8_t wram[KiB_8];

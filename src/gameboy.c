@@ -8,7 +8,6 @@
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
   gb->cartridge = create_cartridge(path_to_rom);
   if (gb->cartridge) {
-    gb->interrupt_enable = false;
     init_cpu(&gb->cpu);
     return true;
   } else {
@@ -56,16 +55,15 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
     return 0xFF;
   }
 
-  if (0xFF00 <= addr && addr <= 0xFF7F) /* IO Registers */ {
-    return read_io(&gb->io, addr);
+  if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF) /* IO Registers */ {
+    return read_io_reg(&gb->io_ports, addr);
   }
 
   if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
     return gb->hram[addr - 0xFF80];
   }
 
-  /* TODO: IE */
-  return gb->interrupt_enable;
+  return 0xFF;
 }
 
 void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
@@ -106,8 +104,8 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
     return;
   }
 
-  if (0xFF00 <= addr && addr <= 0xFF7F) /* IO Registers */ {
-    write_io(&gb->io, addr, val);
+  if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF) /* IO Registers */ {
+    write_io_reg(&gb->io_ports, addr, val);
     return;
   }
 
@@ -115,7 +113,4 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
     gb->hram[addr - 0xFF80] = val;
     return;
   }
-
-  /* TODO: IE */
-  gb->interrupt_enable = val;
 }
