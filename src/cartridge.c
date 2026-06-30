@@ -63,22 +63,21 @@ bool initialize_ram(struct cartridge *cart) {
   return true;
 }
 
-struct cartridge *create_cartridge(const char *path_to_rom) {
+bool init_cartridge(struct cartridge *cart, const char *path_to_rom) {
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not open file");
-    return NULL;
+    return false;
   }
 
-  struct cartridge *cart = malloc(sizeof(struct cartridge));
   if (read_header(rom_file, cart) && initialize_rom(rom_file, cart) &&
       initialize_ram(cart)) {
     fclose(rom_file);
-    return cart;
+    return true;
   } else {
     fclose(rom_file);
     destroy_cartridge(cart);
-    return NULL;
+    return false;
   }
 }
 
@@ -86,7 +85,6 @@ void destroy_cartridge(struct cartridge *cart) {
   if (cart) {
     free(cart->rom);
     free(cart->ram);
-    free(cart);
   }
 }
 

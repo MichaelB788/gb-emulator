@@ -10,16 +10,14 @@ enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 struct gameboy {
   enum gameboy_state state;
   uint8_t opcode;
-  bool path_taken;
 
   struct cpu cpu;
   struct io_regs io_ports;
+  struct cartridge cartridge;
 
   uint8_t vram[KiB_8];
   uint8_t wram[KiB_8];
   uint8_t hram[127];
-
-  struct cartridge *cartridge;
 };
 
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom);

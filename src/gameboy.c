@@ -6,25 +6,15 @@
 #include <stdio.h>
 
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
-  gb->cartridge = create_cartridge(path_to_rom);
-  if (gb->cartridge) {
-    init_cpu(&gb->cpu);
-    return true;
-  } else {
-    gb->state = GB_STOPPED;
-    return false;
-  }
+  init_cpu(&gb->cpu);
+  return init_cartridge(&gb->cartridge, path_to_rom);
 }
 
-void close_gameboy(struct gameboy *gb) {
-  if (gb) {
-    destroy_cartridge(gb->cartridge);
-  }
-}
+void close_gameboy(struct gameboy *gb) { destroy_cartridge(&gb->cartridge); }
 
 uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    return read_rom(gb->cartridge, addr);
+    return read_rom(&gb->cartridge, addr);
   }
 
   if (0x8000 <= addr && addr <= 0x9FFF) { // TODO: VRAM
@@ -32,7 +22,7 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
   }
 
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return read_ram(gb->cartridge, addr);
+    return read_ram(&gb->cartridge, addr);
   }
 
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
@@ -68,7 +58,7 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
 
 void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    write_rom(gb->cartridge, addr, val);
+    write_rom(&gb->cartridge, addr, val);
     return;
   }
 
@@ -78,7 +68,7 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
   }
 
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    write_ram(gb->cartridge, addr, val);
+    write_ram(&gb->cartridge, addr, val);
     return;
   }
 

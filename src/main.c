@@ -14,10 +14,12 @@ void log_instruction(struct gameboy *gb, FILE *output) {
   fflush(output);
 }
 
-int main() {
-  char full_path[sizeof(PROJECT_ROOT) + 64];
-  snprintf(full_path, sizeof(full_path),
-           "%s/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb", PROJECT_ROOT);
+int main(const int argc, const char **argv) {
+  if (argc < 2) {
+    fprintf(stderr, "No arguments given, aborting.\n");
+    return 1;
+  }
+
   FILE *log_file = fopen("log.txt", "w");
   if (!log_file) {
     perror("Couldn't open log.txt");
@@ -25,7 +27,7 @@ int main() {
   }
 
   struct gameboy gb = {0};
-  if (init_gameboy(&gb, full_path)) {
+  if (init_gameboy(&gb, argv[1])) {
     while (gb.state == GB_RUNNING) {
       gb.opcode = read_byte(&gb, gb.cpu.PC);
       log_instruction(&gb, log_file);
@@ -33,6 +35,9 @@ int main() {
       int cycles = unprefixed_ins[gb.opcode](&gb);
     }
     close_gameboy(&gb);
+  } else {
+    fprintf(stderr, "Could not initialize GameBoy.\n");
   }
+
   fclose(log_file);
 }

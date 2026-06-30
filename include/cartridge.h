@@ -15,16 +15,15 @@ struct cartridge {
     struct mbc1 mbc1;
   };
 
-  uint8_t *rom;
   size_t rom_size;
-  uint8_t *ram;
   size_t ram_size;
+
+  uint8_t *rom;
+  uint8_t *ram;
 };
 
-// Returns a heap allocated cartridge on success, NULL on failure
-struct cartridge *create_cartridge(const char *path_to_rom);
+bool init_cartridge(struct cartridge *cart, const char *path_to_rom);
 
-// Destroys a cartridge if it exists, otherwise this operation is a no-op.
 void destroy_cartridge(struct cartridge *cart);
 
 uint8_t read_rom(const struct cartridge *cart, uint16_t addr);
