@@ -88,7 +88,7 @@ void destroy_cartridge(struct cartridge *cart) {
   }
 }
 
-uint8_t read_rom(const struct cartridge *cart, const uint16_t addr) {
+uint8_t mapper_read(const struct cartridge *cart, const uint16_t addr) {
   switch (cart->mapper) {
   case ROM_MAPPER:
     return cart->rom[addr];
@@ -98,7 +98,8 @@ uint8_t read_rom(const struct cartridge *cart, const uint16_t addr) {
   }
 }
 
-void write_rom(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
+void mapper_write(struct cartridge *cart, const uint16_t addr,
+                  const uint8_t val) {
   switch (cart->mapper) {
   case ROM_MAPPER:
     // ROM is read only, so this is a no-op.
@@ -110,7 +111,7 @@ void write_rom(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
   }
 }
 
-uint8_t read_ram(struct cartridge *cart, const uint16_t addr) {
+uint8_t exram_read(struct cartridge *cart, const uint16_t addr) {
   if (cart->ram_size > 0) {
     switch (cart->mapper) {
     case ROM_MAPPER:
@@ -125,7 +126,8 @@ uint8_t read_ram(struct cartridge *cart, const uint16_t addr) {
   return 0xFF;
 }
 
-void write_ram(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
+void exram_write(struct cartridge *cart, const uint16_t addr,
+                 const uint8_t val) {
   if (cart->ram_size > 0) {
     switch (cart->mapper) {
     // Mappers with no ram.
