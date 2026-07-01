@@ -1,17 +1,17 @@
 #pragma once
-#include <stddef.h>
+#define KiB (1024ul)
+#define MiB (1024ul * KiB)
 
-enum {
-  KiB_8 = 8192,
-  KiB_16 = 16384,
-  KiB_32 = 32768,
-  KiB_64 = 65536,
-  KiB_128 = 131072,
-  KiB_256 = 262144,
-  KiB_512 = 524288,
-  MiB_1 = 1048576,
-  MiB_2 = 2097152,
-  MiB_3 = 3145728,
-  MiB_4 = 4194304,
-  MiB_8 = 5242880,
-};
+#define KiB_8 (8ul * KiB)
+#define KiB_16 (16ul * KiB)
+#define KiB_32 (32ul * KiB)
+#define KiB_64 (64ul * KiB)
+#define KiB_128 (128ul * KiB)
+#define KiB_256 (256ul * KiB)
+#define KiB_512 (512ul * KiB)
+
+#define MiB_1 (1ul * MiB)
+#define MiB_2 (2ul * MiB)
+#define MiB_3 (3ul * MiB)
+#define MiB_4 (4ul * MiB)
+#define MiB_8 (8ul * MiB)
