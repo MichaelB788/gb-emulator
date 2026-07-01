@@ -12,18 +12,18 @@ uint8_t field_y(uint8_t opcode) { return (opcode >> 3) & 0b111; }
 
 uint8_t field_z(uint8_t opcode) { return opcode & 0b111; }
 
-uint8_t fetch_n8(struct gameboy *gb) { return read_byte(gb, gb->cpu.PC++); }
+uint8_t fetch_n8(struct gameboy *gb) { return bus_read(gb, gb->cpu.PC++); }
 
 uint16_t fetch_n16(struct gameboy *gb) {
-  const uint8_t lo = read_byte(gb, gb->cpu.PC++);
-  const uint8_t hi = read_byte(gb, gb->cpu.PC++);
+  const uint8_t lo = bus_read(gb, gb->cpu.PC++);
+  const uint8_t hi = bus_read(gb, gb->cpu.PC++);
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t read_hl(struct gameboy *gb) { return read_byte(gb, get_hl(&gb->cpu)); }
+uint8_t read_hl(struct gameboy *gb) { return bus_read(gb, get_hl(&gb->cpu)); }
 
 void write_hl(struct gameboy *gb, uint8_t val) {
-  write_byte(gb, get_hl(&gb->cpu), val);
+  bus_write(gb, get_hl(&gb->cpu), val);
 }
 
 uint16_t get_r16(const struct cpu *cpu, uint8_t opcode) {
@@ -88,13 +88,13 @@ bool check_condition(struct cpu *cpu, enum condition_code cond) {
 }
 
 void push_n16(struct gameboy *gb, uint16_t val) {
-  write_byte(gb, --gb->cpu.SP, val >> 8);
-  write_byte(gb, --gb->cpu.SP, val & 0xFF);
+  bus_write(gb, --gb->cpu.SP, val >> 8);
+  bus_write(gb, --gb->cpu.SP, val & 0xFF);
 }
 
 uint16_t pop_n16(struct gameboy *gb) {
-  const uint8_t lo = read_byte(gb, gb->cpu.SP++);
-  const uint8_t hi = read_byte(gb, gb->cpu.SP++);
+  const uint8_t lo = bus_read(gb, gb->cpu.SP++);
+  const uint8_t hi = bus_read(gb, gb->cpu.SP++);
   return (uint16_t)hi << 8 | lo;
 }
 
@@ -389,42 +389,42 @@ int ld_r8_hl_ind(struct gameboy *gb) {
 }
 
 int ld_r16_ind_a(struct gameboy *gb) {
-  write_byte(gb, get_r16_ind(&gb->cpu, gb->opcode), gb->cpu.A);
+  bus_write(gb, get_r16_ind(&gb->cpu, gb->opcode), gb->cpu.A);
   return 8;
 }
 
 int ld_n16_ind_a(struct gameboy *gb) {
-  write_byte(gb, fetch_n16(gb), gb->cpu.A);
+  bus_write(gb, fetch_n16(gb), gb->cpu.A);
   return 16;
 }
 
 int ldh_n8_ind_a(struct gameboy *gb) {
-  write_byte(gb, 0xFF00 | fetch_n8(gb), gb->cpu.A);
+  bus_write(gb, 0xFF00 | fetch_n8(gb), gb->cpu.A);
   return 12;
 }
 
 int ldh_c_ind_a(struct gameboy *gb) {
-  write_byte(gb, 0xFF00 | gb->cpu.C, gb->cpu.A);
+  bus_write(gb, 0xFF00 | gb->cpu.C, gb->cpu.A);
   return 8;
 }
 
 int ld_a_r16_ind(struct gameboy *gb) {
-  gb->cpu.A = read_byte(gb, get_r16_ind(&gb->cpu, gb->opcode));
+  gb->cpu.A = bus_read(gb, get_r16_ind(&gb->cpu, gb->opcode));
   return 8;
 }
 
 int ld_a_n16_ind(struct gameboy *gb) {
-  gb->cpu.A = read_byte(gb, fetch_n16(gb));
+  gb->cpu.A = bus_read(gb, fetch_n16(gb));
   return 16;
 }
 
 int ldh_a_n8_ind(struct gameboy *gb) {
-  gb->cpu.A = read_byte(gb, 0xFF00 | fetch_n8(gb));
+  gb->cpu.A = bus_read(gb, 0xFF00 | fetch_n8(gb));
   return 12;
 }
 
 int ldh_a_c_ind(struct gameboy *gb) {
-  gb->cpu.A = read_byte(gb, 0xFF00 | gb->cpu.C);
+  gb->cpu.A = bus_read(gb, 0xFF00 | gb->cpu.C);
   return 8;
 }
 
@@ -870,8 +870,8 @@ int ld_hl_sp_e8(struct gameboy *gb) {
 
 int ld_n16_ind_sp(struct gameboy *gb) {
   const uint16_t n16 = fetch_n16(gb);
-  write_byte(gb, n16, gb->cpu.SP & 0xFF);
-  write_byte(gb, n16 + 1, gb->cpu.SP >> 8);
+  bus_write(gb, n16, gb->cpu.SP & 0xFF);
+  bus_write(gb, n16 + 1, gb->cpu.SP >> 8);
   return 20;
 }
 

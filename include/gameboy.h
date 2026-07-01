@@ -2,7 +2,9 @@
 #include "byte_sizes.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "hardware_io.h"
+#include "interrupt.h"
+#include "serial.h"
+#include "timer.h"
 #include <stdint.h>
 
 enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
@@ -10,9 +12,12 @@ enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 struct gameboy {
   enum gameboy_state state;
   uint8_t opcode;
+  uint8_t joypad;
 
   struct cpu cpu;
-  struct hardware_io io_ports;
+  struct interrupts interrupt;
+  struct serial_transfer serial;
+  struct timer timer;
   struct cartridge cartridge;
 
   uint8_t vram[KiB_8];
@@ -24,10 +29,10 @@ bool init_gameboy(struct gameboy *gb, const char *path_to_rom);
 
 void close_gameboy(struct gameboy *gb);
 
-uint8_t read_byte(struct gameboy *gb, uint16_t addr);
+uint8_t bus_read(struct gameboy *gb, uint16_t addr);
 
-void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val);
+void bus_write(struct gameboy *gb, uint16_t addr, uint8_t val);
 
-void execute_instruction(struct gameboy *gb, uint8_t opcode);
+uint8_t io_read(struct gameboy *gb, uint16_t addr);
 
-void execute_cb_instruction(struct gameboy *gb, uint8_t opcode);
+void io_write(struct gameboy *gb, uint16_t addr, uint8_t val);

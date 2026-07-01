@@ -10,8 +10,10 @@ add_library(GB_Core
   cpu.c
   gameboy.c
   instructions.c
-  hardware_io.c
+  interrupt.c
   mbc1.c
+  serial.c
+  timer.c
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GB_Core)
