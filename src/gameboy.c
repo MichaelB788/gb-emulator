@@ -17,7 +17,7 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
     return read_rom(&gb->cartridge, addr);
   }
 
-  if (0x8000 <= addr && addr <= 0x9FFF) { // TODO: VRAM
+  if (0x8000 <= addr && addr <= 0x9FFF) /* TODO: VRAM */ {
     return gb->vram[addr - 0x8000];
   }
 
@@ -33,7 +33,7 @@ uint8_t read_byte(struct gameboy *gb, uint16_t addr) {
     return gb->wram[addr - 0xE000];
   }
 
-  if (0xFE00 <= addr && addr <= 0xFE9F) /* TODO: OAM */ {
+  if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Error: Attempt to read from OAM\n");
     gb->state = GB_STOPPED;
     return 0xFF;
@@ -62,7 +62,7 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
     return;
   }
 
-  if (0x8000 <= addr && addr <= 0x9FFF) { // TODO: VRAM
+  if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     gb->vram[addr - 0x8000] = val;
     return;
   }
@@ -82,7 +82,7 @@ void write_byte(struct gameboy *gb, uint16_t addr, uint8_t val) {
     return;
   }
 
-  if (0xFE00 <= addr && addr <= 0xFE9F) /* TODO: OAM */ {
+  if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Warn: Attempt to write to OAM\n");
     gb->state = GB_STOPPED;
     return;
