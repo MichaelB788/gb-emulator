@@ -662,6 +662,7 @@ int rl_hl_ind(struct gameboy *gb) {
 
 int rla(struct gameboy *gb) {
   gb->cpu.A = rl_impl(&gb->cpu, gb->cpu.A);
+  set_flag(&gb->cpu.F, FLAG_Z, false);
   return 4;
 }
 
@@ -678,6 +679,7 @@ int rlc_hl_ind(struct gameboy *gb) {
 
 int rlca(struct gameboy *gb) {
   gb->cpu.A = rlc_impl(&gb->cpu, gb->cpu.A);
+  set_flag(&gb->cpu.F, FLAG_Z, false);
   return 4;
 }
 
@@ -694,6 +696,7 @@ int rr_hl_ind(struct gameboy *gb) {
 
 int rra(struct gameboy *gb) {
   gb->cpu.A = rr_impl(&gb->cpu, gb->cpu.A);
+  set_flag(&gb->cpu.F, FLAG_Z, false);
   return 4;
 }
 
@@ -710,6 +713,7 @@ int rrc_hl_ind(struct gameboy *gb) {
 
 int rrca(struct gameboy *gb) {
   gb->cpu.A = rrc_impl(&gb->cpu, gb->cpu.A);
+  set_flag(&gb->cpu.F, FLAG_Z, false);
   return 4;
 }
 
@@ -845,7 +849,7 @@ int rst_vec(struct gameboy *gb) {
 int ccf(struct gameboy *gb) {
   set_flag(&gb->cpu.F, FLAG_N, false);
   set_flag(&gb->cpu.F, FLAG_H, false);
-  set_flag(&gb->cpu.F, FLAG_C, ~get_carry(gb->cpu.F));
+  set_flag(&gb->cpu.F, FLAG_C, !get_carry(gb->cpu.F));
   return 4;
 }
 
