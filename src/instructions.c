@@ -183,7 +183,7 @@ uint16_t add_sp_e8_impl(struct cpu *cpu, int8_t e8) {
 
 /// Bitwise logic implementations
 
-void and_impl(struct cpu *cpu, const uint8_t operand) {
+void and_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->A;
   const uint8_t result = A & operand;
 
@@ -195,7 +195,7 @@ void and_impl(struct cpu *cpu, const uint8_t operand) {
   cpu->A = result;
 }
 
-void xor_impl(struct cpu *cpu, const uint8_t operand) {
+void xor_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->A;
   const uint8_t result = A ^ operand;
 
@@ -207,7 +207,7 @@ void xor_impl(struct cpu *cpu, const uint8_t operand) {
   cpu->A = result;
 }
 
-void or_impl(struct cpu *cpu, const uint8_t operand) {
+void or_impl(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->A;
   const uint8_t result = A | operand;
 
