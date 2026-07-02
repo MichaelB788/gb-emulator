@@ -1,4 +1,5 @@
 #include "gameboy.h"
+#include "bitwise.h"
 #include "cartridge.h"
 #include "cpu.h"
 #include "instructions.h"
@@ -22,16 +23,19 @@ void run_gameboy_loop(struct gameboy *gb) {
   while (gb->state == GB_RUNNING) {
     int cycles = 0;
 
+    // Check to see if EI or RETI was called
     if (gb->cpu.enable_interrupts) {
       gb->cpu.enable_interrupts = false;
       gb->cpu.IME = true;
     }
 
+    // Execute the next opcode
     gb->opcode = bus_read(gb, gb->cpu.PC);
     log_curr_instr(gb, log_file);
     ++gb->cpu.PC;
     cycles += unprefixed_ins[gb->opcode](gb);
 
+    // Service interrupts
     if (gb->cpu.IME) {
       gb->cpu.IME = false;
       cycles += service_interrupts(gb);
@@ -126,24 +130,17 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
 }
 
 int service_interrupts(struct gameboy *gb) {
-  const struct interrupts in = gb->interrupt;
+  const uint8_t pending_interrupts = gb->interrupt.flag & gb->interrupt.enable;
 
-  if (in.enable > 0) {
-    push_n16(gb, gb->cpu.PC);
-    if ((in.flag & 0x1) && (in.enable & 0x1)) {
-      gb->cpu.PC = 0x40;
-    } else if ((in.flag & 0x2) && (in.enable & 0x2)) {
-      gb->cpu.PC = 0x48;
-    } else if ((in.flag & 0x4) && (in.enable & 0x4)) {
-      gb->cpu.PC = 0x50;
-    } else if ((in.flag & 0x8) && (in.enable & 0x8)) {
-      gb->cpu.PC = 0x58;
-    } else if ((in.flag & 0x10) && (in.enable & 0x10)) {
-      gb->cpu.PC = 0x60;
+  for (uint8_t bit_idx = 0; bit_idx < 6; ++bit_idx) {
+    if (is_bit_set(pending_interrupts, bit_idx)) {
+      push_n16(gb, gb->cpu.PC);
+      const uint16_t jmp_addr = 0x40 | bit_idx << 3;
+      gb->cpu.PC = jmp_addr;
+      break;
     }
   }
 
-  gb->interrupt.enable = gb->interrupt.flag = 0;
   return 5;
 }
 
