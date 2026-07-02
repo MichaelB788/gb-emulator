@@ -13,6 +13,7 @@ struct cpu {
     uint8_t r8[8];
   };
   bool IME;
+  bool enable_interrupts;
   uint16_t PC;
   uint16_t SP;
 };

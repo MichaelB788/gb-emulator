@@ -6,6 +6,7 @@
 #include "serial.h"
 #include "timer.h"
 #include <stdint.h>
+#include <stdio.h>
 
 enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
 
@@ -29,6 +30,8 @@ bool init_gameboy(struct gameboy *gb, const char *path_to_rom);
 
 void close_gameboy(struct gameboy *gb);
 
+void run_gameboy_loop(struct gameboy *gb);
+
 uint8_t bus_read(struct gameboy *gb, uint16_t addr);
 
 void bus_write(struct gameboy *gb, uint16_t addr, uint8_t val);
@@ -36,3 +39,7 @@ void bus_write(struct gameboy *gb, uint16_t addr, uint8_t val);
 uint8_t io_read(struct gameboy *gb, uint16_t addr);
 
 void io_write(struct gameboy *gb, uint16_t addr, uint8_t val);
+
+int service_interrupts(struct gameboy *gb);
+
+void log_curr_instr(struct gameboy *gb, FILE *output);

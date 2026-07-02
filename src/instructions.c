@@ -832,7 +832,7 @@ int ret(struct gameboy *gb) {
 
 int reti(struct gameboy *gb) {
   gb->cpu.PC = pop_n16(gb);
-  gb->cpu.IME = true;
+  gb->cpu.enable_interrupts = true;
   return 20;
 }
 
@@ -902,7 +902,7 @@ int di(struct gameboy *gb) {
 }
 
 int ei(struct gameboy *gb) {
-  gb->cpu.IME = true;
+  gb->cpu.enable_interrupts = true;
   return 4;
 }
 
