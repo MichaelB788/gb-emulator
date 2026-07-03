@@ -15,7 +15,7 @@ bool init_mapper(struct cartridge *cart) {
     init_mbc1(&cart->mbc1);
     break;
   default:
-    fprintf(stderr, "Cannot init unknown mapper %d", (int)cart->type);
+    fprintf(stderr, "Cannot init unknown mapper %d\n", (int)cart->type);
     return false;
   }
   return true;
@@ -95,7 +95,7 @@ uint8_t rom_read(const struct cartridge *cart, const uint16_t addr) {
   case MBC1_CART:
     return mbc1_read_rom(cart, addr);
   default:
-    fprintf(stderr, "Warn: Unknown mapper type, cannot read ROM");
+    fprintf(stderr, "Warn: Unknown mapper type, cannot read ROM\n");
     return 0xFF;
   }
 }
@@ -108,7 +108,7 @@ void rom_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
     mbc1_write_rom(cart, addr, val);
     break;
   default:
-    fprintf(stderr, "Warn: Unknown mapper type, cannot write ROM");
+    fprintf(stderr, "Warn: Unknown mapper type, cannot write ROM\n");
     break;
   }
 }
@@ -123,7 +123,7 @@ uint8_t ram_read(struct cartridge *cart, const uint16_t addr) {
       break;
     }
   }
-  fprintf(stderr, "Warn: Attempt to read RAM that doesn't exist");
+  fprintf(stderr, "Warn: Attempt to read RAM that doesn't exist\n");
   return 0xFF;
 }
 
@@ -138,5 +138,5 @@ void ram_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
       break;
     }
   }
-  fprintf(stderr, "Warn: Attempt to write RAM that doesn't exist");
+  fprintf(stderr, "Warn: Attempt to write RAM that doesn't exist\n");
 }

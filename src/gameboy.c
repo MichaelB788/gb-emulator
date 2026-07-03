@@ -23,11 +23,8 @@ void run_gameboy_loop(struct gameboy *gb) {
   while (gb->state == GB_RUNNING) {
     int cycles = 0;
 
-    // Check to see if EI or RETI was called
-    if (gb->cpu.enable_interrupts) {
-      gb->cpu.enable_interrupts = false;
-      gb->cpu.IME = true;
-    }
+    // Set the IME flag if interrupts were enabled by RETI or EI
+    gb->cpu.IME = gb->cpu.enable_interrupts;
 
     // Execute the next opcode
     gb->opcode = bus_read(gb, gb->cpu.PC);
@@ -35,8 +32,9 @@ void run_gameboy_loop(struct gameboy *gb) {
     ++gb->cpu.PC;
     cycles += unprefixed_ins[gb->opcode](gb);
 
-    // Service interrupts
+    // Handle interrupts
     if (gb->cpu.IME) {
+      gb->cpu.enable_interrupts = false;
       gb->cpu.IME = false;
       cycles += service_interrupts(gb);
     }
@@ -121,7 +119,7 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
   if (addr == 0xFF00) {
     gb->joypad = val & 0x3; // Lower nibble is read only
   } else if (addr == 0xFF01 || addr == 0xFF02) {
-    serial_write(&gb->serial, (enum serial_reg)addr, val);
+    serial_write(&gb->serial, &gb->interrupt, (enum serial_reg)addr, val);
   } else if (0xFF04 <= addr && addr <= 0xFF07) {
     return; // TODO: Timer write
   } else if (addr == 0xFF0F || addr == 0xFFFF) {
@@ -132,16 +130,16 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
 int service_interrupts(struct gameboy *gb) {
   const uint8_t pending_interrupts = gb->interrupt.flag & gb->interrupt.enable;
 
-  for (uint8_t bit_idx = 0; bit_idx < 6; ++bit_idx) {
+  for (uint8_t bit_idx = 0; bit_idx < 5; ++bit_idx) {
     if (is_bit_set(pending_interrupts, bit_idx)) {
+      clear_bit(&gb->interrupt.flag, bit_idx);
       push_n16(gb, gb->cpu.PC);
-      const uint16_t jmp_addr = 0x40 | bit_idx << 3;
-      gb->cpu.PC = jmp_addr;
+      gb->cpu.PC = 0x40 | (bit_idx * 8);
       break;
     }
   }
 
-  return 5;
+  return 20;
 }
 
 void log_curr_instr(struct gameboy *gb, FILE *output) {
