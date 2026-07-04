@@ -3,9 +3,10 @@
 #include "cartridge.h"
 #include "cpu.h"
 #include "instructions.h"
-#include "interrupt.h"
+#include "interrupts.h"
 #include "optables.h"
-#include "serial.h"
+#include "serial_transfer.h"
+#include "timer.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -67,7 +68,6 @@ uint8_t bus_read(struct gameboy *gb, uint16_t addr) {
   } else if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
     return gb->hram[addr - 0xFF80];
   }
-
   assert(0 && "impossible bus read");
 }
 
@@ -98,47 +98,82 @@ void bus_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
 }
 
 uint8_t io_read(struct gameboy *gb, uint16_t addr) {
-  if (addr == 0xFF00) {
+  switch (addr) {
+  case 0xFF00:
     if ((gb->joypad & 0x30) == 0x30) {
       return 0x3F; // All inputs are considered released if no mode is selected
     } else {
       return gb->joypad;
     }
-  } else if (addr == 0xFF01 || addr == 0xFF02) {
-    return serial_read(&gb->serial, (enum serial_reg)addr);
-  } else if (0xFF04 <= addr && addr <= 0xFF07) {
-    return 0xFF; // TODO: Timer read
-  } else if (addr == 0xFF0F || addr == 0xFFFF) {
-    return interrupt_read(&gb->interrupt, (enum interrupt_reg)addr);
-  } else {
+    break;
+  case 0xFF01:
+    return gb->serial.data;
+  case 0xFF02:
+    return gb->serial.control;
+  case 0xFF04:
+    return gb->timer.div;
+  case 0xFF05:
+    return gb->timer.counter;
+  case 0xFF06:
+    return gb->timer.modulo;
+  case 0xFF07:
+    return gb->timer.control;
+  case 0xFF0F:
+    return gb->interrupt.flag;
+  case 0xFFFF:
+    return gb->interrupt.enable;
+  default:
     return 0xFF;
   }
 }
 
 void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
-  if (addr == 0xFF00) {
-    gb->joypad = val & 0x3; // Lower nibble is read only
-  } else if (addr == 0xFF01 || addr == 0xFF02) {
-    serial_write(&gb->serial, &gb->interrupt, (enum serial_reg)addr, val);
-  } else if (0xFF04 <= addr && addr <= 0xFF07) {
-    return; // TODO: Timer write
-  } else if (addr == 0xFF0F || addr == 0xFFFF) {
-    interrupt_write(&gb->interrupt, (enum interrupt_reg)addr, val);
+  switch (addr) {
+  case 0xFF00:
+    // Lower nibble is read only.
+    gb->joypad = (val & 0x30) | (gb->joypad & 0xF);
+    break;
+  case 0xFF01:
+    gb->serial.data = val;
+    break;
+  case 0xFF02:
+    if (val & 0x80) {
+      putchar(gb->serial.data);
+      fflush(stdout);
+    }
+    set_bit(&gb->interrupt.flag, 3); // Request a serial interrupt
+    break;
+  case 0xFF04:
+    gb->timer.div = 0x0;
+    break;
+  case 0xFF05:
+    gb->timer.counter = val;
+    break;
+  case 0xFF06:
+    gb->timer.modulo = val;
+    break;
+  case 0xFF07:
+    gb->timer.control = val;
+    break;
+  case 0xFF0F:
+    gb->interrupt.flag = val & 0x1F;
+    break;
+  case 0xFFFF:
+    gb->interrupt.enable = val & 0x1F;
+    break;
   }
 }
 
 int service_interrupts(struct gameboy *gb) {
   const uint8_t pending_interrupts = gb->interrupt.flag & gb->interrupt.enable;
-
-  for (uint8_t bit_idx = 0; bit_idx < 5; ++bit_idx) {
-    if (is_bit_set(pending_interrupts, bit_idx)) {
-      clear_bit(&gb->interrupt.flag, bit_idx);
+  for (uint8_t i = 0; i < 5; ++i) {
+    if (is_bit_set(pending_interrupts, i)) {
+      clear_bit(&gb->interrupt.flag, i);
       push_n16(gb, gb->cpu.PC);
-      gb->cpu.PC = 0x40 | (bit_idx * 8);
+      gb->cpu.PC = 0x40 | (i << 3);
       break;
     }
   }
-
   return 20;
 }
 

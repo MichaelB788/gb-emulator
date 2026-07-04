@@ -2,8 +2,8 @@
 #include "byte_sizes.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "interrupt.h"
-#include "serial.h"
+#include "interrupts.h"
+#include "serial_transfer.h"
 #include "timer.h"
 #include <stdint.h>
 #include <stdio.h>

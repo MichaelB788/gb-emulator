@@ -7,3 +7,5 @@ struct timer {
   uint8_t modulo;
   uint8_t control;
 };
+
+void timer_tick(struct timer *timer);
