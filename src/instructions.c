@@ -923,6 +923,8 @@ int nop(struct gameboy *gb) { return 4; }
 int stop(struct gameboy *gb) {
   fetch_n8(gb);
   gb->state = GB_STOPPED;
+  gb->timer.system_counter = 0;
+  gb->timer.divider = 0;
   return 4;
 }
 

@@ -85,7 +85,7 @@ uint8_t io_read(struct gameboy *gb, uint16_t addr) {
   case 0xFF02:
     return gb->serial.control;
   case 0xFF04:
-    return gb->timer.div;
+    return gb->timer.divider;
   case 0xFF05:
     return gb->timer.counter;
   case 0xFF06:
@@ -118,7 +118,8 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
     set_bit(&gb->interrupt.flag, 3); // Request a serial interrupt
     break;
   case 0xFF04:
-    gb->timer.system_counter = 0x00000;
+    gb->timer.system_counter = 0;
+    gb->timer.divider = 0;
     break;
   case 0xFF05:
     gb->timer.counter = val;
