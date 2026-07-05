@@ -1,4 +1,3 @@
-#include "SDL3/SDL_init.h"
 #include "gameboy.h"
 #include "optables.h"
 #include <stdint.h>

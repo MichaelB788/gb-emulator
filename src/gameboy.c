@@ -5,7 +5,6 @@
 #include "interrupts.h"
 #include "serial_transfer.h"
 #include "timer.h"
-#include <SDL3/SDL_events.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
