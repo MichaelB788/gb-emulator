@@ -3,9 +3,9 @@
 #include "cartridge.h"
 #include "cpu.h"
 #include "interrupts.h"
-#include "optables.h"
 #include "serial_transfer.h"
 #include "timer.h"
+#include <SDL3/SDL_events.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -17,25 +17,6 @@ bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
 }
 
 void close_gameboy(struct gameboy *gb) { destroy_cartridge(&gb->cartridge); }
-
-void run_gameboy_loop(struct gameboy *gb) {
-  FILE *log_file = fopen("log.txt", "w");
-  while (gb->state == GB_RUNNING) {
-    int cycles = 0;
-
-    gb->cpu.IME = gb->cpu.enable_interrupts;
-
-    gb->opcode = bus_read(gb, gb->cpu.PC);
-    log_curr_instr(gb, log_file);
-    ++gb->cpu.PC;
-
-    cycles += unprefixed_ins[gb->opcode](gb);
-    cycles += handle_interrupts(gb);
-
-    timer_tick(&gb->timer, cycles, &gb->interrupt);
-  }
-  fclose(log_file);
-}
 
 uint8_t bus_read(struct gameboy *gb, uint16_t addr) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {

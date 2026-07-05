@@ -4,3 +4,6 @@
 [submodule "extern/gameboy-doctor"]
 	path = extern/gameboy-doctor
 	url = https://github.com/robert/gameboy-doctor.git
+[submodule "extern/SDL"]
+	path = extern/SDL
+	url = https://github.com/libsdl-org/SDL.git

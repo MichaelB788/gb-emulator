@@ -15,4 +15,7 @@ add_library(GB_Core
   timer.c
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE GB_Core)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
+  GB_Core
+  SDL3::SDL3
+)

@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED YES)
 set(CMAKE_C_EXTENSIONS OFF)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIGURATION>")
 
 project(
   GameBoy
@@ -15,4 +17,5 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
+add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(src)
