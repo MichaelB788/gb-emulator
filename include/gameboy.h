@@ -40,6 +40,4 @@ uint8_t io_read(struct gameboy *gb, uint16_t addr);
 
 void io_write(struct gameboy *gb, uint16_t addr, uint8_t val);
 
-int service_interrupts(struct gameboy *gb);
-
 void log_curr_instr(struct gameboy *gb, FILE *output);

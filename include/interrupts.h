@@ -5,3 +5,7 @@ struct interrupts {
   uint8_t flag;
   uint8_t enable;
 };
+
+struct gameboy;
+
+int handle_interrupts(struct gameboy *gb);

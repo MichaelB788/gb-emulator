@@ -2,7 +2,6 @@
 #include "bitwise.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "instructions.h"
 #include "interrupts.h"
 #include "optables.h"
 #include "serial_transfer.h"
@@ -24,21 +23,16 @@ void run_gameboy_loop(struct gameboy *gb) {
   while (gb->state == GB_RUNNING) {
     int cycles = 0;
 
-    // Set the IME flag if interrupts were enabled by RETI or EI
     gb->cpu.IME = gb->cpu.enable_interrupts;
 
-    // Execute the next opcode
     gb->opcode = bus_read(gb, gb->cpu.PC);
     log_curr_instr(gb, log_file);
     ++gb->cpu.PC;
-    cycles += unprefixed_ins[gb->opcode](gb);
 
-    // Handle interrupts
-    if (gb->cpu.IME) {
-      gb->cpu.enable_interrupts = false;
-      gb->cpu.IME = false;
-      cycles += service_interrupts(gb);
-    }
+    cycles += unprefixed_ins[gb->opcode](gb);
+    cycles += handle_interrupts(gb);
+
+    timer_tick(&gb->timer, cycles, &gb->interrupt);
   }
   fclose(log_file);
 }
@@ -144,7 +138,7 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
     set_bit(&gb->interrupt.flag, 3); // Request a serial interrupt
     break;
   case 0xFF04:
-    gb->timer.div = 0x0;
+    gb->timer.system_counter = 0x00000;
     break;
   case 0xFF05:
     gb->timer.counter = val;
@@ -153,7 +147,7 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
     gb->timer.modulo = val;
     break;
   case 0xFF07:
-    gb->timer.control = val;
+    gb->timer.control = val & 0x7;
     break;
   case 0xFF0F:
     gb->interrupt.flag = val & 0x1F;
@@ -162,19 +156,6 @@ void io_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
     gb->interrupt.enable = val & 0x1F;
     break;
   }
-}
-
-int service_interrupts(struct gameboy *gb) {
-  const uint8_t pending_interrupts = gb->interrupt.flag & gb->interrupt.enable;
-  for (uint8_t i = 0; i < 5; ++i) {
-    if (is_bit_set(pending_interrupts, i)) {
-      clear_bit(&gb->interrupt.flag, i);
-      push_n16(gb, gb->cpu.PC);
-      gb->cpu.PC = 0x40 | (i << 3);
-      break;
-    }
-  }
-  return 20;
 }
 
 void log_curr_instr(struct gameboy *gb, FILE *output) {
