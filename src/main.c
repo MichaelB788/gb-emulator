@@ -13,6 +13,35 @@
 static struct gameboy gb = {0};
 static FILE *log_file = NULL;
 
+int cpu_step() {
+  if (gb.cpu.halt_mode) {
+    return 4;
+  }
+
+  if (gb.cpu.enable_interrupts) {
+    gb.cpu.IME = true;
+    gb.cpu.enable_interrupts = false;
+  }
+
+  gb.opcode = bus_read(&gb, gb.cpu.PC);
+  if (log_file) {
+    log_curr_instr(&gb, log_file);
+  }
+  ++gb.cpu.PC;
+
+  return unprefixed_ins[gb.opcode](&gb);
+}
+
+int handle_interrupts() {
+  if (interrupt_pending(&gb.interrupt)) {
+    gb.cpu.halt_mode = false;
+    if (gb.cpu.IME) {
+      return service_interrupt(&gb);
+    }
+  }
+  return 0;
+}
+
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   if (argc < 2) {
     fprintf(stderr, "No arguments given, aborting.\n");
@@ -42,29 +71,8 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 SDL_AppResult SDL_AppIterate(void *appstate) {
   int cycles = 0;
 
-  if (gb.cpu.halt_mode) {
-    cycles += 4;
-  } else {
-    gb.opcode = bus_read(&gb, gb.cpu.PC);
-    if (log_file) {
-      log_curr_instr(&gb, log_file);
-    }
-    ++gb.cpu.PC;
-    cycles += unprefixed_ins[gb.opcode](&gb);
-
-    if (gb.cpu.enable_interrupts) {
-      gb.cpu.IME = true;
-      gb.cpu.enable_interrupts = false;
-    }
-  }
-
-  if (interrupt_pending(&gb.interrupt)) {
-    gb.cpu.halt_mode = false;
-    if (gb.cpu.IME) {
-      cycles += service_interrupts(&gb);
-    }
-  }
-
+  cycles += cpu_step();
+  cycles += handle_interrupts();
   timer_tick(&gb.timer, cycles, &gb.interrupt);
 
   return SDL_APP_CONTINUE;
@@ -88,9 +96,5 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
     fclose(log_file);
   }
 
-  if (result == SDL_APP_SUCCESS) {
-    printf("Program exited successfully\n");
-  } else {
-    printf("Program exited unsuccessfully with: %d\n", result);
-  }
+  printf("Program exited with: %d\n", result);
 }

@@ -4,7 +4,7 @@
 #include "instructions.h"
 #include <stdint.h>
 
-int service_interrupts(struct gameboy *gb) {
+int service_interrupt(struct gameboy *gb) {
   const uint8_t pending_interrupts = gb->interrupt.enable & gb->interrupt.flag;
   for (uint8_t i = 0; i < 5; ++i) {
     if (is_bit_set(pending_interrupts, i)) {
@@ -14,6 +14,7 @@ int service_interrupts(struct gameboy *gb) {
 
       clear_bit(&gb->interrupt.flag, i);
       gb->cpu.IME = false;
+      gb->cpu.enable_interrupts = false;
       return 20;
     }
   }

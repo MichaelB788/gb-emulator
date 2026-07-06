@@ -13,4 +13,4 @@ static bool interrupt_pending(const struct interrupts *interrupt) {
 
 struct gameboy;
 
-int service_interrupts(struct gameboy *gb);
+int service_interrupt(struct gameboy *gb);
