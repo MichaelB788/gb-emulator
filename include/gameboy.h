@@ -8,10 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-enum gameboy_state { GB_RUNNING, GB_STOPPED, GB_HALTED };
-
 struct gameboy {
-  enum gameboy_state state;
   uint8_t opcode;
   uint8_t joypad;
 

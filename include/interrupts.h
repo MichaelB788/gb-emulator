@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 struct interrupts {
@@ -6,6 +7,10 @@ struct interrupts {
   uint8_t enable;
 };
 
+static bool interrupt_pending(const struct interrupts *interrupt) {
+  return (interrupt->enable & interrupt->flag) > 0;
+}
+
 struct gameboy;
 
-int handle_interrupts(struct gameboy *gb);
+int service_interrupts(struct gameboy *gb);

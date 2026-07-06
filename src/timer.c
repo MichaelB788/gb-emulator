@@ -15,7 +15,7 @@ void timer_tick(struct timer *timer, int t_cycles,
     static const unsigned timer_period[] = {
         CPU_CLOCK / 4096u, CPU_CLOCK / 262144u, CPU_CLOCK / 65536u,
         CPU_CLOCK / 16384u};
-    int selected_freq = timer_period[timer->control & 0b11];
+    unsigned selected_freq = timer_period[timer->control & 0b11];
     if (timer->elapsed_cycles >= selected_freq) {
       // Increment the timer counter and check for overflow
       if (++timer->counter == 0x00) {

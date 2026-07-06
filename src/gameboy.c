@@ -30,11 +30,9 @@ uint8_t bus_read(struct gameboy *gb, uint16_t addr) {
     return gb->wram[addr - 0xE000];
   } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Error: Attempt to read from OAM\n");
-    gb->state = GB_STOPPED;
     return 0xFF;
   } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to read from prohibited space\n");
-    gb->state = GB_STOPPED;
     return 0xFF;
   } else if (0xFF00 <= addr && addr <= 0xFF7F ||
              addr == 0xFFFF) /* IO Registers */ {
@@ -58,11 +56,9 @@ void bus_write(struct gameboy *gb, uint16_t addr, uint8_t val) {
     gb->wram[addr - 0xE000] = val;
   } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Warn: Attempt to write to OAM\n");
-    gb->state = GB_STOPPED;
     return;
   } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to write to prohibited space\n");
-    gb->state = GB_STOPPED;
   } else if (0xFF00 <= addr && addr <= 0xFF7F ||
              addr == 0xFFFF) /* IO Registers */ {
     io_write(gb, addr, val);

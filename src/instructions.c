@@ -907,7 +907,7 @@ int ei(struct gameboy *gb) {
 }
 
 int halt(struct gameboy *gb) {
-  gb->state = GB_HALTED;
+  gb->cpu.halt_mode = true;
   return 4;
 }
 
@@ -922,7 +922,7 @@ int nop(struct gameboy *gb) { return 4; }
 
 int stop(struct gameboy *gb) {
   fetch_n8(gb);
-  gb->state = GB_STOPPED;
+  gb->cpu.stop_mode = true;
   gb->timer.system_counter = 0;
   gb->timer.divider = 0;
   return 4;
@@ -935,6 +935,5 @@ int prefix(struct gameboy *gb) {
 
 int illegal(struct gameboy *gb) {
   fprintf(stderr, "Illegal instruction: 0x%02X\n", gb->opcode);
-  gb->state = GB_STOPPED;
   return 0;
 }

@@ -1,4 +1,5 @@
 #include "gameboy.h"
+#include "interrupts.h"
 #include "optables.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -40,16 +41,29 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   int cycles = 0;
-  gb.cpu.IME = gb.cpu.enable_interrupts;
 
-  gb.opcode = bus_read(&gb, gb.cpu.PC);
-  if (log_file) {
-    log_curr_instr(&gb, log_file);
+  if (gb.cpu.halt_mode) {
+    cycles += 4;
+  } else {
+    gb.opcode = bus_read(&gb, gb.cpu.PC);
+    if (log_file) {
+      log_curr_instr(&gb, log_file);
+    }
+    ++gb.cpu.PC;
+    cycles += unprefixed_ins[gb.opcode](&gb);
+
+    if (gb.cpu.enable_interrupts) {
+      gb.cpu.IME = true;
+      gb.cpu.enable_interrupts = false;
+    }
   }
-  ++gb.cpu.PC;
 
-  cycles += unprefixed_ins[gb.opcode](&gb);
-  cycles += handle_interrupts(&gb);
+  if (interrupt_pending(&gb.interrupt)) {
+    gb.cpu.halt_mode = false;
+    if (gb.cpu.IME) {
+      cycles += service_interrupts(&gb);
+    }
+  }
 
   timer_tick(&gb.timer, cycles, &gb.interrupt);
 
