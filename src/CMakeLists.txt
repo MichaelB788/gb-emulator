@@ -6,6 +6,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
   PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 add_library(GB_Core
+  appstate.c
   cartridge.c
   cpu.c
   gameboy.c

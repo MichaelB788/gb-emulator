@@ -6,7 +6,6 @@
 #include "serial_transfer.h"
 #include "timer.h"
 #include <stdint.h>
-#include <stdio.h>
 
 struct gameboy {
   uint8_t opcode;
@@ -35,4 +34,4 @@ uint8_t io_read(struct gameboy *gb, uint16_t addr);
 
 void io_write(struct gameboy *gb, uint16_t addr, uint8_t val);
 
-void log_curr_instr(struct gameboy *gb, FILE *output);
+int handle_interrupts(struct gameboy *gb);

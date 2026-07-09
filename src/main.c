@@ -1,66 +1,40 @@
+#include "appstate.h"
 #include "gameboy.h"
-#include "interrupts.h"
-#include "optables.h"
-#include <stdint.h>
+#include <SDL3/SDL_error.h>
+#include <SDL3/SDL_init.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_events.h>
-#include <SDL3/SDL_log.h>
 #include <SDL3/SDL_main.h>
-
-static struct gameboy gb = {0};
-static FILE *log_file = NULL;
-
-int cpu_step() {
-  if (gb.cpu.halt_mode) {
-    return 4;
-  }
-
-  if (gb.cpu.enable_interrupts) {
-    gb.cpu.IME = true;
-    gb.cpu.enable_interrupts = false;
-  }
-
-  gb.opcode = bus_read(&gb, gb.cpu.PC);
-  if (log_file) {
-    log_curr_instr(&gb, log_file);
-  }
-  ++gb.cpu.PC;
-
-  return unprefixed_ins[gb.opcode](&gb);
-}
-
-int handle_interrupts() {
-  if (interrupt_pending(&gb.interrupt)) {
-    gb.cpu.halt_mode = false;
-    if (gb.cpu.IME) {
-      return service_interrupt(&gb);
-    }
-  }
-  return 0;
-}
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   if (argc < 2) {
-    fprintf(stderr, "No arguments given, aborting.\n");
+    SDL_SetError("No ROM given");
     return SDL_APP_FAILURE;
   }
 
   if (!SDL_Init(SDL_INIT_EVENTS)) {
-    SDL_Log("Could not initialize SDL: %s", SDL_GetError());
     return SDL_APP_FAILURE;
   }
 
-  if (!init_gameboy(&gb, argv[1])) {
-    fprintf(stderr, "Could not initialize the gameboy.\n");
+  *appstate = malloc(sizeof(struct appstate));
+  if (*appstate == NULL) {
+    SDL_SetError("Could not allocate memory for appstate");
     return SDL_APP_FAILURE;
   }
 
-  if (argv[2] && strcmp(argv[2], "--logging_enabled") == 0) {
-    log_file = fopen("log.txt", "w");
-    if (!log_file) {
+  struct appstate *state = *appstate;
+  if (!init_gameboy(&state->gb, argv[1])) {
+    SDL_SetError("Could not initialize the gameboy");
+    return SDL_APP_FAILURE;
+  }
+
+  if (argv[2] && strncmp(argv[2], "--logging_enabled", 17) == 0) {
+    state->log_file = fopen("log.txt", "w");
+    if (!state->log_file) {
       perror("Could not open log file");
     }
   }
@@ -69,11 +43,13 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
+  struct appstate *state = appstate;
   int cycles = 0;
 
-  cycles += cpu_step();
-  cycles += handle_interrupts();
-  timer_tick(&gb.timer, cycles, &gb.interrupt);
+  cycles += cpu_step(state);
+  cycles += handle_interrupts(&state->gb);
+
+  timer_tick(&state->gb.timer, cycles, &state->gb.interrupt);
 
   return SDL_APP_CONTINUE;
 }
@@ -90,11 +66,18 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  close_gameboy(&gb);
-
-  if (log_file) {
-    fclose(log_file);
+  if (appstate) {
+    struct appstate *state = appstate;
+    close_gameboy(&state->gb);
+    if (state->log_file) {
+      fclose(state->log_file);
+    }
+    free(appstate);
   }
 
-  printf("Program exited with: %d\n", result);
+  if (result == SDL_APP_SUCCESS) {
+    printf("App exited successfully.\n");
+  } else if (result == SDL_APP_FAILURE) {
+    fprintf(stderr, "An error occurred: %s\n", SDL_GetError());
+  }
 }
