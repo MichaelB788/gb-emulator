@@ -13,5 +13,4 @@ struct timer {
 
 struct interrupts;
 
-void timer_tick(struct timer *timer, int t_cycles,
-                struct interrupts *interrupt);
+void timer_tick(struct timer *timer, int cycles, struct interrupts *interrupt);
