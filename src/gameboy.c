@@ -11,6 +11,11 @@
 #include <stdio.h>
 
 bool init_gameboy(struct gameboy *gb, const char *path_to_rom) {
+  if (!path_to_rom) {
+    fprintf(stderr, "Could not init Gameboy, no ROM given.\n");
+    return false;
+  }
+
   init_cpu(&gb->cpu);
   return init_cartridge(&gb->cartridge, path_to_rom);
 }
