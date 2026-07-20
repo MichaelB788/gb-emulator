@@ -12,6 +12,7 @@ bool init_mapper(struct cartridge *cart) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
+  case MBC1_RAM_CART:
     init_mbc1(&cart->mbc1);
     break;
   default:
@@ -93,6 +94,7 @@ uint8_t rom_read(const struct cartridge *cart, const uint16_t addr) {
   case ROM_ONLY_CART:
     return cart->rom[addr];
   case MBC1_CART:
+  case MBC1_RAM_CART:
     return mbc1_read_rom(cart, addr);
   default:
     fprintf(stderr, "Warn: Unknown mapper type, cannot read ROM\n");
@@ -105,6 +107,7 @@ void rom_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
+  case MBC1_RAM_CART:
     mbc1_write_rom(cart, addr, val);
     break;
   default:
@@ -114,29 +117,22 @@ void rom_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
 }
 
 uint8_t ram_read(struct cartridge *cart, const uint16_t addr) {
-  if (cart->ram_size > 0) {
-    switch (cart->type) {
-    case MBC1_RAM_CART:
-    case MBC1_RAM_BATTERY_CART:
-      return mbc1_read_ram(cart, addr);
-    default:
-      break;
-    }
+  switch (cart->type) {
+  case MBC1_RAM_CART:
+    return mbc1_read_ram(cart, addr);
+  default:
+    fprintf(stderr, "Warn: Attempt to read RAM that doesn't exist\n");
+    return 0xFF;
   }
-  fprintf(stderr, "Warn: Attempt to read RAM that doesn't exist\n");
-  return 0xFF;
 }
 
 void ram_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
-  if (cart->ram_size > 0) {
-    switch (cart->type) {
-    case MBC1_RAM_CART:
-    case MBC1_RAM_BATTERY_CART:
-      mbc1_write_ram(cart, addr, val);
-      break;
-    default:
-      break;
-    }
+  switch (cart->type) {
+  case MBC1_RAM_CART:
+    mbc1_write_ram(cart, addr, val);
+    break;
+  default:
+    fprintf(stderr, "Warn: Attempt to write RAM that doesn't exist\n");
+    break;
   }
-  fprintf(stderr, "Warn: Attempt to write RAM that doesn't exist\n");
 }
