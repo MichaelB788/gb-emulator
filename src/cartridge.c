@@ -66,7 +66,7 @@ bool initialize_cart_from_header(FILE *rom_file, struct cartridge *cart) {
          initialize_ram(cart);
 }
 
-bool init_cartridge(struct cartridge *cart, const char *path_to_rom) {
+bool cart_init(struct cartridge *cart, const char *path_to_rom) {
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not open file");
@@ -77,19 +77,19 @@ bool init_cartridge(struct cartridge *cart, const char *path_to_rom) {
     return true;
   } else {
     fclose(rom_file);
-    destroy_cartridge(cart);
+    cart_close(cart);
     return false;
   }
 }
 
-void destroy_cartridge(struct cartridge *cart) {
+void cart_close(struct cartridge *cart) {
   if (cart) {
     free(cart->rom);
     free(cart->ram);
   }
 }
 
-uint8_t rom_read(const struct cartridge *cart, const uint16_t addr) {
+uint8_t cart_read_rom(const struct cartridge *cart, const uint16_t addr) {
   switch (cart->type) {
   case ROM_ONLY_CART:
     return cart->rom[addr];
@@ -102,7 +102,8 @@ uint8_t rom_read(const struct cartridge *cart, const uint16_t addr) {
   }
 }
 
-void rom_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
+void cart_write_rom(struct cartridge *cart, const uint16_t addr,
+                    const uint8_t val) {
   switch (cart->type) {
   case ROM_ONLY_CART:
     break;
@@ -116,7 +117,7 @@ void rom_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
   }
 }
 
-uint8_t ram_read(struct cartridge *cart, const uint16_t addr) {
+uint8_t cart_read_ram(struct cartridge *cart, const uint16_t addr) {
   switch (cart->type) {
   case MBC1_RAM_CART:
     return mbc1_read_ram(cart, addr);
@@ -126,7 +127,8 @@ uint8_t ram_read(struct cartridge *cart, const uint16_t addr) {
   }
 }
 
-void ram_write(struct cartridge *cart, const uint16_t addr, const uint8_t val) {
+void cart_write_ram(struct cartridge *cart, const uint16_t addr,
+                    const uint8_t val) {
   switch (cart->type) {
   case MBC1_RAM_CART:
     mbc1_write_ram(cart, addr, val);

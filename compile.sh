@@ -14,4 +14,4 @@ cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
 ninja -C "$BUILD_DIR"
 
 echo "Build successful. Program can be run with:"
-echo "./build/bin/GameBoy <path/to/rom>"
+echo "./build/bin/GB_Emulator <path/to/rom>"

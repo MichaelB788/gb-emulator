@@ -2,10 +2,23 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+struct bus;
+struct interrupts;
+
+#define FLAG_Z 7u
+#define FLAG_N 6u
+#define FLAG_H 5u
+#define FLAG_C 4u
+
+enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED };
+
 /**
  * The GameBoy's CPU
  */
 struct cpu {
+  uint8_t opcode;
+  enum cpu_state state;
+
   union {
     struct {
       uint8_t B, C, D, E, H, L, F, A;
@@ -13,41 +26,51 @@ struct cpu {
     uint8_t r8[8];
   };
 
-  bool enable_interrupts;
-  bool halt_mode;
-  bool stop_mode;
-
   bool IME;
+  bool ime_pending;
 
   uint16_t PC;
   uint16_t SP;
+
+  struct bus *bus;
 };
 
-void init_cpu(struct cpu *cpu);
+void cpu_init(struct cpu *cpu, struct bus *bus);
 
-void set_hl(struct cpu *cpu, uint16_t val);
+uint8_t cpu_step(struct cpu *cpu);
+uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt);
 
-uint16_t get_hl(struct cpu *cpu);
+/// Register pair operations
 
-/**
- * Offsets to form the regular 8-bit register pairs, such that
- * hi = r8[i], and lo = r8[i + 1]
- *
- * Note: 16-bit registers are derived from the y-field, yet the offset can be
- * deduced simply by ignoring the first bit, the binary representations
- * exemplify this.
- */
-enum regpair { REG_BC = 0b000, REG_DE = 0b010, REG_HL = 0b100 };
+uint16_t cpu_get_bc(const struct cpu *cpu);
+uint16_t cpu_get_de(const struct cpu *cpu);
+uint16_t cpu_get_hl(const struct cpu *cpu);
+uint16_t cpu_get_af(const struct cpu *cpu);
 
-void set_regpair(struct cpu *cpu, enum regpair rp, uint16_t val);
+void cpu_set_bc(struct cpu *cpu, uint16_t val);
+void cpu_set_de(struct cpu *cpu, uint16_t val);
+void cpu_set_hl(struct cpu *cpu, uint16_t val);
+void cpu_set_af(struct cpu *cpu, uint16_t val);
 
-uint16_t get_regpair(const struct cpu *cpu, enum regpair rp);
+/// Memory operations
 
-// Flags used by the CPU. The values mask the bit corresponding to the flag.
-enum flag { FLAG_Z = 0x80, FLAG_N = 0x40, FLAG_H = 0x20, FLAG_C = 0x10 };
+uint8_t cpu_fetch_n8(struct cpu *cpu);
+uint16_t cpu_fetch_n16(struct cpu *cpu);
 
-void set_flag(uint8_t *reg_f, enum flag flag, bool val);
+uint8_t cpu_read_hl(struct cpu *cpu);
+void cpu_write_hl(struct cpu *cpu, uint8_t val);
 
-bool is_flag_set(uint8_t reg_f, enum flag flag);
+void cpu_push_n16(struct cpu *cpu, uint16_t val);
+uint16_t cpu_pop_n16(struct cpu *cpu);
 
-bool get_carry(uint8_t reg_f);
+/// Opcode dispatching
+
+uint16_t cpu_get_r16(const struct cpu *cpu);
+void cpu_set_r16(struct cpu *cpu, uint16_t val);
+
+uint16_t cpu_get_r16stk(const struct cpu *cpu);
+void cpu_set_r16stk(struct cpu *cpu, uint16_t val);
+
+uint16_t cpu_get_r16mem(struct cpu *cpu);
+
+bool cpu_test_cond(struct cpu *cpu);

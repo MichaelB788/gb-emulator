@@ -1,8 +1,8 @@
 #pragma once
-#include "instructions.h"
+#include "cpu_instrs.h"
 #include <stdint.h>
 
-typedef int (*opcode_fn)(struct gameboy *);
+typedef uint8_t (*opcode_fn)(struct cpu *);
 
 static const opcode_fn unprefixed_ins[256] = {
     [0x00] = nop,          [0x10] = stop,         [0x20] = jr_cc_e8,

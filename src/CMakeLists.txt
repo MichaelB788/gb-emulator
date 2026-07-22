@@ -7,11 +7,13 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 
 add_library(GB_Core
   appstate.c
+  bus.c
   cartridge.c
   cpu.c
-  gameboy.c
-  instructions.c
-  interrupts.c
+  cpu_instrs.c
+  emulator.c
+  impl_cpu_instrs.c
+  main.c
   mbc1.c
   timer.c
 )

@@ -26,14 +26,11 @@ struct cartridge {
   uint8_t *ram;
 };
 
-bool init_cartridge(struct cartridge *cart, const char *path_to_rom);
+bool cart_init(struct cartridge *cart, const char *path_to_rom);
+void cart_close(struct cartridge *cart);
 
-void destroy_cartridge(struct cartridge *cart);
+uint8_t cart_read_rom(const struct cartridge *cart, uint16_t addr);
+void cart_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val);
 
-uint8_t rom_read(const struct cartridge *cart, uint16_t addr);
-
-void rom_write(struct cartridge *cart, uint16_t addr, uint8_t val);
-
-uint8_t ram_read(struct cartridge *cart, uint16_t addr);
-
-void ram_write(struct cartridge *cart, uint16_t addr, uint8_t val);
+uint8_t cart_read_ram(struct cartridge *cart, uint16_t addr);
+void cart_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val);

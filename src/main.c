@@ -1,6 +1,7 @@
 #include "appstate.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -25,12 +26,9 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
   struct appstate *state = appstate;
-  int cycles = 0;
 
-  cycles += cpu_step(state);
-  cycles += handle_interrupts(&state->gb);
-
-  timer_tick(&state->gb.timer, cycles, &state->gb.interrupt);
+  const uint8_t cycles = cpu_step(&state->gb.cpu);
+  timer_tick(&state->gb.bus.timer, cycles, &state->gb.bus.interrupt);
 
   return SDL_APP_CONTINUE;
 }
