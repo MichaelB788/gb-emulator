@@ -245,34 +245,3 @@ uint8_t impl_swap(struct cpu *cpu, uint8_t operand) {
 
   return result;
 }
-
-/// DAA implementation
-
-void daa_impl(struct cpu *cpu) {
-  const uint8_t A = cpu->A, F = cpu->F;
-  uint8_t result = 0, adjustment = 0;
-
-  if (is_bit_set(F, FLAG_N)) {
-    if (is_bit_set(F, FLAG_H)) {
-      adjustment |= 0x6;
-    }
-    if (is_bit_set(F, FLAG_C)) {
-      adjustment |= 0x60;
-    }
-    result = A - adjustment;
-  } else {
-    if (is_bit_set(F, FLAG_H) || (A & 0xF) > 0x9) {
-      adjustment |= 0x6;
-    }
-    if (is_bit_set(F, FLAG_C) || A > 0x99) {
-      adjustment |= 0x60;
-      write_bit(&cpu->F, FLAG_C, true);
-    }
-    result = A + adjustment;
-  }
-
-  write_bit(&cpu->F, FLAG_Z, result == 0);
-  write_bit(&cpu->F, FLAG_H, false);
-
-  cpu->A = result;
-}

@@ -39,6 +39,3 @@ uint8_t impl_sra(struct cpu *cpu, uint8_t operand);
 uint8_t impl_srl(struct cpu *cpu, uint8_t operand);
 
 uint8_t impl_swap(struct cpu *cpu, uint8_t operand);
-
-/// DAA implementation
-void daa_impl(struct cpu *cpu);
