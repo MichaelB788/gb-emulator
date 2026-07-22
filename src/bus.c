@@ -1,17 +1,40 @@
 #include "bus.h"
 #include "bitwise.h"
+#include "cartridge.h"
+#include "mapper.h"
 #include "serial_transfer.h"
 #include "timer.h"
 #include <assert.h>
 #include <stdio.h>
 
+bool bus_init(struct bus *bus, const char *rom_path) {
+  bus->joypad = 0x3F;
+
+  bus->interrupt.enable = 0;
+  bus->interrupt.flag = 0;
+
+  bus->serial.data = 0;
+  bus->serial.control = 0;
+
+  bus->timer.elapsed_cycles = 0;
+  bus->timer.system_counter = 0;
+  bus->timer.divider = 0;
+  bus->timer.counter = 0;
+  bus->timer.modulo = 0;
+  bus->timer.control = 0;
+
+  return cart_init(&bus->cartridge, rom_path);
+}
+
+void bus_close(struct bus *bus) { cart_close(&bus->cartridge); }
+
 uint8_t bus_read_byte(struct bus *bus, uint16_t addr) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    return cart_read_rom(&bus->cartridge, addr);
+    return mapper_read_rom(&bus->cartridge, addr);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     return bus->vram[addr - 0x8000];
   } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return cart_read_ram(&bus->cartridge, addr);
+    return mapper_read_ram(&bus->cartridge, addr);
   } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     return bus->wram[addr - 0xC000];
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
@@ -33,11 +56,11 @@ uint8_t bus_read_byte(struct bus *bus, uint16_t addr) {
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
-    cart_write_rom(&bus->cartridge, addr, val);
+    mapper_write_rom(&bus->cartridge, addr, val);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     bus->vram[addr - 0x8000] = val;
   } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    cart_write_ram(&bus->cartridge, addr, val);
+    mapper_write_ram(&bus->cartridge, addr, val);
   } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     bus->wram[addr - 0xC000] = val;
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {

@@ -1,9 +1,7 @@
 #include "emulator.h"
-#include "cartridge.h"
 #include "cpu.h"
 #include <assert.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 
 bool emu_init(struct emulator *gb, const char *path_to_rom) {
@@ -12,8 +10,7 @@ bool emu_init(struct emulator *gb, const char *path_to_rom) {
     return false;
   }
 
-  cpu_init(&gb->cpu, &gb->bus);
-  return cart_init(&gb->bus.cartridge, path_to_rom);
+  return bus_init(&gb->bus, path_to_rom) && cpu_init(&gb->cpu, &gb->bus);
 }
 
-void emu_close(struct emulator *gb) { cart_close(&gb->bus.cartridge); }
+void emu_close(struct emulator *gb) { bus_close(&gb->bus); }

@@ -18,6 +18,9 @@ struct bus {
   uint8_t hram[127];
 };
 
+bool bus_init(struct bus *bus, const char *rom_path);
+void bus_close(struct bus *bus);
+
 uint8_t bus_read_byte(struct bus *bus, uint16_t addr);
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val);
 

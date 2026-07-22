@@ -1,7 +1,6 @@
 #pragma once
 #include "bus.h"
 #include "cpu.h"
-#include <stdint.h>
 
 struct emulator {
   struct bus bus;

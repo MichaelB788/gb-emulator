@@ -6,6 +6,7 @@
 #include "optables.h"
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define GET_REGPAIR(hi, lo) ((hi << 8) | lo)
 #define SET_REGPAIR(hi, lo, val)                                               \
@@ -15,7 +16,11 @@
   } while (false)
 #define R16_BIT_FIELD(opcode) (opcode >> 4) & 0x3
 
-void cpu_init(struct cpu *cpu, struct bus *bus) {
+bool cpu_init(struct cpu *cpu, struct bus *bus) {
+  if (!bus) {
+    fprintf(stderr, "Invalid bus pointer given to CPU");
+    return false;
+  }
   cpu->bus = bus;
   cpu->state = CPU_RUNNING;
   cpu->opcode = 0;
@@ -33,6 +38,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 
   cpu->IME = false;
   cpu->ime_pending = false;
+  return true;
 }
 
 uint8_t cpu_step(struct cpu *cpu) {

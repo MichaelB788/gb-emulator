@@ -35,7 +35,7 @@ struct cpu {
   struct bus *bus;
 };
 
-void cpu_init(struct cpu *cpu, struct bus *bus);
+bool cpu_init(struct cpu *cpu, struct bus *bus);
 
 uint8_t cpu_step(struct cpu *cpu);
 uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt);
