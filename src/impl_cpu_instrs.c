@@ -124,7 +124,7 @@ void impl_and(struct cpu *cpu, uint8_t operand) {
   cpu->A = result;
 }
 
-void imple_xor(struct cpu *cpu, uint8_t operand) {
+void impl_xor(struct cpu *cpu, uint8_t operand) {
   const uint8_t A = cpu->A;
   const uint8_t result = A ^ operand;
 

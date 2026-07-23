@@ -39,6 +39,7 @@ struct cpu {
 
 bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file);
 
+// Returns cycles taken
 uint8_t cpu_tick(struct cpu *cpu);
 
 /// Register pair operations
@@ -58,8 +59,8 @@ void cpu_set_af(struct cpu *cpu, uint16_t val);
 uint8_t cpu_fetch_n8(struct cpu *cpu);
 uint16_t cpu_fetch_n16(struct cpu *cpu);
 
-uint8_t cpu_read_hl(struct cpu *cpu);
-void cpu_write_hl(struct cpu *cpu, uint8_t val);
+uint8_t cpu_read_hl(const struct cpu *cpu);
+void cpu_write_hl(const struct cpu *cpu, uint8_t val);
 
 void cpu_push_n16(struct cpu *cpu, uint16_t val);
 uint16_t cpu_pop_n16(struct cpu *cpu);
@@ -74,4 +75,4 @@ void cpu_set_r16stk(struct cpu *cpu, uint16_t val);
 
 uint16_t cpu_get_r16mem(struct cpu *cpu);
 
-bool cpu_test_cond(struct cpu *cpu);
+bool cpu_test_cond(const struct cpu *cpu);

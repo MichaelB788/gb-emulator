@@ -21,8 +21,8 @@ struct bus {
 bool bus_init(struct bus *bus, const char *rom_path);
 void bus_close(struct bus *bus);
 
-uint8_t bus_read_byte(struct bus *bus, uint16_t addr);
+uint8_t bus_read_byte(const struct bus *bus, uint16_t addr);
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val);
 
-uint8_t bus_read_io(struct bus *bus, uint16_t addr);
+uint8_t bus_read_io(const struct bus *bus, uint16_t addr);
 void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val);

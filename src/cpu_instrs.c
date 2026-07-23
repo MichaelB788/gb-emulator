@@ -230,17 +230,17 @@ uint8_t or_n8(struct cpu *cpu) {
 }
 
 uint8_t xor_r8(struct cpu *cpu) {
-  imple_xor(cpu, cpu->r8[Z_BIT_FIELD(cpu->opcode)]);
+  impl_xor(cpu, cpu->r8[Z_BIT_FIELD(cpu->opcode)]);
   return 4;
 }
 
 uint8_t xor_hl_ind(struct cpu *cpu) {
-  imple_xor(cpu, cpu_read_hl(cpu));
+  impl_xor(cpu, cpu_read_hl(cpu));
   return 8;
 }
 
 uint8_t xor_n8(struct cpu *cpu) {
-  imple_xor(cpu, cpu_fetch_n8(cpu));
+  impl_xor(cpu, cpu_fetch_n8(cpu));
   return 8;
 }
 
@@ -445,7 +445,7 @@ uint8_t jr_e8(struct cpu *cpu) {
 }
 
 uint8_t jr_cc_e8(struct cpu *cpu) {
-  const int8_t offset = cpu_fetch_n8(cpu);
+  const int8_t offset = (int8_t)cpu_fetch_n8(cpu);
   if (cpu_test_cond(cpu)) {
     cpu->PC += offset;
     return 12;
@@ -499,12 +499,12 @@ uint8_t scf(struct cpu *cpu) {
 /// Stack manipulation instructions
 
 uint8_t add_sp_e8(struct cpu *cpu) {
-  cpu->SP = impl_add_sp_e8(cpu, cpu_fetch_n8(cpu));
+  cpu->SP = impl_add_sp_e8(cpu, (int8_t)cpu_fetch_n8(cpu));
   return 16;
 }
 
 uint8_t ld_hl_sp_e8(struct cpu *cpu) {
-  cpu_set_hl(cpu, impl_add_sp_e8(cpu, cpu_fetch_n8(cpu)));
+  cpu_set_hl(cpu, impl_add_sp_e8(cpu, (int8_t)cpu_fetch_n8(cpu)));
   return 12;
 }
 

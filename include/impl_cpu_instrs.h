@@ -21,7 +21,7 @@ uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8);
 
 /// Bitwise logic implementations
 void impl_and(struct cpu *cpu, uint8_t operand);
-void imple_xor(struct cpu *cpu, uint8_t operand);
+void impl_xor(struct cpu *cpu, uint8_t operand);
 void impl_or(struct cpu *cpu, uint8_t operand);
 
 /// Bit flag implementations

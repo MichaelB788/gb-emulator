@@ -1,5 +1,4 @@
 #pragma once
-#include <stdbool.h>
 #include <stdint.h>
 
 struct cpu;
@@ -84,7 +83,7 @@ uint8_t res_b3_hl_ind(struct cpu *cpu);
 uint8_t set_b3_r8(struct cpu *cpu);
 uint8_t set_b3_hl_ind(struct cpu *cpu);
 
-/// Bit shfit instructions
+/// Bit shift instructions
 uint8_t rl_r8(struct cpu *cpu);
 uint8_t rl_hl_ind(struct cpu *cpu);
 uint8_t rla(struct cpu *cpu);

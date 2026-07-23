@@ -9,9 +9,8 @@ bool byte_vector_create(struct byte_vector *vec, size_t size) {
       vec->size = 0;
       perror("byte_vector data malloc failed");
       return false;
-    } else {
-      return true;
     }
+    return true;
   }
   return false;
 }
@@ -22,13 +21,12 @@ bool byte_vector_create_from_file(struct byte_vector *vec, size_t size,
     rewind(file);
     if (fread(vec->data, 1, vec->size, file) == vec->size) {
       return true;
-    } else {
-      free(vec->data);
-      vec->data = NULL;
-      vec->size = 0;
-      perror("Could not read file content into byte_vector data");
-      return false;
     }
+    free(vec->data);
+    vec->data = NULL;
+    vec->size = 0;
+    perror("Could not read file content into byte_vector data");
+    return false;
   }
   return false;
 }

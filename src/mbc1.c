@@ -2,7 +2,6 @@
 #include "byte_sizes.h"
 #include "byte_vector.h"
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 void mbc1_init(struct mbc1 *mbc1) {
@@ -16,9 +15,8 @@ uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct byte_vector *rom,
                       const uint16_t addr) {
   if (addr < 0x4000) {
     return rom->data[addr];
-  } else {
-    return rom->data[(KiB_16 * mbc1->rom_bank) + (addr - 0x4000)];
   }
+  return rom->data[(KiB_16 * mbc1->rom_bank) + (addr - 0x4000)];
 }
 
 void mbc1_write_rom(struct mbc1 *mbc1, const struct byte_vector *rom,
@@ -51,9 +49,8 @@ uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct byte_vector *ram,
                       const uint16_t addr) {
   if (mbc1->ram_enabled) {
     return ram->data[((addr - 0xA000) + (mbc1->ram_bank * KiB_8)) % ram->size];
-  } else {
-    return 0xFF;
   }
+  return 0xFF;
 }
 
 void mbc1_write_ram(const struct mbc1 *mbc1, struct byte_vector *ram,

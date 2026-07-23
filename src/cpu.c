@@ -1,7 +1,6 @@
 #include "cpu.h"
 #include "bitwise.h"
 #include "bus.h"
-#include "cpu_instrs.h"
 #include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
@@ -35,7 +34,7 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   return true;
 }
 
-void log_instruction(struct cpu *cpu) {
+static void log_instruction(const struct cpu *cpu) {
   if (cpu->log_file) {
     fprintf(cpu->log_file,
             "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
@@ -49,7 +48,7 @@ void log_instruction(struct cpu *cpu) {
   }
 }
 
-uint8_t execute_next_instruction(struct cpu *cpu) {
+static uint8_t execute_next_instruction(struct cpu *cpu) {
   log_instruction(cpu);
   cpu->opcode = cpu_fetch_n8(cpu);
   if (cpu->ime_pending) {
@@ -59,7 +58,8 @@ uint8_t execute_next_instruction(struct cpu *cpu) {
   return unprefixed_ins[cpu->opcode](cpu);
 }
 
-uint8_t service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
+static uint8_t service_interrupts(struct cpu *cpu,
+                                  struct interrupts *interrupt) {
   const uint8_t pending_interrupts = interrupt->enable & interrupt->flag;
   for (uint8_t i = 0; i < 5; ++i) {
     if (is_bit_set(pending_interrupts, i)) {
@@ -75,7 +75,8 @@ uint8_t service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
   return 0;
 }
 
-uint8_t handle_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
+static uint8_t handle_interrupts(struct cpu *cpu,
+                                 struct interrupts *interrupt) {
   if (interrupt->enable & interrupt->flag) {
     cpu->state = CPU_RUNNING;
     if (cpu->IME) {
@@ -94,7 +95,9 @@ uint8_t cpu_tick(struct cpu *cpu) {
 
 /// Register pair operations
 
-uint16_t get_regpair(uint8_t hi, uint8_t lo) { return (uint16_t)hi << 8 | lo; }
+static uint16_t get_regpair(uint8_t hi, uint8_t lo) {
+  return (uint16_t)hi << 8 | lo;
+}
 
 uint16_t cpu_get_bc(const struct cpu *cpu) {
   return get_regpair(cpu->B, cpu->C);
@@ -112,7 +115,7 @@ uint16_t cpu_get_af(const struct cpu *cpu) {
   return get_regpair(cpu->A, cpu->F);
 }
 
-void set_regpair(uint8_t *hi, uint8_t *lo, uint16_t val) {
+static void set_regpair(uint8_t *hi, uint8_t *lo, uint16_t val) {
   *hi = val >> 8;
   *lo = val & 0xFF;
 }
@@ -146,11 +149,11 @@ uint16_t cpu_fetch_n16(struct cpu *cpu) {
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t cpu_read_hl(struct cpu *cpu) {
+uint8_t cpu_read_hl(const struct cpu *cpu) {
   return bus_read_byte(cpu->bus, cpu_get_hl(cpu));
 }
 
-void cpu_write_hl(struct cpu *cpu, uint8_t val) {
+void cpu_write_hl(const struct cpu *cpu, uint8_t val) {
   bus_write_byte(cpu->bus, cpu_get_hl(cpu), val);
 }
 
@@ -167,7 +170,7 @@ uint16_t cpu_pop_n16(struct cpu *cpu) {
 
 /// Opcode dispatching
 
-#define R16_BIT_FIELD(opcode) (opcode >> 4) & 0x3
+#define R16_BIT_FIELD(opcode) ((opcode >> 4) & 0x3)
 
 uint16_t cpu_get_r16(const struct cpu *cpu) {
   switch (R16_BIT_FIELD(cpu->opcode)) {
@@ -258,7 +261,7 @@ uint16_t cpu_get_r16mem(struct cpu *cpu) {
   }
 }
 
-bool cpu_test_cond(struct cpu *cpu) {
+bool cpu_test_cond(const struct cpu *cpu) {
   switch ((cpu->opcode >> 3) & 0x3) {
   case 0:
     return !is_bit_set(cpu->F, FLAG_Z);

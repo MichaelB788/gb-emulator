@@ -28,34 +28,41 @@ bool bus_init(struct bus *bus, const char *rom_path) {
 
 void bus_close(struct bus *bus) { cart_close(&bus->cartridge); }
 
-uint8_t bus_read_byte(struct bus *bus, uint16_t addr) {
-  if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
+uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
+  if (addr <= 0x7FFF) /* ROM */ {
     return mapper_read_rom(&bus->cartridge, addr);
-  } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
+  }
+  if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     return bus->vram[addr - 0x8000];
-  } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
+  }
+  if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
     return mapper_read_ram(&bus->cartridge, addr);
-  } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
+  }
+  if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     return bus->wram[addr - 0xC000];
-  } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
+  }
+  if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
     return bus->wram[addr - 0xE000];
-  } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
+  }
+  if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Error: Attempt to read from OAM\n");
     return 0xFF;
-  } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
+  }
+  if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to read from prohibited space\n");
     return 0xFF;
-  } else if (0xFF00 <= addr && addr <= 0xFF7F ||
-             addr == 0xFFFF) /* IO Registers */ {
+  }
+  if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF) /* IO Registers */ {
     return bus_read_io(bus, addr);
-  } else if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
+  }
+  if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
     return bus->hram[addr - 0xFF80];
   }
   assert(0 && "impossible bus read");
 }
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
-  if (0x0000 <= addr && addr <= 0x7FFF) /* ROM */ {
+  if (addr <= 0x7FFF) /* ROM */ {
     mapper_write_rom(&bus->cartridge, addr, val);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     bus->vram[addr - 0x8000] = val;
@@ -67,7 +74,6 @@ void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
     bus->wram[addr - 0xE000] = val;
   } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
     fprintf(stderr, "Warn: Attempt to write to OAM\n");
-    return;
   } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to write to prohibited space\n");
   } else if (0xFF00 <= addr && addr <= 0xFF7F ||
@@ -78,15 +84,11 @@ void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   }
 }
 
-uint8_t bus_read_io(struct bus *bus, uint16_t addr) {
+uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   switch (addr) {
   case 0xFF00:
-    if ((bus->joypad & 0x30) == 0x30) {
-      return 0x3F; // All inputs are considered released if no mode is selected
-    } else {
-      return bus->joypad;
-    }
-    break;
+    // All inputs are considered released if no mode is selected
+    return (bus->joypad & 0x30) == 0x30 ? 0x3F : bus->joypad;
   case 0xFF01:
     return bus->serial.data;
   case 0xFF02:
@@ -142,6 +144,8 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     break;
   case 0xFFFF:
     bus->interrupt.enable = val & 0x1F;
+    break;
+  default:
     break;
   }
 }

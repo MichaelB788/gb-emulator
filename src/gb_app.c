@@ -4,7 +4,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <errno.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -30,7 +29,7 @@ void app_init(struct gb_app *app, const char *path_to_rom,
   }
 }
 
-void app_handle_events(struct gb_app *app) {
+static void app_handle_events(struct gb_app *app) {
   while (SDL_PollEvent(&app->event)) {
     switch (app->event.type) {
     case SDL_EVENT_QUIT:
