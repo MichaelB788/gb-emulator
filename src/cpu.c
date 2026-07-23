@@ -8,14 +8,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define GET_REGPAIR(hi, lo) ((hi << 8) | lo)
-#define SET_REGPAIR(hi, lo, val)                                               \
-  do {                                                                         \
-    hi = (val) >> 8;                                                           \
-    lo = (val) & 0xFF;                                                         \
-  } while (false)
-#define R16_BIT_FIELD(opcode) (opcode >> 4) & 0x3
-
 bool cpu_init(struct cpu *cpu, struct bus *bus) {
   if (!bus) {
     fprintf(stderr, "Invalid bus pointer given to CPU");
@@ -41,7 +33,7 @@ bool cpu_init(struct cpu *cpu, struct bus *bus) {
   return true;
 }
 
-uint8_t cpu_step(struct cpu *cpu) {
+uint8_t cpu_tick(struct cpu *cpu) {
   uint8_t cycles = 0;
   if (cpu->state != CPU_HALTED) {
     if (cpu->ime_pending) {
@@ -84,32 +76,39 @@ uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
 
 /// Register pair operations
 
+uint16_t get_regpair(uint8_t hi, uint8_t lo) { return (uint16_t)hi << 8 | lo; }
+
 uint16_t cpu_get_bc(const struct cpu *cpu) {
-  return GET_REGPAIR(cpu->B, cpu->C);
+  return get_regpair(cpu->B, cpu->C);
 }
 
 uint16_t cpu_get_de(const struct cpu *cpu) {
-  return GET_REGPAIR(cpu->D, cpu->E);
+  return get_regpair(cpu->D, cpu->E);
 }
 
 uint16_t cpu_get_hl(const struct cpu *cpu) {
-  return GET_REGPAIR(cpu->H, cpu->L);
+  return get_regpair(cpu->H, cpu->L);
 }
 
 uint16_t cpu_get_af(const struct cpu *cpu) {
-  return GET_REGPAIR(cpu->A, cpu->F);
+  return get_regpair(cpu->A, cpu->F);
+}
+
+void set_regpair(uint8_t *hi, uint8_t *lo, uint16_t val) {
+  *hi = val >> 8;
+  *lo = val & 0xFF;
 }
 
 void cpu_set_bc(struct cpu *cpu, uint16_t val) {
-  SET_REGPAIR(cpu->B, cpu->C, val);
+  set_regpair(&cpu->B, &cpu->C, val);
 }
 
 void cpu_set_de(struct cpu *cpu, uint16_t val) {
-  SET_REGPAIR(cpu->D, cpu->E, val);
+  set_regpair(&cpu->D, &cpu->E, val);
 }
 
 void cpu_set_hl(struct cpu *cpu, uint16_t val) {
-  SET_REGPAIR(cpu->H, cpu->L, val);
+  set_regpair(&cpu->H, &cpu->L, val);
 }
 
 void cpu_set_af(struct cpu *cpu, uint16_t val) {
@@ -149,6 +148,8 @@ uint16_t cpu_pop_n16(struct cpu *cpu) {
 }
 
 /// Opcode dispatching
+
+#define R16_BIT_FIELD(opcode) (opcode >> 4) & 0x3
 
 uint16_t cpu_get_r16(const struct cpu *cpu) {
   switch (R16_BIT_FIELD(cpu->opcode)) {
