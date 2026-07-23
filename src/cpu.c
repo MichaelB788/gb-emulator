@@ -8,11 +8,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool cpu_init(struct cpu *cpu, struct bus *bus) {
+bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   if (!bus) {
     fprintf(stderr, "Invalid bus pointer given to CPU");
     return false;
   }
+  cpu->log_file = log_file;
+
   cpu->bus = bus;
   cpu->state = CPU_RUNNING;
   cpu->opcode = 0;
@@ -33,32 +35,31 @@ bool cpu_init(struct cpu *cpu, struct bus *bus) {
   return true;
 }
 
-uint8_t cpu_tick(struct cpu *cpu) {
-  uint8_t cycles = 0;
-  if (cpu->state != CPU_HALTED) {
-    if (cpu->ime_pending) {
-      cpu->IME = true;
-      cpu->ime_pending = false;
-    }
-
-    cpu->opcode = cpu_fetch_n8(cpu);
-    cycles += unprefixed_ins[cpu->opcode](cpu);
-  } else {
-    cycles += 4;
+void log_instruction(struct cpu *cpu) {
+  if (cpu->log_file) {
+    fprintf(cpu->log_file,
+            "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
+            "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
+            cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L,
+            cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+            bus_read_byte(cpu->bus, cpu->PC + 1),
+            bus_read_byte(cpu->bus, cpu->PC + 2),
+            bus_read_byte(cpu->bus, cpu->PC + 3));
+    fflush(cpu->log_file);
   }
-
-  struct interrupts *interrupt = &cpu->bus->interrupt;
-  if (interrupt->enable & interrupt->flag) {
-    cpu->state = CPU_RUNNING;
-    if (cpu->IME) {
-      cycles += cpu_service_interrupts(cpu, interrupt);
-    }
-  }
-
-  return cycles;
 }
 
-uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
+uint8_t execute_next_instruction(struct cpu *cpu) {
+  log_instruction(cpu);
+  cpu->opcode = cpu_fetch_n8(cpu);
+  if (cpu->ime_pending) {
+    cpu->IME = true;
+    cpu->ime_pending = false;
+  }
+  return unprefixed_ins[cpu->opcode](cpu);
+}
+
+uint8_t service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
   const uint8_t pending_interrupts = interrupt->enable & interrupt->flag;
   for (uint8_t i = 0; i < 5; ++i) {
     if (is_bit_set(pending_interrupts, i)) {
@@ -72,6 +73,23 @@ uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
     }
   }
   return 0;
+}
+
+uint8_t handle_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
+  if (interrupt->enable & interrupt->flag) {
+    cpu->state = CPU_RUNNING;
+    if (cpu->IME) {
+      return service_interrupts(cpu, interrupt);
+    }
+  }
+  return 0;
+}
+
+uint8_t cpu_tick(struct cpu *cpu) {
+  uint8_t cycles = 0;
+  cycles += cpu->state != CPU_HALTED ? execute_next_instruction(cpu) : 4;
+  cycles += handle_interrupts(cpu, &cpu->bus->interrupt);
+  return cycles;
 }
 
 /// Register pair operations

@@ -7,6 +7,6 @@ struct gb_emulator {
   struct cpu cpu;
 };
 
-bool emu_init(struct gb_emulator *gb, const char *path_to_rom);
+bool emu_init(struct gb_emulator *gb, const char *path_to_rom, FILE *log_file);
 void emu_tick(struct gb_emulator *gb);
 void emu_close(struct gb_emulator *gb);

@@ -24,7 +24,7 @@ void app_init(struct gb_app *app, const char *path_to_rom,
     app->msg = SDL_GetError();
   }
 
-  if (!emu_init(&app->gb, path_to_rom)) {
+  if (!emu_init(&app->gb, path_to_rom, app->log_file)) {
     app->status = APP_FAILURE;
     app->msg = "Could not init emulator";
   }

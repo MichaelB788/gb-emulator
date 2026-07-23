@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 
 struct bus;
 struct interrupts;
@@ -33,12 +34,12 @@ struct cpu {
   uint16_t SP;
 
   struct bus *bus;
+  FILE *log_file; // Observer, non-owning
 };
 
-bool cpu_init(struct cpu *cpu, struct bus *bus);
+bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file);
 
 uint8_t cpu_tick(struct cpu *cpu);
-uint8_t cpu_service_interrupts(struct cpu *cpu, struct interrupts *interrupt);
 
 /// Register pair operations
 

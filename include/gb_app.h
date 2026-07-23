@@ -1,7 +1,6 @@
 #pragma once
 #include "gb_emulator.h"
 #include <SDL3/SDL_events.h>
-#include <stdio.h>
 
 enum app_status { APP_RUNNING, APP_SUCCESS, APP_FAILURE };
 
