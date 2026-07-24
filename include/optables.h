@@ -2,20 +2,20 @@
 #include "cpu_instrs.h"
 #include <stdint.h>
 
-typedef uint8_t (*opcode_fn)(struct cpu *);
+typedef void (*instruction_handler)(struct cpu *);
 
-static const opcode_fn unprefixed_ins[256] = {
+static const instruction_handler unprefixed_ins[256] = {
     [0x00] = nop,          [0x10] = stop,         [0x20] = jr_cc_e8,
-    [0x30] = jr_cc_e8,     [0x01] = ld_r16_n16,   [0x11] = ld_r16_n16,
-    [0x21] = ld_r16_n16,   [0x31] = ld_r16_n16,   [0x02] = ld_r16_ind_a,
+    [0x30] = jr_cc_e8,     [0x01] = ld_r16_u16,   [0x11] = ld_r16_u16,
+    [0x21] = ld_r16_u16,   [0x31] = ld_r16_u16,   [0x02] = ld_r16_ind_a,
     [0x12] = ld_r16_ind_a, [0x22] = ld_r16_ind_a, [0x32] = ld_r16_ind_a,
     [0x03] = inc_r16,      [0x13] = inc_r16,      [0x23] = inc_r16,
     [0x33] = inc_r16,      [0x04] = inc_r8,       [0x14] = inc_r8,
     [0x24] = inc_r8,       [0x34] = inc_hl_ind,   [0x05] = dec_r8,
     [0x15] = dec_r8,       [0x25] = dec_r8,       [0x35] = dec_hl_ind,
-    [0x06] = ld_r8_n8,     [0x16] = ld_r8_n8,     [0x26] = ld_r8_n8,
-    [0x36] = ld_hl_ind_n8, [0x07] = rlca,         [0x17] = rla,
-    [0x27] = daa,          [0x37] = scf,          [0x08] = ld_n16_ind_sp,
+    [0x06] = ld_r8_u8,     [0x16] = ld_r8_u8,     [0x26] = ld_r8_u8,
+    [0x36] = ld_hl_ind_u8, [0x07] = rlca,         [0x17] = rla,
+    [0x27] = daa,          [0x37] = scf,          [0x08] = ld_u16_ind_sp,
     [0x18] = jr_e8,        [0x28] = jr_cc_e8,     [0x38] = jr_cc_e8,
     [0x09] = add_hl_r16,   [0x19] = add_hl_r16,   [0x29] = add_hl_r16,
     [0x39] = add_hl_r16,   [0x0A] = ld_a_r16_ind, [0x1A] = ld_a_r16_ind,
@@ -23,8 +23,8 @@ static const opcode_fn unprefixed_ins[256] = {
     [0x1B] = dec_r16,      [0x2B] = dec_r16,      [0x3B] = dec_r16,
     [0x0C] = inc_r8,       [0x1C] = inc_r8,       [0x2C] = inc_r8,
     [0x3C] = inc_r8,       [0x0D] = dec_r8,       [0x1D] = dec_r8,
-    [0x2D] = dec_r8,       [0x3D] = dec_r8,       [0x0E] = ld_r8_n8,
-    [0x1E] = ld_r8_n8,     [0x2E] = ld_r8_n8,     [0x3E] = ld_r8_n8,
+    [0x2D] = dec_r8,       [0x3D] = dec_r8,       [0x0E] = ld_r8_u8,
+    [0x1E] = ld_r8_u8,     [0x2E] = ld_r8_u8,     [0x3E] = ld_r8_u8,
     [0x0F] = rrca,         [0x1F] = rra,          [0x2F] = cpl,
     [0x3F] = ccf,
 
@@ -74,30 +74,30 @@ static const opcode_fn unprefixed_ins[256] = {
     [0xBC] = cp_r8,        [0xBD] = cp_r8,        [0xBE] = cp_hl_ind,
     [0xBF] = cp_r8,
 
-    [0xC0] = ret_cc,       [0xD0] = ret_cc,       [0xE0] = ldh_n8_ind_a,
-    [0xF0] = ldh_a_n8_ind, [0xC1] = pop_r16stk,   [0xD1] = pop_r16stk,
-    [0xE1] = pop_r16stk,   [0xF1] = pop_r16stk,   [0xC2] = jp_cc_n16,
-    [0xD2] = jp_cc_n16,    [0xE2] = ldh_c_ind_a,  [0xF2] = ldh_a_c_ind,
-    [0xC3] = jp_n16,       [0xD3] = illegal,      [0xE3] = illegal,
-    [0xF3] = di,           [0xC4] = call_cc_n16,  [0xD4] = call_cc_n16,
+    [0xC0] = ret_cc,       [0xD0] = ret_cc,       [0xE0] = ldh_u8_ind_a,
+    [0xF0] = ldh_a_u8_ind, [0xC1] = pop_r16stk,   [0xD1] = pop_r16stk,
+    [0xE1] = pop_r16stk,   [0xF1] = pop_r16stk,   [0xC2] = jp_cc_a16,
+    [0xD2] = jp_cc_a16,    [0xE2] = ldh_c_ind_a,  [0xF2] = ldh_a_c_ind,
+    [0xC3] = jp_a16,       [0xD3] = illegal,      [0xE3] = illegal,
+    [0xF3] = di,           [0xC4] = call_cc_a16,  [0xD4] = call_cc_a16,
     [0xE4] = illegal,      [0xF4] = illegal,      [0xC5] = push_r16stk,
     [0xD5] = push_r16stk,  [0xE5] = push_r16stk,  [0xF5] = push_r16stk,
-    [0xC6] = add_n8,       [0xD6] = sub_n8,       [0xE6] = and_n8,
-    [0xF6] = or_n8,        [0xC7] = rst_vec,      [0xD7] = rst_vec,
+    [0xC6] = add_u8,       [0xD6] = sub_u8,       [0xE6] = and_u8,
+    [0xF6] = or_u8,        [0xC7] = rst_vec,      [0xD7] = rst_vec,
     [0xE7] = rst_vec,      [0xF7] = rst_vec,      [0xC8] = ret_cc,
     [0xD8] = ret_cc,       [0xE8] = add_sp_e8,    [0xF8] = ld_hl_sp_e8,
     [0xC9] = ret,          [0xD9] = reti,         [0xE9] = jp_hl,
-    [0xF9] = ld_sp_hl,     [0xCA] = jp_cc_n16,    [0xDA] = jp_cc_n16,
-    [0xEA] = ld_n16_ind_a, [0xFA] = ld_a_n16_ind, [0xCB] = prefix,
+    [0xF9] = ld_sp_hl,     [0xCA] = jp_cc_a16,    [0xDA] = jp_cc_a16,
+    [0xEA] = ld_u16_ind_a, [0xFA] = ld_a_u16_ind, [0xCB] = prefix,
     [0xDB] = illegal,      [0xEB] = illegal,      [0xFB] = ei,
-    [0xCC] = call_cc_n16,  [0xDC] = call_cc_n16,  [0xEC] = illegal,
-    [0xFC] = illegal,      [0xCD] = call_n16,     [0xDD] = illegal,
-    [0xED] = illegal,      [0xFD] = illegal,      [0xCE] = adc_n8,
-    [0xDE] = sbc_n8,       [0xEE] = xor_n8,       [0xFE] = cp_n8,
+    [0xCC] = call_cc_a16,  [0xDC] = call_cc_a16,  [0xEC] = illegal,
+    [0xFC] = illegal,      [0xCD] = call_a16,     [0xDD] = illegal,
+    [0xED] = illegal,      [0xFD] = illegal,      [0xCE] = adc_u8,
+    [0xDE] = sbc_u8,       [0xEE] = xor_u8,       [0xFE] = cp_u8,
     [0xCF] = rst_vec,      [0xDF] = rst_vec,      [0xEF] = rst_vec,
     [0xFF] = rst_vec};
 
-static const opcode_fn cbprefixed_ins[256] = {
+static const instruction_handler cbprefixed_ins[256] = {
     [0x00] = rlc_r8,        [0x01] = rlc_r8,        [0x02] = rlc_r8,
     [0x03] = rlc_r8,        [0x04] = rlc_r8,        [0x05] = rlc_r8,
     [0x06] = rlc_hl_ind,    [0x07] = rlc_r8,        [0x08] = rrc_r8,

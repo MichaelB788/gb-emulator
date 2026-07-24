@@ -11,6 +11,4 @@ struct timer {
   uint8_t control;
 };
 
-struct interrupts;
-
-void timer_tick(struct timer *timer, int cycles, struct interrupts *interrupt);
+void timer_tick(struct timer *timer, uint8_t *interrupt_flag);

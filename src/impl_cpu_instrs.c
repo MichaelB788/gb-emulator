@@ -1,6 +1,8 @@
 #include "impl_cpu_instrs.h"
 #include "bitwise.h"
+#include "bus.h"
 #include "cpu.h"
+#include <stdint.h>
 
 /// 8-bit arithmetic implementations
 
@@ -96,9 +98,11 @@ void impl_add_r16(struct cpu *cpu, uint16_t operand) {
   write_bit(&cpu->F, FLAG_C, sum > 0xFFFF);
 
   cpu_set_hl(cpu, sum);
+  bus_tick(cpu->bus); // Internal tick, likely when setting HL
 }
 
-uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8) {
+uint16_t impl_add_sp_e8(struct cpu *cpu) {
+  const int8_t e8 = (int8_t)cpu_fetch_u8(cpu);
   const uint16_t SP = cpu->SP;
   const uint16_t sum = SP + e8;
 
@@ -107,6 +111,7 @@ uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8) {
   write_bit(&cpu->F, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
   write_bit(&cpu->F, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
 
+  bus_tick(cpu->bus); // Internal tick, likely when setting r16
   return sum;
 }
 

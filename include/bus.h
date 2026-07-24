@@ -19,6 +19,7 @@ struct bus {
 };
 
 bool bus_init(struct bus *bus, const char *rom_path);
+void bus_tick(struct bus *bus);
 void bus_close(struct bus *bus);
 
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr);

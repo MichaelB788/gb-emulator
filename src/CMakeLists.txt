@@ -6,13 +6,13 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
   PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 
 add_library(GB_Core
-  gb_app.c
+  appstate.c
   bus.c
   byte_vector.c
   cartridge.c
   cpu.c
   cpu_instrs.c
-  gb_emulator.c
+  gameboy.c
   impl_cpu_instrs.c
   main.c
   mapper.c

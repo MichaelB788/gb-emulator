@@ -1,5 +1,5 @@
-#include "gb_app.h"
-#include "gb_emulator.h"
+#include "appstate.h"
+#include "gameboy.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-void app_init(struct gb_app *app, const char *path_to_rom,
+void app_init(struct appstate *app, const char *path_to_rom,
               bool logging_enabled) {
   app->status = APP_RUNNING;
 
@@ -23,13 +23,13 @@ void app_init(struct gb_app *app, const char *path_to_rom,
     app->msg = SDL_GetError();
   }
 
-  if (!emu_init(&app->gb, path_to_rom, app->log_file)) {
+  if (!gameboy_init(&app->gb, path_to_rom, app->log_file)) {
     app->status = APP_FAILURE;
     app->msg = "Could not init emulator";
   }
 }
 
-static void app_handle_events(struct gb_app *app) {
+static void app_handle_events(struct appstate *app) {
   while (SDL_PollEvent(&app->event)) {
     switch (app->event.type) {
     case SDL_EVENT_QUIT:
@@ -41,16 +41,16 @@ static void app_handle_events(struct gb_app *app) {
   }
 }
 
-void app_run(struct gb_app *app) {
+void app_run(struct appstate *app) {
   while (app->status == APP_RUNNING) {
     app_handle_events(app);
-    emu_tick(&app->gb);
+    gameboy_update(&app->gb);
     // TODO: rendering, keyboard input, etc.
   }
 }
 
-void app_close(struct gb_app *app) {
-  emu_close(&app->gb);
+void app_close(struct appstate *app) {
+  gameboy_close(&app->gb);
   if (app->log_file) {
     fclose(app->log_file);
   }

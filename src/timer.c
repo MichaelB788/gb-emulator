@@ -1,13 +1,12 @@
 #include "timer.h"
 #include "bitwise.h"
-#include "interrupts.h"
 #include <stdint.h>
 
 #define CPU_CLOCK_HZ 4194304u
 
-void timer_tick(struct timer *timer, int cycles, struct interrupts *interrupt) {
-  timer->elapsed_cycles += cycles;
-  timer->system_counter += cycles;
+void timer_tick(struct timer *timer, uint8_t *interrupt_flag) {
+  timer->elapsed_cycles += 4;
+  timer->system_counter += 4;
   timer->divider = timer->system_counter >> 8; // DIV is just the visible part
 
   // Check to see if timer is enabled
@@ -21,7 +20,7 @@ void timer_tick(struct timer *timer, int cycles, struct interrupts *interrupt) {
     if (timer->elapsed_cycles >= max_cycles[clock_select]) {
       if (++timer->counter == 0x00) {
         timer->counter = timer->modulo;
-        set_bit(&interrupt->flag, 2); // Request a timer interrupt
+        set_bit(interrupt_flag, 2); // Request a timer interrupt
       }
 
       timer->elapsed_cycles = timer->elapsed_cycles % max_cycles[clock_select];

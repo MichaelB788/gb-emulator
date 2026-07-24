@@ -4,6 +4,7 @@
 #include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -31,6 +32,7 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
 
   cpu->IME = false;
   cpu->ime_pending = false;
+  cpu->halt_bug = false;
   return true;
 }
 
@@ -48,49 +50,63 @@ static void log_instruction(const struct cpu *cpu) {
   }
 }
 
-static uint8_t execute_next_instruction(struct cpu *cpu) {
-  log_instruction(cpu);
-  cpu->opcode = cpu_fetch_n8(cpu);
-  if (cpu->ime_pending) {
-    cpu->IME = true;
-    cpu->ime_pending = false;
-  }
-  return unprefixed_ins[cpu->opcode](cpu);
+static void execute_opcode(struct cpu *cpu, const instruction_handler handler) {
+  handler(cpu);
 }
 
-static uint8_t service_interrupts(struct cpu *cpu,
-                                  struct interrupts *interrupt) {
+// See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
+static void service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
   const uint8_t pending_interrupts = interrupt->enable & interrupt->flag;
   for (uint8_t i = 0; i < 5; ++i) {
     if (is_bit_set(pending_interrupts, i)) {
-      cpu_push_n16(cpu, cpu->PC);
-      cpu->PC = 0x40 | (i << 3);
+      // Two wait states are executed
+      bus_tick(cpu->bus);
+      bus_tick(cpu->bus);
 
+      // Call the interrupt handler at it's address around 0x40
+      cpu_call_a16(cpu, (uint16_t)(0x40 | (i << 3)), true);
+
+      // Interrupt handled
       clear_bit(&interrupt->flag, i);
       cpu->IME = false;
       cpu->ime_pending = false;
-      return 20;
+      return;
     }
   }
-  return 0;
 }
 
-static uint8_t handle_interrupts(struct cpu *cpu,
-                                 struct interrupts *interrupt) {
+void cpu_step(struct cpu *cpu) {
+  if (cpu->state == CPU_RUNNING) {
+    log_instruction(cpu);
+
+    if (cpu->ime_pending) {
+      cpu->IME = true;
+      cpu->ime_pending = false;
+    }
+
+    if (cpu->halt_bug) {
+      // PC fails to increment normally
+      cpu->opcode = cpu_read_byte(cpu, cpu->PC);
+      cpu->halt_bug = false;
+    } else {
+      cpu->opcode = cpu_fetch_u8(cpu);
+    }
+
+    unprefixed_ins[cpu->opcode](cpu);
+  } else {
+    bus_tick(cpu->bus);
+  }
+
+  struct interrupts *interrupt = &cpu->bus->interrupt;
   if (interrupt->enable & interrupt->flag) {
     cpu->state = CPU_RUNNING;
     if (cpu->IME) {
-      return service_interrupts(cpu, interrupt);
+      service_interrupts(cpu, interrupt);
+    } else {
+      // TODO: This breaks on test 2
+      // cpu->halt_bug = true;
     }
   }
-  return 0;
-}
-
-uint8_t cpu_tick(struct cpu *cpu) {
-  uint8_t cycles = 0;
-  cycles += cpu->state != CPU_HALTED ? execute_next_instruction(cpu) : 4;
-  cycles += handle_interrupts(cpu, &cpu->bus->interrupt);
-  return cycles;
 }
 
 /// Register pair operations
@@ -139,33 +155,64 @@ void cpu_set_af(struct cpu *cpu, uint16_t val) {
 
 /// Memory operations
 
-uint8_t cpu_fetch_n8(struct cpu *cpu) {
-  return bus_read_byte(cpu->bus, cpu->PC++);
+uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr) {
+  const uint8_t ret = bus_read_byte(cpu->bus, addr);
+  bus_tick(cpu->bus);
+  return ret;
 }
 
-uint16_t cpu_fetch_n16(struct cpu *cpu) {
-  const uint8_t lo = bus_read_byte(cpu->bus, cpu->PC++);
-  const uint8_t hi = bus_read_byte(cpu->bus, cpu->PC++);
+void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val) {
+  bus_write_byte(cpu->bus, addr, val);
+  bus_tick(cpu->bus);
+}
+
+uint8_t cpu_fetch_u8(struct cpu *cpu) { return cpu_read_byte(cpu, cpu->PC++); }
+
+uint16_t cpu_fetch_u16(struct cpu *cpu) {
+  const uint8_t lo = cpu_read_byte(cpu, cpu->PC++);
+  const uint8_t hi = cpu_read_byte(cpu, cpu->PC++);
   return (uint16_t)hi << 8 | lo;
 }
 
-uint8_t cpu_read_hl(const struct cpu *cpu) {
-  return bus_read_byte(cpu->bus, cpu_get_hl(cpu));
+uint8_t cpu_read_hl(struct cpu *cpu) {
+  return cpu_read_byte(cpu, cpu_get_hl(cpu));
 }
 
-void cpu_write_hl(const struct cpu *cpu, uint8_t val) {
-  bus_write_byte(cpu->bus, cpu_get_hl(cpu), val);
+void cpu_write_hl(struct cpu *cpu, uint8_t val) {
+  cpu_write_byte(cpu, cpu_get_hl(cpu), val);
 }
 
-void cpu_push_n16(struct cpu *cpu, uint16_t val) {
-  bus_write_byte(cpu->bus, --cpu->SP, val >> 8);
-  bus_write_byte(cpu->bus, --cpu->SP, val & 0xFF);
+void cpu_push_u16(struct cpu *cpu, uint16_t val) {
+  cpu_write_byte(cpu, --cpu->SP, val >> 8);
+  cpu_write_byte(cpu, --cpu->SP, val & 0xFF);
 }
 
-uint16_t cpu_pop_n16(struct cpu *cpu) {
-  const uint8_t lo = bus_read_byte(cpu->bus, cpu->SP++);
-  const uint8_t hi = bus_read_byte(cpu->bus, cpu->SP++);
+uint16_t cpu_pop_u16(struct cpu *cpu) {
+  const uint8_t lo = cpu_read_byte(cpu, cpu->SP++);
+  const uint8_t hi = cpu_read_byte(cpu, cpu->SP++);
   return (uint16_t)hi << 8 | lo;
+}
+
+void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond) {
+  if (cond) {
+    cpu->PC = addr;
+    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+  }
+}
+
+void cpu_call_a16(struct cpu *cpu, uint16_t addr, bool cond) {
+  if (cond) {
+    cpu_push_u16(cpu, cpu->PC);
+    cpu->PC = addr;
+    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+  }
+}
+
+void cpu_return(struct cpu *cpu, bool cond) {
+  if (cond) {
+    cpu->PC = cpu_pop_u16(cpu);
+    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+  }
 }
 
 /// Opcode dispatching

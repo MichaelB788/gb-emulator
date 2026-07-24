@@ -4,151 +4,151 @@
 struct cpu;
 
 /// Load instructions
-uint8_t ld_r8_r8(struct cpu *cpu);
-uint8_t ld_r8_n8(struct cpu *cpu);
+void ld_r8_r8(struct cpu *cpu);
+void ld_r8_u8(struct cpu *cpu);
 
-uint8_t ld_r16_n16(struct cpu *cpu);
+void ld_r16_u16(struct cpu *cpu);
 
-uint8_t ld_hl_ind_r8(struct cpu *cpu);
-uint8_t ld_hl_ind_n8(struct cpu *cpu);
+void ld_hl_ind_r8(struct cpu *cpu);
+void ld_hl_ind_u8(struct cpu *cpu);
 
-uint8_t ld_r8_hl_ind(struct cpu *cpu);
+void ld_r8_hl_ind(struct cpu *cpu);
 
-uint8_t ld_r16_ind_a(struct cpu *cpu);
-uint8_t ld_n16_ind_a(struct cpu *cpu);
+void ld_r16_ind_a(struct cpu *cpu);
+void ld_u16_ind_a(struct cpu *cpu);
 
-uint8_t ldh_n8_ind_a(struct cpu *cpu);
-uint8_t ldh_c_ind_a(struct cpu *cpu);
+void ldh_u8_ind_a(struct cpu *cpu);
+void ldh_c_ind_a(struct cpu *cpu);
 
-uint8_t ld_a_r16_ind(struct cpu *cpu);
-uint8_t ld_a_n16_ind(struct cpu *cpu);
+void ld_a_r16_ind(struct cpu *cpu);
+void ld_a_u16_ind(struct cpu *cpu);
 
-uint8_t ldh_a_n8_ind(struct cpu *cpu);
-uint8_t ldh_a_c_ind(struct cpu *cpu);
+void ldh_a_u8_ind(struct cpu *cpu);
+void ldh_a_c_ind(struct cpu *cpu);
 
 /// 8-bit arithmetic instructions
-uint8_t adc_r8(struct cpu *cpu);
-uint8_t adc_hl_ind(struct cpu *cpu);
-uint8_t adc_n8(struct cpu *cpu);
+void adc_r8(struct cpu *cpu);
+void adc_hl_ind(struct cpu *cpu);
+void adc_u8(struct cpu *cpu);
 
-uint8_t add_r8(struct cpu *cpu);
-uint8_t add_hl_ind(struct cpu *cpu);
-uint8_t add_n8(struct cpu *cpu);
+void add_r8(struct cpu *cpu);
+void add_hl_ind(struct cpu *cpu);
+void add_u8(struct cpu *cpu);
 
-uint8_t sbc_r8(struct cpu *cpu);
-uint8_t sbc_hl_ind(struct cpu *cpu);
-uint8_t sbc_n8(struct cpu *cpu);
+void sbc_r8(struct cpu *cpu);
+void sbc_hl_ind(struct cpu *cpu);
+void sbc_u8(struct cpu *cpu);
 
-uint8_t sub_r8(struct cpu *cpu);
-uint8_t sub_hl_ind(struct cpu *cpu);
-uint8_t sub_n8(struct cpu *cpu);
+void sub_r8(struct cpu *cpu);
+void sub_hl_ind(struct cpu *cpu);
+void sub_u8(struct cpu *cpu);
 
-uint8_t cp_r8(struct cpu *cpu);
-uint8_t cp_hl_ind(struct cpu *cpu);
-uint8_t cp_n8(struct cpu *cpu);
+void cp_r8(struct cpu *cpu);
+void cp_hl_ind(struct cpu *cpu);
+void cp_u8(struct cpu *cpu);
 
-uint8_t inc_r8(struct cpu *cpu);
-uint8_t inc_hl_ind(struct cpu *cpu);
+void inc_r8(struct cpu *cpu);
+void inc_hl_ind(struct cpu *cpu);
 
-uint8_t dec_r8(struct cpu *cpu);
-uint8_t dec_hl_ind(struct cpu *cpu);
+void dec_r8(struct cpu *cpu);
+void dec_hl_ind(struct cpu *cpu);
 
 /// 16-bit arithmetic instructions
-uint8_t add_hl_r16(struct cpu *cpu);
-uint8_t inc_r16(struct cpu *cpu);
-uint8_t dec_r16(struct cpu *cpu);
+void add_hl_r16(struct cpu *cpu);
+void inc_r16(struct cpu *cpu);
+void dec_r16(struct cpu *cpu);
 
 /// Bitwise logic instructions
-uint8_t and_r8(struct cpu *cpu);
-uint8_t and_hl_ind(struct cpu *cpu);
-uint8_t and_n8(struct cpu *cpu);
+void and_r8(struct cpu *cpu);
+void and_hl_ind(struct cpu *cpu);
+void and_u8(struct cpu *cpu);
 
-uint8_t or_r8(struct cpu *cpu);
-uint8_t or_hl_ind(struct cpu *cpu);
-uint8_t or_n8(struct cpu *cpu);
+void or_r8(struct cpu *cpu);
+void or_hl_ind(struct cpu *cpu);
+void or_u8(struct cpu *cpu);
 
-uint8_t xor_r8(struct cpu *cpu);
-uint8_t xor_hl_ind(struct cpu *cpu);
-uint8_t xor_n8(struct cpu *cpu);
+void xor_r8(struct cpu *cpu);
+void xor_hl_ind(struct cpu *cpu);
+void xor_u8(struct cpu *cpu);
 
-uint8_t cpl(struct cpu *cpu);
+void cpl(struct cpu *cpu);
 
 /// Bit flag instructions
-uint8_t bit_b3_r8(struct cpu *cpu);
-uint8_t bit_b3_hl_ind(struct cpu *cpu);
+void bit_b3_r8(struct cpu *cpu);
+void bit_b3_hl_ind(struct cpu *cpu);
 
-uint8_t res_b3_r8(struct cpu *cpu);
-uint8_t res_b3_hl_ind(struct cpu *cpu);
+void res_b3_r8(struct cpu *cpu);
+void res_b3_hl_ind(struct cpu *cpu);
 
-uint8_t set_b3_r8(struct cpu *cpu);
-uint8_t set_b3_hl_ind(struct cpu *cpu);
+void set_b3_r8(struct cpu *cpu);
+void set_b3_hl_ind(struct cpu *cpu);
 
 /// Bit shift instructions
-uint8_t rl_r8(struct cpu *cpu);
-uint8_t rl_hl_ind(struct cpu *cpu);
-uint8_t rla(struct cpu *cpu);
+void rl_r8(struct cpu *cpu);
+void rl_hl_ind(struct cpu *cpu);
+void rla(struct cpu *cpu);
 
-uint8_t rlc_r8(struct cpu *cpu);
-uint8_t rlc_hl_ind(struct cpu *cpu);
-uint8_t rlca(struct cpu *cpu);
+void rlc_r8(struct cpu *cpu);
+void rlc_hl_ind(struct cpu *cpu);
+void rlca(struct cpu *cpu);
 
-uint8_t rr_r8(struct cpu *cpu);
-uint8_t rr_hl_ind(struct cpu *cpu);
-uint8_t rra(struct cpu *cpu);
+void rr_r8(struct cpu *cpu);
+void rr_hl_ind(struct cpu *cpu);
+void rra(struct cpu *cpu);
 
-uint8_t rrc_r8(struct cpu *cpu);
-uint8_t rrc_hl_ind(struct cpu *cpu);
-uint8_t rrca(struct cpu *cpu);
+void rrc_r8(struct cpu *cpu);
+void rrc_hl_ind(struct cpu *cpu);
+void rrca(struct cpu *cpu);
 
-uint8_t sla_r8(struct cpu *cpu);
-uint8_t sla_hl_ind(struct cpu *cpu);
+void sla_r8(struct cpu *cpu);
+void sla_hl_ind(struct cpu *cpu);
 
-uint8_t sra_r8(struct cpu *cpu);
-uint8_t sra_hl_ind(struct cpu *cpu);
+void sra_r8(struct cpu *cpu);
+void sra_hl_ind(struct cpu *cpu);
 
-uint8_t srl_r8(struct cpu *cpu);
-uint8_t srl_hl_ind(struct cpu *cpu);
+void srl_r8(struct cpu *cpu);
+void srl_hl_ind(struct cpu *cpu);
 
-uint8_t swap_r8(struct cpu *cpu);
-uint8_t swap_hl_ind(struct cpu *cpu);
+void swap_r8(struct cpu *cpu);
+void swap_hl_ind(struct cpu *cpu);
 
 /// Jumps and subroutine instructions
-uint8_t call_n16(struct cpu *cpu);
-uint8_t call_cc_n16(struct cpu *cpu);
+void call_a16(struct cpu *cpu);
+void call_cc_a16(struct cpu *cpu);
 
-uint8_t jp_hl(struct cpu *cpu);
-uint8_t jp_n16(struct cpu *cpu);
-uint8_t jp_cc_n16(struct cpu *cpu);
+void jp_hl(struct cpu *cpu);
+void jp_a16(struct cpu *cpu);
+void jp_cc_a16(struct cpu *cpu);
 
-uint8_t jr_e8(struct cpu *cpu);
-uint8_t jr_cc_e8(struct cpu *cpu);
+void jr_e8(struct cpu *cpu);
+void jr_cc_e8(struct cpu *cpu);
 
-uint8_t ret_cc(struct cpu *cpu);
-uint8_t ret(struct cpu *cpu);
-uint8_t reti(struct cpu *cpu);
+void ret_cc(struct cpu *cpu);
+void ret(struct cpu *cpu);
+void reti(struct cpu *cpu);
 
-uint8_t rst_vec(struct cpu *cpu);
+void rst_vec(struct cpu *cpu);
 
 /// Carry flag instructions
-uint8_t ccf(struct cpu *cpu);
-uint8_t scf(struct cpu *cpu);
+void ccf(struct cpu *cpu);
+void scf(struct cpu *cpu);
 
 /// Stack manipulation instructions
-uint8_t add_sp_e8(struct cpu *cpu);
-uint8_t ld_hl_sp_e8(struct cpu *cpu);
-uint8_t ld_n16_ind_sp(struct cpu *cpu);
-uint8_t ld_sp_hl(struct cpu *cpu);
-uint8_t pop_r16stk(struct cpu *cpu);
-uint8_t push_r16stk(struct cpu *cpu);
+void add_sp_e8(struct cpu *cpu);
+void ld_hl_sp_e8(struct cpu *cpu);
+void ld_u16_ind_sp(struct cpu *cpu);
+void ld_sp_hl(struct cpu *cpu);
+void pop_r16stk(struct cpu *cpu);
+void push_r16stk(struct cpu *cpu);
 
 /// Interrupt-related instructions
-uint8_t di(struct cpu *cpu);
-uint8_t ei(struct cpu *cpu);
-uint8_t halt(struct cpu *cpu);
+void di(struct cpu *cpu);
+void ei(struct cpu *cpu);
+void halt(struct cpu *cpu);
 
 /// Misc.
-uint8_t daa(struct cpu *cpu);
-uint8_t nop(struct cpu *cpu);
-uint8_t stop(struct cpu *cpu);
-uint8_t prefix(struct cpu *cpu);
-uint8_t illegal(struct cpu *cpu);
+void daa(struct cpu *cpu);
+void nop(struct cpu *cpu);
+void stop(struct cpu *cpu);
+void prefix(struct cpu *cpu);
+void illegal(struct cpu *cpu);

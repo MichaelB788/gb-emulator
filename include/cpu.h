@@ -17,9 +17,6 @@ enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED };
  * The GameBoy's CPU
  */
 struct cpu {
-  uint8_t opcode;
-  enum cpu_state state;
-
   union {
     struct {
       uint8_t B, C, D, E, H, L, F, A;
@@ -27,20 +24,22 @@ struct cpu {
     uint8_t r8[8];
   };
 
-  bool IME;
-  bool ime_pending;
-
   uint16_t PC;
   uint16_t SP;
+
+  bool IME;
+  bool ime_pending;
+  bool halt_bug;
+
+  uint8_t opcode;
+  enum cpu_state state;
 
   struct bus *bus;
   FILE *log_file; // Observer, non-owning
 };
 
 bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file);
-
-// Returns cycles taken
-uint8_t cpu_tick(struct cpu *cpu);
+void cpu_step(struct cpu *cpu);
 
 /// Register pair operations
 
@@ -56,14 +55,35 @@ void cpu_set_af(struct cpu *cpu, uint16_t val);
 
 /// Memory operations
 
-uint8_t cpu_fetch_n8(struct cpu *cpu);
-uint16_t cpu_fetch_n16(struct cpu *cpu);
+uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr);
+void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val);
 
-uint8_t cpu_read_hl(const struct cpu *cpu);
-void cpu_write_hl(const struct cpu *cpu, uint8_t val);
+// M-cycles: 1
+uint8_t cpu_fetch_u8(struct cpu *cpu);
 
-void cpu_push_n16(struct cpu *cpu, uint16_t val);
-uint16_t cpu_pop_n16(struct cpu *cpu);
+// M-cycles: 2
+uint16_t cpu_fetch_u16(struct cpu *cpu);
+
+// M-cycles: 1
+uint8_t cpu_read_hl(struct cpu *cpu);
+
+// M-cycles: 1
+void cpu_write_hl(struct cpu *cpu, uint8_t val);
+
+// M-cycles: 2
+void cpu_push_u16(struct cpu *cpu, uint16_t val);
+
+// M-cycles: 2
+uint16_t cpu_pop_u16(struct cpu *cpu);
+
+// M-cycles: 0 untaken / 1 taken
+void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond);
+
+// M-cycles: 0 untaken / 3 taken
+void cpu_call_a16(struct cpu *cpu, uint16_t addr, bool cond);
+
+// M-cycles: 0 untaken / 3 taken
+void cpu_return(struct cpu *cpu, bool cond);
 
 /// Opcode dispatching
 

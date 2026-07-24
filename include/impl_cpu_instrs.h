@@ -16,8 +16,12 @@ uint8_t impl_inc_u8(struct cpu *cpu, uint8_t operand);
 uint8_t impl_dec_u8(struct cpu *cpu, uint8_t operand);
 
 /// 16-bit arithmetic implementations
+
+// Takes one machine cycle when setting HL
 void impl_add_r16(struct cpu *cpu, uint16_t operand);
-uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8);
+
+// Should take at least one machine cycle
+uint16_t impl_add_sp_e8(struct cpu *cpu);
 
 /// Bitwise logic implementations
 void impl_and(struct cpu *cpu, uint8_t operand);
