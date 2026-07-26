@@ -16,10 +16,6 @@ include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
-find_package(SDL3 CONFIG)
-if (NOT ${SDL3_FOUND})
-  message("Attempting to use vendored SDL3")
-  add_subdirectory(extern/SDL EXCLUDE_FROM_ALL)
-endif()
+find_package(SDL3 CONFIG REQUIRED)
 
 add_subdirectory(src)
