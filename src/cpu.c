@@ -16,8 +16,7 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   cpu->log_file = log_file;
 
   cpu->bus = bus;
-  cpu->state = CPU_RUNNING;
-  cpu->opcode = 0;
+  cpu->interrupt = &bus->interrupt;
 
   cpu->A = 0x01;
   cpu->F = 0xB0;
@@ -33,6 +32,9 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   cpu->IME = false;
   cpu->ime_pending = false;
   cpu->halt_bug = false;
+
+  cpu->state = CPU_RUNNING;
+  cpu->IR = 0;
   return true;
 }
 
@@ -50,13 +52,9 @@ static void log_instruction(const struct cpu *cpu) {
   }
 }
 
-static void execute_opcode(struct cpu *cpu, const instruction_handler handler) {
-  handler(cpu);
-}
-
 // See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
-static void service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
-  const uint8_t pending_interrupts = interrupt->enable & interrupt->flag;
+static void service_interrupts(struct cpu *cpu) {
+  const uint8_t pending_interrupts = interrupt_get_pending(cpu->interrupt);
   for (uint8_t i = 0; i < 5; ++i) {
     if (is_bit_set(pending_interrupts, i)) {
       // Two wait states are executed
@@ -67,7 +65,7 @@ static void service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
       cpu_call_a16(cpu, (uint16_t)(0x40 | (i << 3)), true);
 
       // Interrupt handled
-      clear_bit(&interrupt->flag, i);
+      clear_bit(&cpu->interrupt->flag, i);
       cpu->IME = false;
       cpu->ime_pending = false;
       return;
@@ -76,35 +74,29 @@ static void service_interrupts(struct cpu *cpu, struct interrupts *interrupt) {
 }
 
 void cpu_step(struct cpu *cpu) {
-  if (cpu->state == CPU_RUNNING) {
-    log_instruction(cpu);
-
+  switch (cpu->state) {
+  case CPU_RUNNING:
     if (cpu->ime_pending) {
       cpu->IME = true;
       cpu->ime_pending = false;
     }
 
-    if (cpu->halt_bug) {
-      // PC fails to increment normally
-      cpu->opcode = cpu_read_byte(cpu, cpu->PC);
-      cpu->halt_bug = false;
-    } else {
-      cpu->opcode = cpu_fetch_u8(cpu);
-    }
-
-    unprefixed_ins[cpu->opcode](cpu);
-  } else {
+    log_instruction(cpu);
+    cpu->IR = cpu_read_byte(cpu, cpu->PC++);
+    unprefixed_ins[cpu->IR](cpu);
+    break;
+  case CPU_HALTED:
     bus_tick(cpu->bus);
+    break;
+  case CPU_STOPPED:
+    // TODO
+    break;
   }
 
-  struct interrupts *interrupt = &cpu->bus->interrupt;
-  if (interrupt->enable & interrupt->flag) {
+  if (interrupt_get_pending(cpu->interrupt)) {
     cpu->state = CPU_RUNNING;
     if (cpu->IME) {
-      service_interrupts(cpu, interrupt);
-    } else {
-      // TODO: This breaks on test 2
-      // cpu->halt_bug = true;
+      service_interrupts(cpu);
     }
   }
 }
@@ -161,36 +153,22 @@ uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr) {
   return ret;
 }
 
+uint16_t cpu_read_word(struct cpu *cpu, uint16_t addr) {
+  const uint8_t lo = cpu_read_byte(cpu, addr);
+  const uint8_t hi = cpu_read_byte(cpu, addr + 1);
+  return (uint16_t)hi << 8 | lo;
+}
+
 void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val) {
   bus_write_byte(cpu->bus, addr, val);
   bus_tick(cpu->bus);
 }
 
-uint8_t cpu_fetch_u8(struct cpu *cpu) { return cpu_read_byte(cpu, cpu->PC++); }
-
-uint16_t cpu_fetch_u16(struct cpu *cpu) {
-  const uint8_t lo = cpu_read_byte(cpu, cpu->PC++);
-  const uint8_t hi = cpu_read_byte(cpu, cpu->PC++);
-  return (uint16_t)hi << 8 | lo;
-}
-
-uint8_t cpu_read_hl(struct cpu *cpu) {
-  return cpu_read_byte(cpu, cpu_get_hl(cpu));
-}
-
-void cpu_write_hl(struct cpu *cpu, uint8_t val) {
-  cpu_write_byte(cpu, cpu_get_hl(cpu), val);
-}
-
-void cpu_push_u16(struct cpu *cpu, uint16_t val) {
-  cpu_write_byte(cpu, --cpu->SP, val >> 8);
-  cpu_write_byte(cpu, --cpu->SP, val & 0xFF);
-}
-
-uint16_t cpu_pop_u16(struct cpu *cpu) {
-  const uint8_t lo = cpu_read_byte(cpu, cpu->SP++);
-  const uint8_t hi = cpu_read_byte(cpu, cpu->SP++);
-  return (uint16_t)hi << 8 | lo;
+void cpu_write_word(struct cpu *cpu, uint16_t addr, uint16_t val) {
+  const uint8_t hi = val >> 8;
+  const uint8_t lo = val & 0xFF;
+  cpu_write_byte(cpu, addr, lo);
+  cpu_write_byte(cpu, addr + 1, hi);
 }
 
 void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond) {
@@ -202,7 +180,8 @@ void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond) {
 
 void cpu_call_a16(struct cpu *cpu, uint16_t addr, bool cond) {
   if (cond) {
-    cpu_push_u16(cpu, cpu->PC);
+    cpu->SP -= 2;
+    cpu_write_word(cpu, cpu->SP, cpu->PC);
     cpu->PC = addr;
     bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
   }
@@ -210,7 +189,9 @@ void cpu_call_a16(struct cpu *cpu, uint16_t addr, bool cond) {
 
 void cpu_return(struct cpu *cpu, bool cond) {
   if (cond) {
-    cpu->PC = cpu_pop_u16(cpu);
+    const uint16_t jmp_addr = cpu_read_word(cpu, cpu->SP);
+    cpu->SP += 2;
+    cpu->PC = jmp_addr;
     bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
   }
 }
@@ -220,7 +201,7 @@ void cpu_return(struct cpu *cpu, bool cond) {
 #define R16_BIT_FIELD(opcode) ((opcode >> 4) & 0x3)
 
 uint16_t cpu_get_r16(const struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->opcode)) {
+  switch (R16_BIT_FIELD(cpu->IR)) {
   case 0:
     return cpu_get_bc(cpu);
   case 1:
@@ -235,7 +216,7 @@ uint16_t cpu_get_r16(const struct cpu *cpu) {
 }
 
 void cpu_set_r16(struct cpu *cpu, uint16_t val) {
-  switch (R16_BIT_FIELD(cpu->opcode)) {
+  switch (R16_BIT_FIELD(cpu->IR)) {
   case 0:
     cpu_set_bc(cpu, val);
     break;
@@ -254,7 +235,7 @@ void cpu_set_r16(struct cpu *cpu, uint16_t val) {
 }
 
 uint16_t cpu_get_r16stk(const struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->opcode)) {
+  switch (R16_BIT_FIELD(cpu->IR)) {
   case 0:
     return cpu_get_bc(cpu);
   case 1:
@@ -269,7 +250,7 @@ uint16_t cpu_get_r16stk(const struct cpu *cpu) {
 }
 
 void cpu_set_r16stk(struct cpu *cpu, uint16_t val) {
-  switch (R16_BIT_FIELD(cpu->opcode)) {
+  switch (R16_BIT_FIELD(cpu->IR)) {
   case 0:
     cpu_set_bc(cpu, val);
     break;
@@ -288,7 +269,7 @@ void cpu_set_r16stk(struct cpu *cpu, uint16_t val) {
 }
 
 uint16_t cpu_get_r16mem(struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->opcode)) {
+  switch (R16_BIT_FIELD(cpu->IR)) {
   case 0:
     return cpu_get_bc(cpu);
   case 1:
@@ -309,7 +290,7 @@ uint16_t cpu_get_r16mem(struct cpu *cpu) {
 }
 
 bool cpu_test_cond(const struct cpu *cpu) {
-  switch ((cpu->opcode >> 3) & 0x3) {
+  switch ((cpu->IR >> 3) & 0x3) {
   case 0:
     return !is_bit_set(cpu->F, FLAG_Z);
   case 1:

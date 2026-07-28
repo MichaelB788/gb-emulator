@@ -8,7 +8,7 @@
 struct bus {
   uint8_t joypad;
 
-  struct interrupts interrupt;
+  struct interrupt interrupt;
   struct serial_transfer serial;
   struct timer timer;
   struct cartridge cartridge;

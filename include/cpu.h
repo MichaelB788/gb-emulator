@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 struct bus;
-struct interrupts;
+struct interrupt;
 
 #define FLAG_Z 7u
 #define FLAG_N 6u
@@ -31,10 +31,11 @@ struct cpu {
   bool ime_pending;
   bool halt_bug;
 
-  uint8_t opcode;
+  uint8_t IR;
   enum cpu_state state;
 
   struct bus *bus;
+  struct interrupt *interrupt;
   FILE *log_file; // Observer, non-owning
 };
 
@@ -55,26 +56,17 @@ void cpu_set_af(struct cpu *cpu, uint16_t val);
 
 /// Memory operations
 
+// M-cycles: 1
 uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr);
+
+// M-cycles: 2
+uint16_t cpu_read_word(struct cpu *cpu, uint16_t addr);
+
+// M-cycles: 1
 void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val);
 
-// M-cycles: 1
-uint8_t cpu_fetch_u8(struct cpu *cpu);
-
 // M-cycles: 2
-uint16_t cpu_fetch_u16(struct cpu *cpu);
-
-// M-cycles: 1
-uint8_t cpu_read_hl(struct cpu *cpu);
-
-// M-cycles: 1
-void cpu_write_hl(struct cpu *cpu, uint8_t val);
-
-// M-cycles: 2
-void cpu_push_u16(struct cpu *cpu, uint16_t val);
-
-// M-cycles: 2
-uint16_t cpu_pop_u16(struct cpu *cpu);
+void cpu_write_word(struct cpu *cpu, uint16_t addr, uint16_t val);
 
 // M-cycles: 0 untaken / 1 taken
 void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond);

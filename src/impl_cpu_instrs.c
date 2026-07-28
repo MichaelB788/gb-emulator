@@ -102,7 +102,7 @@ void impl_add_r16(struct cpu *cpu, uint16_t operand) {
 }
 
 uint16_t impl_add_sp_e8(struct cpu *cpu) {
-  const int8_t e8 = (int8_t)cpu_fetch_u8(cpu);
+  const int8_t e8 = (int8_t)cpu_read_byte(cpu, cpu->PC++);
   const uint16_t SP = cpu->SP;
   const uint16_t sum = SP + e8;
 
