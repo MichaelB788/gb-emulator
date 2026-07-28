@@ -20,6 +20,10 @@ bool mapper_init(struct cartridge *cart, uint8_t mapper_header_byte) {
   return true;
 }
 
+bool mapper_has_ram(enum mapper mapper) {
+  return mapper == MBC1_RAM_CART || mapper == MBC1_RAM_BATTERY_CART;
+}
+
 uint8_t mapper_read_rom(const struct cartridge *cart, uint16_t addr) {
   switch (cart->mapper) {
   case ROM_ONLY_CART:
