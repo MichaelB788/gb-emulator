@@ -28,7 +28,7 @@ struct cpu {
   uint16_t SP;
 
   bool IME;
-  bool ime_pending;
+  bool ei_called;
   bool halt_bug;
 
   uint8_t IR;

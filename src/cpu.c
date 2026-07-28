@@ -30,11 +30,11 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   cpu->SP = 0xFFFE;
 
   cpu->IME = false;
-  cpu->ime_pending = false;
+  cpu->ei_called = false;
   cpu->halt_bug = false;
 
   cpu->state = CPU_RUNNING;
-  cpu->IR = 0;
+  cpu->IR = cpu_read_byte(cpu, cpu->PC++);
   return true;
 }
 
@@ -67,7 +67,6 @@ static void service_interrupts(struct cpu *cpu) {
       // Interrupt handled
       clear_bit(&cpu->interrupt->flag, i);
       cpu->IME = false;
-      cpu->ime_pending = false;
       return;
     }
   }
@@ -76,13 +75,19 @@ static void service_interrupts(struct cpu *cpu) {
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
-    if (cpu->ime_pending) {
+    if (cpu->ei_called) {
+      cpu->ei_called = false;
       cpu->IME = true;
-      cpu->ime_pending = false;
+    }
+
+    cpu->IR = cpu_read_byte(cpu, cpu->PC);
+    if (cpu->halt_bug) {
+      cpu->halt_bug = false;
+    } else {
+      ++cpu->PC;
     }
 
     log_instruction(cpu);
-    cpu->IR = cpu_read_byte(cpu, cpu->PC++);
     unprefixed_ins[cpu->IR](cpu);
     break;
   case CPU_HALTED:

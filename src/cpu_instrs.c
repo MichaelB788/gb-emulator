@@ -361,7 +361,7 @@ void ret(struct cpu *cpu) { cpu_return(cpu, true); }
 
 void reti(struct cpu *cpu) {
   cpu_return(cpu, true);
-  cpu->ime_pending = true;
+  cpu->ei_called = true;
 }
 
 void rst_vec(struct cpu *cpu) {
@@ -418,7 +418,7 @@ void push_r16stk(struct cpu *cpu) {
 
 void di(struct cpu *cpu) { cpu->IME = false; }
 
-void ei(struct cpu *cpu) { cpu->ime_pending = true; }
+void ei(struct cpu *cpu) { cpu->ei_called = true; }
 
 void halt(struct cpu *cpu) {
   if (!cpu->IME && interrupt_get_pending(cpu->interrupt)) {
