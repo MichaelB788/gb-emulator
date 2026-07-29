@@ -14,7 +14,6 @@ enum mapper {
 };
 
 bool mapper_init(struct cartridge *cart, uint8_t mapper_header_byte);
-bool mapper_has_ram(enum mapper mapper);
 
 uint8_t mapper_read_rom(const struct cartridge *cart, uint16_t addr);
 void mapper_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val);

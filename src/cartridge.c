@@ -30,8 +30,6 @@ bool cart_init(struct cartridge *cart, const char *path_to_rom) {
     goto fail_exit;
   }
 
-  // ram_sizes[0x01] is unused by any official ROMs, so it's unknown what RAM
-  // size it should correspond to, if any.
   const size_t ram_sizes[] = {0ul, 0ul, KiB_8, KiB_32, KiB_128, KiB_64};
   const uint8_t mapper_byte = header[0x47];
   const uint8_t rom_size_byte = header[0x48];
@@ -48,8 +46,8 @@ bool cart_init(struct cartridge *cart, const char *path_to_rom) {
     goto fail_exit;
   }
 
-  if (mapper_has_ram(cart->mapper) &&
-      !byte_vector_create(&cart->ram, ram_sizes[ram_size_byte])) {
+  const size_t ram_size = ram_sizes[ram_size_byte];
+  if (ram_size > 0 && !byte_vector_create(&cart->ram, ram_size)) {
     fprintf(stderr, "Could not initialize RAM\n");
     goto fail_exit;
   }

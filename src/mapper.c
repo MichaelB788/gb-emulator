@@ -20,10 +20,6 @@ bool mapper_init(struct cartridge *cart, uint8_t mapper_header_byte) {
   return true;
 }
 
-bool mapper_has_ram(enum mapper mapper) {
-  return mapper == MBC1_RAM_CART || mapper == MBC1_RAM_BATTERY_CART;
-}
-
 uint8_t mapper_read_rom(const struct cartridge *cart, uint16_t addr) {
   switch (cart->mapper) {
   case ROM_ONLY_CART:
@@ -57,7 +53,7 @@ uint8_t mapper_read_ram(const struct cartridge *cart, uint16_t addr) {
   case MBC1_RAM_BATTERY_CART:
     return mbc1_read_ram(&cart->mbc1, &cart->ram, addr);
   default:
-    assert(false && "mapper_read_ram fail");
+    return 0xFF;
   }
 }
 
@@ -68,6 +64,6 @@ void mapper_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val) {
     mbc1_write_ram(&cart->mbc1, &cart->ram, addr, val);
     break;
   default:
-    assert(false && "mapper_write_ram fail");
+    break;
   }
 }

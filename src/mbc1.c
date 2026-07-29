@@ -14,30 +14,27 @@ void mbc1_init(struct mbc1 *mbc1) {
 
 uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct byte_vector *rom,
                       const uint16_t addr) {
-  if (addr < 0x4000) {
-    return rom->data[addr];
-  }
-  return rom->data[(KiB_16 * mbc1->rom_bank) + (addr - 0x4000)];
+  return addr < 0x4000 ? rom->data[addr]
+                       : rom->data[(KiB_16 * mbc1->rom_bank) + (addr - 0x4000)];
 }
 
+// See: https://gbdev.io/pandocs/MBC1.html#registers
 void mbc1_write_rom(struct mbc1 *mbc1, const struct byte_vector *rom,
                     const uint16_t addr, const uint8_t val) {
-  // See: https://gbdev.io/pandocs/MBC1.html#registers
   if (addr <= 0x1FFF) {
     mbc1->ram_enabled = (val & 0xF) == 0xA;
   } else if (0x2000 <= addr && addr <= 0x3FFF) {
     const uint8_t bits_needed = rom->size / KiB_16;
     if (bits_needed > 5) {
-      if (mbc1->advanced_banking_enabled) {
-        mbc1->rom_bank = (mbc1->ram_bank << 5) + val & 0x1F;
-      } else {
-        mbc1->rom_bank = val & 0x1F;
-      }
+      const uint8_t bank = val & 0x1F;
+      mbc1->rom_bank =
+          mbc1->advanced_banking_enabled ? (mbc1->ram_bank << 5) | bank : bank;
     } else {
       mbc1->rom_bank = val & ((1 << bits_needed) - 1);
     }
+
     if ((mbc1->rom_bank & 0x1F) == 0) {
-      mbc1->rom_bank += 1;
+      ++mbc1->rom_bank;
     }
   } else if (0x4000 <= addr && addr <= 0x5FFF) {
     mbc1->ram_bank = val & 0x3;
@@ -48,19 +45,14 @@ void mbc1_write_rom(struct mbc1 *mbc1, const struct byte_vector *rom,
 
 uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct byte_vector *ram,
                       const uint16_t addr) {
-  if (mbc1->ram_enabled && ram->size > 0) {
-    const size_t real_addr = addr - 0xA000;
-    const size_t offset = mbc1->ram_bank * KiB_8;
-    return ram->data[real_addr + offset];
-  }
-  return 0xFF;
+  return ram->size > 0 && mbc1->ram_enabled
+             ? ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB_8)]
+             : 0xFF;
 }
 
 void mbc1_write_ram(const struct mbc1 *mbc1, struct byte_vector *ram,
                     const uint16_t addr, const uint8_t val) {
-  if (mbc1->ram_enabled && ram->size > 0) {
-    const size_t real_addr = addr - 0xA000;
-    const size_t offset = mbc1->ram_bank * KiB_8;
-    ram->data[real_addr + offset] = val;
+  if (ram->size > 0 && mbc1->ram_enabled) {
+    ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB_8)] = val;
   }
 }
