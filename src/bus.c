@@ -7,21 +7,29 @@
 #include <assert.h>
 #include <stdio.h>
 
-bool bus_init(struct bus *bus, const char *rom_path) {
-  bus->joypad = 0x3F;
+#define JOYP_WRITE_BITS 0x30u
+#define INTERRUPT_WRITE_BITS 0x1Fu
+#define SERIAL_CONTROL_WRITE_BITS 0x83u
+#define TIMER_CONTROL_WRITE_BITS 0x7u
 
-  bus->interrupt.enable = 0;
-  bus->interrupt.flag = 0;
+bool bus_init(struct bus *bus, const char *rom_path) {
+  // NOTE: On real hardware, unused bits are turned into 1 due to pull up
+  // resistors
+
+  bus->joypad = 0xFF;
+
+  bus->interrupt.enable = (uint8_t)~INTERRUPT_WRITE_BITS;
+  bus->interrupt.flag = (uint8_t)~INTERRUPT_WRITE_BITS;
 
   bus->serial.data = 0;
-  bus->serial.control = 0;
+  bus->serial.control = (uint8_t)~SERIAL_CONTROL_WRITE_BITS;
 
   bus->timer.elapsed_cycles = 0;
   bus->timer.system_counter = 0;
   bus->timer.divider = 0;
   bus->timer.counter = 0;
   bus->timer.modulo = 0;
-  bus->timer.control = 0;
+  bus->timer.control = (uint8_t)~TIMER_CONTROL_WRITE_BITS;
 
   return cart_init(&bus->cartridge, rom_path);
 }
@@ -91,7 +99,7 @@ uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   switch (addr) {
   case 0xFF00:
     // All inputs are considered released if no mode is selected
-    return (bus->joypad & 0x30) == 0x30 ? 0x3F : bus->joypad;
+    return are_any_bits_set(bus->joypad, 0x30) ? bus->joypad : 0xFF;
   case 0xFF01:
     return bus->serial.data;
   case 0xFF02:
@@ -117,13 +125,15 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
   switch (addr) {
   case 0xFF00:
     // Lower nibble is read only.
-    bus->joypad = (val & 0x30) | (bus->joypad & 0xF);
+    write_bit(&bus->joypad, 5, is_bit_set(val, 5));
+    write_bit(&bus->joypad, 4, is_bit_set(val, 4));
     break;
   case 0xFF01:
     bus->serial.data = val;
     break;
   case 0xFF02:
-    if (val & 0x80) {
+    bus->serial.control = val;
+    if (is_bit_set(bus->serial.control, 7)) {
       putchar(bus->serial.data);
       fflush(stdout);
     }
@@ -140,13 +150,13 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     bus->timer.modulo = val;
     break;
   case 0xFF07:
-    bus->timer.control = val & 0x7;
+    bus->timer.control = val & TIMER_CONTROL_WRITE_BITS;
     break;
   case 0xFF0F:
-    bus->interrupt.flag = val & 0x1F;
+    bus->interrupt.flag = val & INTERRUPT_WRITE_BITS;
     break;
   case 0xFFFF:
-    bus->interrupt.enable = val & 0x1F;
+    bus->interrupt.enable = val & INTERRUPT_WRITE_BITS;
     break;
   default:
     break;
