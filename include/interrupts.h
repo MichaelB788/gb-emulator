@@ -2,11 +2,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-struct interrupt {
-  uint8_t flag;
-  uint8_t enable;
-};
+#define INTERRUPT_VBLANK (1 << 0)
+#define INTERRUPT_LCD (1 << 1)
+#define INTERRUPT_TIMER (1 << 2)
+#define INTERRUPT_SERIAL (1 << 3)
+#define INTERRUPT_JOYPAD (1 << 4)
+#define INTERRUPT_UNUSED 0xE0
 
-static uint8_t interrupt_get_pending(const struct interrupt *interrupt) {
-  return interrupt->enable & interrupt->flag;
-}
+struct interrupts {
+  uint8_t IF; // Interrupt flag, requests interrupts
+  uint8_t IE; // Interrupt enable, calls interrupts
+};
