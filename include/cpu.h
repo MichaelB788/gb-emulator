@@ -9,7 +9,6 @@
 #define FLAG_C (1 << 4)
 
 struct bus;
-struct interrupts;
 
 enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED };
 

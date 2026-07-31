@@ -97,7 +97,7 @@ void cpu_step(struct cpu *cpu) {
   }
 
   struct interrupts *interrupts = &cpu->bus->interrupt;
-  if (interrupts->IE & interrupts->IF) {
+  if ((interrupts->IE & interrupts->IF) != 0) {
     cpu->state = CPU_RUNNING;
     if (cpu->IME) {
       service_interrupts(cpu, interrupts);

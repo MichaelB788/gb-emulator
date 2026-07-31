@@ -415,13 +415,16 @@ void push_r16stk(struct cpu *cpu) {
 
 /// Interrupt-related instructions
 
-void di(struct cpu *cpu) { cpu->IME = false; }
+void di(struct cpu *cpu) {
+  cpu->IME = false;
+  cpu->ei_called = false;
+}
 
 void ei(struct cpu *cpu) { cpu->ei_called = true; }
 
 void halt(struct cpu *cpu) {
-  const struct interrupts interrupts = cpu->bus->interrupt;
-  if (!cpu->IME && (interrupts.IE & interrupts.IF) != 0) {
+  const struct interrupts *interrupts = &cpu->bus->interrupt;
+  if (!cpu->IME && (interrupts->IE & interrupts->IF) != 0) {
     cpu->halt_bug = true;
   } else {
     cpu->state = CPU_HALTED;

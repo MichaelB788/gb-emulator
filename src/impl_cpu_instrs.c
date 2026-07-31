@@ -118,41 +118,32 @@ uint16_t impl_add_sp_e8(struct cpu *cpu) {
 /// Bitwise logic implementations
 
 void impl_and(struct cpu *cpu, uint8_t operand) {
-  const uint8_t A = cpu->A;
-  const uint8_t result = A & operand;
+  cpu->A &= operand;
 
-  cpu_write_flags(cpu, FLAG_Z, result == 0);
+  cpu_write_flags(cpu, FLAG_Z, cpu->A == 0);
   cpu->F &= ~(FLAG_N | FLAG_C);
   cpu->F |= FLAG_H;
-
-  cpu->A = result;
 }
 
 void impl_xor(struct cpu *cpu, uint8_t operand) {
-  const uint8_t A = cpu->A;
-  const uint8_t result = A ^ operand;
+  cpu->A ^= operand;
 
-  cpu_write_flags(cpu, FLAG_Z, result == 0);
+  cpu_write_flags(cpu, FLAG_Z, cpu->A == 0);
   cpu->F &= ~(FLAG_N | FLAG_H | FLAG_C);
-
-  cpu->A = result;
 }
 
 void impl_or(struct cpu *cpu, uint8_t operand) {
-  const uint8_t A = cpu->A;
-  const uint8_t result = A | operand;
+  cpu->A |= operand;
 
-  cpu_write_flags(cpu, FLAG_Z, result == 0);
+  cpu_write_flags(cpu, FLAG_Z, cpu->A == 0);
   cpu->F &= ~(FLAG_N | FLAG_H | FLAG_C);
-
-  cpu->A = result;
 }
 
 /// Bit flag implementations
 
 void impl_bit_b3(struct cpu *cpu, uint8_t b3, uint8_t r8) {
-  cpu_write_flags(cpu, FLAG_Z, !((r8 >> b3) & 1));
-  cpu->F &= ~(FLAG_N);
+  cpu_write_flags(cpu, FLAG_Z, (r8 & 1 << b3) == 0);
+  cpu->F &= ~FLAG_N;
   cpu->F |= FLAG_H;
 }
 
@@ -164,7 +155,7 @@ uint8_t impl_rl(struct cpu *cpu, uint8_t operand) {
 
   cpu_write_flags(cpu, FLAG_Z, result == 0);
   cpu->F &= ~(FLAG_N | FLAG_H);
-  cpu_write_flags(cpu, FLAG_C, operand & 0x80);
+  cpu_write_flags(cpu, FLAG_C, (operand & 0x80) != 0);
 
   return result;
 }
@@ -174,7 +165,7 @@ uint8_t impl_rlc(struct cpu *cpu, uint8_t operand) {
 
   cpu_write_flags(cpu, FLAG_Z, result == 0);
   cpu->F &= ~(FLAG_N | FLAG_H);
-  cpu_write_flags(cpu, FLAG_C, operand & 0x80);
+  cpu_write_flags(cpu, FLAG_C, (operand & 0x80) != 0);
 
   return result;
 }
@@ -185,7 +176,7 @@ uint8_t impl_rr(struct cpu *cpu, uint8_t operand) {
 
   cpu_write_flags(cpu, FLAG_Z, result == 0);
   cpu->F &= ~(FLAG_N | FLAG_H);
-  cpu_write_flags(cpu, FLAG_C, operand & 1);
+  cpu_write_flags(cpu, FLAG_C, (operand & 1) != 0);
 
   return result;
 }
