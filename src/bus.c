@@ -10,19 +10,17 @@
 #include <stdio.h>
 
 bool bus_init(struct bus *bus, const char *rom_path) {
-  // NOTE: On real hardware, unused bits are turned into 1 due to pull up
-  // resistors
-  bus->joypad.JOYP = 0xFF;
+  bus->joypad.JOYP = 0x3F;
 
-  bus->interrupt.IE = bus->interrupt.IF = INTERRUPT_UNUSED;
+  bus->interrupt.IE = bus->interrupt.IF = 0;
 
   bus->serial.SB = 0;
-  bus->serial.SC = SC_UNUSED;
+  bus->serial.SC = 0;
 
   bus->timer.elapsed_cycles = 0;
   bus->timer.system_counter = 0;
   bus->timer.DIV = bus->timer.TIMA = bus->timer.TMA = 0;
-  bus->timer.TAC = TAC_UNUSED;
+  bus->timer.TAC = 0;
 
   return cart_init(&bus->cartridge, rom_path);
 }
@@ -144,13 +142,13 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     bus->timer.TMA = val;
     break;
   case 0xFF07:
-    bus->timer.TAC = val | TAC_UNUSED;
+    bus->timer.TAC = val & ~TAC_UNUSED;
     break;
   case 0xFF0F:
-    bus->interrupt.IF = val | INTERRUPT_UNUSED;
+    bus->interrupt.IF = val & ~INTERRUPT_UNUSED;
     break;
   case 0xFFFF:
-    bus->interrupt.IE = val | INTERRUPT_UNUSED;
+    bus->interrupt.IE = val & ~INTERRUPT_UNUSED;
     break;
   default:
     break;
