@@ -1,6 +1,6 @@
 #include "cartridge.h"
-#include "byte_sizes.h"
 #include "byte_vector.h"
+#include "constants.h"
 #include "mapper.h"
 #include <stdbool.h>
 #include <stddef.h>

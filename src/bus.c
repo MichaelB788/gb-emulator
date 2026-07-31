@@ -1,42 +1,33 @@
 #include "bus.h"
-#include "bitwise.h"
 #include "cartridge.h"
+#include "interrupts.h"
+#include "joypad.h"
 #include "mapper.h"
-#include "serial_transfer.h"
+#include "serial.h"
 #include "timer.h"
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
-
-#define JOYP_WRITE_BITS 0x30u
-#define INTERRUPT_WRITE_BITS 0x1Fu
-#define SERIAL_CONTROL_WRITE_BITS 0x83u
-#define TIMER_CONTROL_WRITE_BITS 0x7u
 
 bool bus_init(struct bus *bus, const char *rom_path) {
   // NOTE: On real hardware, unused bits are turned into 1 due to pull up
   // resistors
+  bus->joypad.JOYP = 0xFF;
 
-  bus->joypad = 0xFF;
+  bus->interrupt.IE = bus->interrupt.IF = INTERRUPT_UNUSED;
 
-  bus->interrupt.enable = (uint8_t)~INTERRUPT_WRITE_BITS;
-  bus->interrupt.flag = (uint8_t)~INTERRUPT_WRITE_BITS;
-
-  bus->serial.data = 0;
-  bus->serial.control = (uint8_t)~SERIAL_CONTROL_WRITE_BITS;
+  bus->serial.SB = 0;
+  bus->serial.SC = SC_UNUSED;
 
   bus->timer.elapsed_cycles = 0;
   bus->timer.system_counter = 0;
-  bus->timer.divider = 0;
-  bus->timer.counter = 0;
-  bus->timer.modulo = 0;
-  bus->timer.control = (uint8_t)~TIMER_CONTROL_WRITE_BITS;
+  bus->timer.DIV = bus->timer.TIMA = bus->timer.TMA = 0;
+  bus->timer.TAC = TAC_UNUSED;
 
   return cart_init(&bus->cartridge, rom_path);
 }
 
-void bus_tick(struct bus *bus) {
-  timer_tick(&bus->timer, &bus->interrupt.flag);
-}
+void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
 
 void bus_close(struct bus *bus) { cart_close(&bus->cartridge); }
 
@@ -98,24 +89,23 @@ void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
 uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   switch (addr) {
   case 0xFF00:
-    // All inputs are considered released if no mode is selected
-    return are_any_bits_set(bus->joypad, 0x30) ? bus->joypad : 0xFF;
+    return bus->joypad.JOYP;
   case 0xFF01:
-    return bus->serial.data;
+    return bus->serial.SB;
   case 0xFF02:
-    return bus->serial.control;
+    return bus->serial.SC;
   case 0xFF04:
-    return bus->timer.divider;
+    return bus->timer.DIV;
   case 0xFF05:
-    return bus->timer.counter;
+    return bus->timer.TIMA;
   case 0xFF06:
-    return bus->timer.modulo;
+    return bus->timer.TMA;
   case 0xFF07:
-    return bus->timer.control;
+    return bus->timer.TAC;
   case 0xFF0F:
-    return bus->interrupt.flag;
+    return bus->interrupt.IF;
   case 0xFFFF:
-    return bus->interrupt.enable;
+    return bus->interrupt.IE;
   default:
     return 0xFF;
   }
@@ -123,40 +113,44 @@ uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
 
 void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
   switch (addr) {
-  case 0xFF00:
-    // Lower nibble is read only.
-    write_bit(&bus->joypad, 5, is_bit_set(val, 5));
-    write_bit(&bus->joypad, 4, is_bit_set(val, 4));
-    break;
+  case 0xFF00: {
+    const uint8_t written = val & JOYP_MODE_SELECT;
+    if (written == JOYP_MODE_SELECT) {
+      bus->joypad.JOYP = 0xFF;
+    } else {
+      bus->joypad.JOYP &= ~JOYP_BUTTONS_SELECT;
+      bus->joypad.JOYP |= written;
+    }
+  } break;
   case 0xFF01:
-    bus->serial.data = val;
+    bus->serial.SB = val;
     break;
   case 0xFF02:
-    bus->serial.control = val;
-    if (is_bit_set(bus->serial.control, 7)) {
-      putchar(bus->serial.data);
+    bus->serial.SC = val | SC_UNUSED;
+    if ((bus->serial.SC & SC_TRANSFER_ENABLE) != 0) {
+      putchar(bus->serial.SB);
       fflush(stdout);
     }
-    set_bit(&bus->interrupt.flag, 3); // Request a serial interrupt
+    bus->interrupt.IF |= INTERRUPT_SERIAL;
     break;
   case 0xFF04:
     bus->timer.system_counter = 0;
-    bus->timer.divider = 0;
+    bus->timer.DIV = 0;
     break;
   case 0xFF05:
-    bus->timer.counter = val;
+    bus->timer.TIMA = val;
     break;
   case 0xFF06:
-    bus->timer.modulo = val;
+    bus->timer.TMA = val;
     break;
   case 0xFF07:
-    bus->timer.control = val & TIMER_CONTROL_WRITE_BITS;
+    bus->timer.TAC = val | TAC_UNUSED;
     break;
   case 0xFF0F:
-    bus->interrupt.flag = val & INTERRUPT_WRITE_BITS;
+    bus->interrupt.IF = val | INTERRUPT_UNUSED;
     break;
   case 0xFFFF:
-    bus->interrupt.enable = val & INTERRUPT_WRITE_BITS;
+    bus->interrupt.IE = val | INTERRUPT_UNUSED;
     break;
   default:
     break;

@@ -1,15 +1,15 @@
 #pragma once
-#include "byte_sizes.h"
 #include "cartridge.h"
+#include "constants.h"
 #include "interrupts.h"
-#include "serial_transfer.h"
+#include "joypad.h"
+#include "serial.h"
 #include "timer.h"
 
 struct bus {
-  uint8_t joypad;
-
-  struct interrupt interrupt;
-  struct serial_transfer serial;
+  struct joypad joypad;
+  struct interrupts interrupt;
+  struct serial serial;
   struct timer timer;
   struct cartridge cartridge;
 

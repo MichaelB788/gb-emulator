@@ -15,3 +15,5 @@
 #define MiB_3 (3ul * MiB)
 #define MiB_4 (4ul * MiB)
 #define MiB_8 (8ul * MiB)
+
+#define CPU_CLOCK_HZ 4194304u

@@ -1,6 +1,6 @@
 #include "mbc1.h"
-#include "byte_sizes.h"
 #include "byte_vector.h"
+#include "constants.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
