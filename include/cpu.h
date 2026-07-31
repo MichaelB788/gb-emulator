@@ -3,13 +3,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
-struct bus;
-struct interrupt;
+#define FLAG_Z (1 << 7)
+#define FLAG_N (1 << 6)
+#define FLAG_H (1 << 5)
+#define FLAG_C (1 << 4)
 
-#define FLAG_Z 7u
-#define FLAG_N 6u
-#define FLAG_H 5u
-#define FLAG_C 4u
+struct bus;
+struct interrupts;
 
 enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED };
 
@@ -35,7 +35,6 @@ struct cpu {
   enum cpu_state state;
 
   struct bus *bus;
-  struct interrupt *interrupt;
   FILE *log_file; // Observer, non-owning
 };
 
@@ -53,6 +52,10 @@ void cpu_set_bc(struct cpu *cpu, uint16_t val);
 void cpu_set_de(struct cpu *cpu, uint16_t val);
 void cpu_set_hl(struct cpu *cpu, uint16_t val);
 void cpu_set_af(struct cpu *cpu, uint16_t val);
+
+/// Flags operations
+
+void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
 
 /// Memory operations
 

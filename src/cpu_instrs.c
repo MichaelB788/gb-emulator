@@ -1,5 +1,4 @@
 #include "cpu_instrs.h"
-#include "bitwise.h"
 #include "bus.h"
 #include "cpu.h"
 #include "impl_cpu_instrs.h"
@@ -9,17 +8,22 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define Y_BIT_FIELD(opcode) ((opcode >> 3) & 0x7)
-#define Z_BIT_FIELD(opcode) (opcode & 0x7)
+#define OPCODE_Y 0x38
+#define OPCODE_Z 0x7
+
+#define REG8_Y(opcode) ((opcode & OPCODE_Y) >> 3)
+#define REG8_Z(opcode) (opcode & OPCODE_Z)
+
+#define BIT3_Y(opcode) ((opcode & OPCODE_Y) >> 3)
 
 /// Load instructions
 
 void ld_r8_r8(struct cpu *cpu) {
-  cpu->r8[Y_BIT_FIELD(cpu->IR)] = cpu->r8[Z_BIT_FIELD(cpu->IR)];
+  cpu->r8[REG8_Y(cpu->IR)] = cpu->r8[REG8_Z(cpu->IR)];
 }
 
 void ld_r8_u8(struct cpu *cpu) {
-  cpu->r8[Y_BIT_FIELD(cpu->IR)] = cpu_read_byte(cpu, cpu->PC++);
+  cpu->r8[REG8_Y(cpu->IR)] = cpu_read_byte(cpu, cpu->PC++);
 }
 
 void ld_r16_u16(struct cpu *cpu) {
@@ -29,7 +33,7 @@ void ld_r16_u16(struct cpu *cpu) {
 }
 
 void ld_hl_ind_r8(struct cpu *cpu) {
-  cpu_write_byte(cpu, cpu_get_hl(cpu), cpu->r8[Z_BIT_FIELD(cpu->IR)]);
+  cpu_write_byte(cpu, cpu_get_hl(cpu), cpu->r8[REG8_Z(cpu->IR)]);
 }
 
 void ld_hl_ind_u8(struct cpu *cpu) {
@@ -37,7 +41,7 @@ void ld_hl_ind_u8(struct cpu *cpu) {
 }
 
 void ld_r8_hl_ind(struct cpu *cpu) {
-  cpu->r8[Y_BIT_FIELD(cpu->IR)] = cpu_read_byte(cpu, cpu_get_hl(cpu));
+  cpu->r8[REG8_Y(cpu->IR)] = cpu_read_byte(cpu, cpu_get_hl(cpu));
 }
 
 void ld_r16_ind_a(struct cpu *cpu) {
@@ -78,7 +82,7 @@ void ldh_a_c_ind(struct cpu *cpu) {
 
 /// 8-bit arithmetic instructions
 
-void adc_r8(struct cpu *cpu) { impl_adc(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void adc_r8(struct cpu *cpu) { impl_adc(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void adc_hl_ind(struct cpu *cpu) {
   impl_adc(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -86,7 +90,7 @@ void adc_hl_ind(struct cpu *cpu) {
 
 void adc_u8(struct cpu *cpu) { impl_adc(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void add_r8(struct cpu *cpu) { impl_add(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void add_r8(struct cpu *cpu) { impl_add(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void add_hl_ind(struct cpu *cpu) {
   impl_add(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -94,7 +98,7 @@ void add_hl_ind(struct cpu *cpu) {
 
 void add_u8(struct cpu *cpu) { impl_add(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void sbc_r8(struct cpu *cpu) { impl_sbc(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void sbc_r8(struct cpu *cpu) { impl_sbc(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void sbc_hl_ind(struct cpu *cpu) {
   impl_sbc(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -102,7 +106,7 @@ void sbc_hl_ind(struct cpu *cpu) {
 
 void sbc_u8(struct cpu *cpu) { impl_sbc(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void sub_r8(struct cpu *cpu) { impl_sub(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void sub_r8(struct cpu *cpu) { impl_sub(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void sub_hl_ind(struct cpu *cpu) {
   impl_sub(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -110,7 +114,7 @@ void sub_hl_ind(struct cpu *cpu) {
 
 void sub_u8(struct cpu *cpu) { impl_sub(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void cp_r8(struct cpu *cpu) { impl_cp(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void cp_r8(struct cpu *cpu) { impl_cp(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void cp_hl_ind(struct cpu *cpu) {
   impl_cp(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -119,7 +123,7 @@ void cp_hl_ind(struct cpu *cpu) {
 void cp_u8(struct cpu *cpu) { impl_cp(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
 void inc_r8(struct cpu *cpu) {
-  const uint8_t i = Y_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Y(cpu->IR);
   cpu->r8[i] = impl_inc_u8(cpu, cpu->r8[i]);
 }
 
@@ -129,7 +133,7 @@ void inc_hl_ind(struct cpu *cpu) {
 }
 
 void dec_r8(struct cpu *cpu) {
-  const uint8_t i = Y_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Y(cpu->IR);
   cpu->r8[i] = impl_dec_u8(cpu, cpu->r8[i]);
 }
 
@@ -152,7 +156,7 @@ void dec_r16(struct cpu *cpu) {
 
 /// Bitwise logic instructions
 
-void and_r8(struct cpu *cpu) { impl_and(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void and_r8(struct cpu *cpu) { impl_and(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void and_hl_ind(struct cpu *cpu) {
   impl_and(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -160,7 +164,7 @@ void and_hl_ind(struct cpu *cpu) {
 
 void and_u8(struct cpu *cpu) { impl_and(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void or_r8(struct cpu *cpu) { impl_or(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void or_r8(struct cpu *cpu) { impl_or(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void or_hl_ind(struct cpu *cpu) {
   impl_or(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -168,7 +172,7 @@ void or_hl_ind(struct cpu *cpu) {
 
 void or_u8(struct cpu *cpu) { impl_or(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
-void xor_r8(struct cpu *cpu) { impl_xor(cpu, cpu->r8[Z_BIT_FIELD(cpu->IR)]); }
+void xor_r8(struct cpu *cpu) { impl_xor(cpu, cpu->r8[REG8_Z(cpu->IR)]); }
 
 void xor_hl_ind(struct cpu *cpu) {
   impl_xor(cpu, cpu_read_byte(cpu, cpu_get_hl(cpu)));
@@ -178,44 +182,43 @@ void xor_u8(struct cpu *cpu) { impl_xor(cpu, cpu_read_byte(cpu, cpu->PC++)); }
 
 void cpl(struct cpu *cpu) {
   cpu->A = ~(cpu->A);
-  set_bit(&cpu->F, FLAG_N);
-  set_bit(&cpu->F, FLAG_H);
+  cpu->F |= (FLAG_N | FLAG_H);
 }
 
 /// Bit flag instructions
 
 void bit_b3_r8(struct cpu *cpu) {
-  impl_bit_b3(cpu, Y_BIT_FIELD(cpu->IR), cpu->r8[Z_BIT_FIELD(cpu->IR)]);
+  impl_bit_b3(cpu, BIT3_Y(cpu->IR), cpu->r8[REG8_Z(cpu->IR)]);
 }
 
 void bit_b3_hl_ind(struct cpu *cpu) {
-  impl_bit_b3(cpu, Y_BIT_FIELD(cpu->IR), cpu_read_byte(cpu, cpu_get_hl(cpu)));
+  impl_bit_b3(cpu, BIT3_Y(cpu->IR), cpu_read_byte(cpu, cpu_get_hl(cpu)));
 }
 
 void res_b3_r8(struct cpu *cpu) {
-  clear_bit(&cpu->r8[Z_BIT_FIELD(cpu->IR)], Y_BIT_FIELD(cpu->IR));
+  cpu->r8[REG8_Z(cpu->IR)] &= ~(1 << BIT3_Y(cpu->IR));
 }
 
 void res_b3_hl_ind(struct cpu *cpu) {
-  uint8_t hl_mem = cpu_read_byte(cpu, cpu_get_hl(cpu));
-  clear_bit(&hl_mem, Y_BIT_FIELD(cpu->IR));
-  cpu_write_byte(cpu, cpu_get_hl(cpu), hl_mem);
+  const uint8_t result =
+      cpu_read_byte(cpu, cpu_get_hl(cpu)) & ~(1 << BIT3_Y(cpu->IR));
+  cpu_write_byte(cpu, cpu_get_hl(cpu), result);
 }
 
 void set_b3_r8(struct cpu *cpu) {
-  set_bit(&cpu->r8[Z_BIT_FIELD(cpu->IR)], Y_BIT_FIELD(cpu->IR));
+  cpu->r8[REG8_Z(cpu->IR)] |= 1 << BIT3_Y(cpu->IR);
 }
 
 void set_b3_hl_ind(struct cpu *cpu) {
-  uint8_t hl_mem = cpu_read_byte(cpu, cpu_get_hl(cpu));
-  set_bit(&hl_mem, Y_BIT_FIELD(cpu->IR));
-  cpu_write_byte(cpu, cpu_get_hl(cpu), hl_mem);
+  const uint8_t result =
+      cpu_read_byte(cpu, cpu_get_hl(cpu)) | (1 << BIT3_Y(cpu->IR));
+  cpu_write_byte(cpu, cpu_get_hl(cpu), result);
 }
 
 /// Bit shfit instructions
 
 void rl_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_rl(cpu, cpu->r8[i]);
 }
 
@@ -226,11 +229,11 @@ void rl_hl_ind(struct cpu *cpu) {
 
 void rla(struct cpu *cpu) {
   cpu->A = impl_rl(cpu, cpu->A);
-  clear_bit(&cpu->F, FLAG_Z);
+  cpu->F &= ~FLAG_Z;
 }
 
 void rlc_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_rlc(cpu, cpu->r8[i]);
 }
 
@@ -241,11 +244,11 @@ void rlc_hl_ind(struct cpu *cpu) {
 
 void rlca(struct cpu *cpu) {
   cpu->A = impl_rlc(cpu, cpu->A);
-  clear_bit(&cpu->F, FLAG_Z);
+  cpu->F &= ~FLAG_Z;
 }
 
 void rr_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_rr(cpu, cpu->r8[i]);
 }
 
@@ -256,11 +259,11 @@ void rr_hl_ind(struct cpu *cpu) {
 
 void rra(struct cpu *cpu) {
   cpu->A = impl_rr(cpu, cpu->A);
-  clear_bit(&cpu->F, FLAG_Z);
+  cpu->F &= ~FLAG_Z;
 }
 
 void rrc_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_rrc(cpu, cpu->r8[i]);
 }
 
@@ -271,11 +274,11 @@ void rrc_hl_ind(struct cpu *cpu) {
 
 void rrca(struct cpu *cpu) {
   cpu->A = impl_rrc(cpu, cpu->A);
-  clear_bit(&cpu->F, FLAG_Z);
+  cpu->F &= ~FLAG_Z;
 }
 
 void sla_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_sla(cpu, cpu->r8[i]);
 }
 
@@ -285,7 +288,7 @@ void sla_hl_ind(struct cpu *cpu) {
 }
 
 void sra_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_sra(cpu, cpu->r8[i]);
 }
 
@@ -295,7 +298,7 @@ void sra_hl_ind(struct cpu *cpu) {
 }
 
 void srl_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_srl(cpu, cpu->r8[i]);
 }
 
@@ -305,7 +308,7 @@ void srl_hl_ind(struct cpu *cpu) {
 }
 
 void swap_r8(struct cpu *cpu) {
-  const uint8_t i = Z_BIT_FIELD(cpu->IR);
+  const uint8_t i = REG8_Z(cpu->IR);
   cpu->r8[i] = impl_swap(cpu, cpu->r8[i]);
 }
 
@@ -364,22 +367,18 @@ void reti(struct cpu *cpu) {
   cpu->ei_called = true;
 }
 
-void rst_vec(struct cpu *cpu) {
-  cpu_call_a16(cpu, (uint16_t)(cpu->IR & 0x38), true);
-}
+void rst_vec(struct cpu *cpu) { cpu_call_a16(cpu, cpu->IR & OPCODE_Y, true); }
 
 /// Carry flag instructions
 
 void ccf(struct cpu *cpu) {
-  clear_bit(&cpu->F, FLAG_N);
-  clear_bit(&cpu->F, FLAG_H);
-  toggle_bit(&cpu->F, FLAG_C);
+  cpu->F &= ~(FLAG_N | FLAG_H);
+  cpu->F ^= FLAG_C;
 }
 
 void scf(struct cpu *cpu) {
-  clear_bit(&cpu->F, FLAG_N);
-  clear_bit(&cpu->F, FLAG_H);
-  set_bit(&cpu->F, FLAG_C);
+  cpu->F &= ~(FLAG_N | FLAG_H);
+  cpu->F |= FLAG_C;
 }
 
 /// Stack manipulation instructions
@@ -421,7 +420,8 @@ void di(struct cpu *cpu) { cpu->IME = false; }
 void ei(struct cpu *cpu) { cpu->ei_called = true; }
 
 void halt(struct cpu *cpu) {
-  if (!cpu->IME && interrupt_get_pending(cpu->interrupt)) {
+  const struct interrupts interrupts = cpu->bus->interrupt;
+  if (!cpu->IME && (interrupts.IE & interrupts.IF) != 0) {
     cpu->halt_bug = true;
   } else {
     cpu->state = CPU_HALTED;
@@ -434,27 +434,27 @@ void daa(struct cpu *cpu) {
   const uint8_t A = cpu->A, F = cpu->F;
   uint8_t result = 0, adjustment = 0;
 
-  if (is_bit_set(F, FLAG_N)) {
-    if (is_bit_set(F, FLAG_H)) {
+  if ((F & FLAG_N) != 0) {
+    if ((F & FLAG_H) != 0) {
       adjustment |= 0x6;
     }
-    if (is_bit_set(F, FLAG_C)) {
+    if ((F & FLAG_C) != 0) {
       adjustment |= 0x60;
     }
     result = A - adjustment;
   } else {
-    if (is_bit_set(F, FLAG_H) || (A & 0xF) > 0x9) {
+    if ((F & FLAG_H) != 0 || (A & 0xF) > 0x9) {
       adjustment |= 0x6;
     }
-    if (is_bit_set(F, FLAG_C) || A > 0x99) {
+    if ((F & FLAG_C) != 0 || A > 0x99) {
       adjustment |= 0x60;
-      write_bit(&cpu->F, FLAG_C, true);
+      cpu->F |= FLAG_C;
     }
     result = A + adjustment;
   }
 
-  write_bit(&cpu->F, FLAG_Z, result == 0);
-  write_bit(&cpu->F, FLAG_H, false);
+  cpu_write_flags(cpu, FLAG_Z, result == 0);
+  cpu->F &= ~FLAG_H;
 
   cpu->A = result;
 }
@@ -465,7 +465,7 @@ void stop(struct cpu *cpu) {
   cpu_read_byte(cpu, cpu->PC++);
   cpu->state = CPU_STOPPED;
   cpu->bus->timer.system_counter = 0;
-  cpu->bus->timer.divider = 0;
+  cpu->bus->timer.DIV = 0;
 }
 
 void prefix(struct cpu *cpu) {

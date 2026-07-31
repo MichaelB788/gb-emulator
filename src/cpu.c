@@ -1,5 +1,4 @@
 #include "cpu.h"
-#include "bitwise.h"
 #include "bus.h"
 #include "interrupts.h"
 #include "optables.h"
@@ -16,7 +15,6 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   cpu->log_file = log_file;
 
   cpu->bus = bus;
-  cpu->interrupt = &bus->interrupt;
 
   cpu->A = 0x01;
   cpu->F = 0xB0;
@@ -53,10 +51,10 @@ static void log_instruction(const struct cpu *cpu) {
 }
 
 // See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
-static void service_interrupts(struct cpu *cpu) {
-  const uint8_t pending_interrupts = interrupt_get_pending(cpu->interrupt);
+static void service_interrupts(struct cpu *cpu, struct interrupts *interrupts) {
+  const uint8_t pending = interrupts->IE & interrupts->IF;
   for (uint8_t i = 0; i < 5; ++i) {
-    if (is_bit_set(pending_interrupts, i)) {
+    if ((pending & (1 << i)) != 0) {
       // Two wait states are executed
       bus_tick(cpu->bus);
       bus_tick(cpu->bus);
@@ -65,7 +63,7 @@ static void service_interrupts(struct cpu *cpu) {
       cpu_call_a16(cpu, (uint16_t)(0x40 | (i << 3)), true);
 
       // Interrupt handled
-      clear_bit(&cpu->interrupt->flag, i);
+      interrupts->IF &= ~(1 << i);
       cpu->IME = false;
       return;
     }
@@ -98,10 +96,11 @@ void cpu_step(struct cpu *cpu) {
     break;
   }
 
-  if (interrupt_get_pending(cpu->interrupt)) {
+  struct interrupts *interrupts = &cpu->bus->interrupt;
+  if (interrupts->IE & interrupts->IF) {
     cpu->state = CPU_RUNNING;
     if (cpu->IME) {
-      service_interrupts(cpu);
+      service_interrupts(cpu, interrupts);
     }
   }
 }
@@ -148,6 +147,12 @@ void cpu_set_hl(struct cpu *cpu, uint16_t val) {
 void cpu_set_af(struct cpu *cpu, uint16_t val) {
   cpu->A = val >> 8;
   cpu->F = val & 0xF0;
+}
+
+/// Flags operations
+
+void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
+  cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
 }
 
 /// Memory operations
@@ -297,13 +302,13 @@ uint16_t cpu_get_r16mem(struct cpu *cpu) {
 bool cpu_test_cond(const struct cpu *cpu) {
   switch ((cpu->IR >> 3) & 0x3) {
   case 0:
-    return !is_bit_set(cpu->F, FLAG_Z);
+    return ((cpu->F & FLAG_Z) == 0);
   case 1:
-    return is_bit_set(cpu->F, FLAG_Z);
+    return ((cpu->F & FLAG_Z) != 0);
   case 2:
-    return !is_bit_set(cpu->F, FLAG_C);
+    return ((cpu->F & FLAG_C) == 0);
   case 3:
-    return is_bit_set(cpu->F, FLAG_C);
+    return ((cpu->F & FLAG_C) != 0);
   default:
     assert(false && "cpu_check_cond fail");
   }
