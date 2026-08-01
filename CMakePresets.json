@@ -1,12 +1,27 @@
 {
-  "version": 3,
+  "version": 8,
   "configurePresets": [
     {
-      "name": "default",
-      "displayName": "Default (no vcpkg)",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build",
+      "name": "Clang Redhat",
+      "displayName": "Clang 22.1.8 x86_64-redhat-linux-gnu",
+      "description": "Using compilers: C = /usr/lib64/ccache/clang, CXX = /usr/lib64/ccache/clang++",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "/usr/lib64/ccache/clang",
+        "CMAKE_CXX_COMPILER": "/usr/lib64/ccache/clang++",
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "GCC RedHat",
+      "displayName": "GCC 16.1.1 x86_64-redhat-linux",
+      "description": "Using compilers: C = /usr/lib64/ccache/gcc, CXX = /usr/lib64/ccache/g++",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "/usr/lib64/ccache/gcc",
+        "CMAKE_CXX_COMPILER": "/usr/lib64/ccache/g++",
         "CMAKE_BUILD_TYPE": "Debug"
       }
     }
