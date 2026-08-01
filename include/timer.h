@@ -1,4 +1,5 @@
 #pragma once
+#include <stddef.h>
 #include <stdint.h>
 
 #define TAC_CLOCK_SELECT 0x3
@@ -6,7 +7,7 @@
 #define TAC_UNUSED 0xF8
 
 struct timer {
-  unsigned elapsed_cycles; // Tracks cycles elapsed, used with TIMA
+  size_t elapsed_cycles;   // Tracks cycles elapsed, used with TIMA
   uint16_t system_counter; // Internal system counter
 
   uint8_t DIV;  // Timer divider, upper byte of the system counter

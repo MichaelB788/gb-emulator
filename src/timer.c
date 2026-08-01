@@ -4,11 +4,12 @@
 #include <stdint.h>
 
 void timer_tick(struct timer *timer, struct interrupts *interrupts) {
-  timer->elapsed_cycles += 4;
   timer->system_counter += 4;
   timer->DIV = timer->system_counter >> 8;
 
   if ((timer->TAC & TAC_ENABLE) != 0) {
+    timer->elapsed_cycles += 4;
+
     static const unsigned clocks[] = {[0b00] = CPU_CLOCK_HZ / 4096u,
                                       [0b01] = CPU_CLOCK_HZ / 262144u,
                                       [0b10] = CPU_CLOCK_HZ / 65536u,
@@ -20,7 +21,7 @@ void timer_tick(struct timer *timer, struct interrupts *interrupts) {
         interrupts->IF |= INTERRUPT_TIMER;
       }
 
-      timer->elapsed_cycles = timer->elapsed_cycles % clocks[selected];
+      timer->elapsed_cycles -= clocks[selected];
     }
   }
 }
