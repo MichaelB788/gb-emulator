@@ -39,7 +39,7 @@
         "${workspaceFolder}/extern/gb-test-roms/cpu_instrs/cpu_instrs.gb"
       ],
       "stopAtEntry": false,
-      "cwd": "${fileDirname}",
+      "cwd": "${workspaceFolder}",
       "environment": [],
       "externalConsole": false,
       "MIMode": "gdb",

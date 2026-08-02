@@ -5,7 +5,7 @@
       "name": "Clang Redhat",
       "displayName": "Clang 22.1.8 x86_64-redhat-linux-gnu",
       "description": "Using compilers: C = /usr/lib64/ccache/clang, CXX = /usr/lib64/ccache/clang++",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
         "CMAKE_C_COMPILER": "/usr/lib64/ccache/clang",
@@ -17,7 +17,7 @@
       "name": "GCC RedHat",
       "displayName": "GCC 16.1.1 x86_64-redhat-linux",
       "description": "Using compilers: C = /usr/lib64/ccache/gcc, CXX = /usr/lib64/ccache/g++",
-      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "binaryDir": "${workspaceFolder}/build",
       "cacheVariables": {
         "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
         "CMAKE_C_COMPILER": "/usr/lib64/ccache/gcc",
