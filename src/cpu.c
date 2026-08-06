@@ -36,18 +36,16 @@ bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
   return true;
 }
 
-static void log_instruction(const struct cpu *cpu) {
-  if (cpu->log_file) {
-    fprintf(cpu->log_file,
-            "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
-            "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
-            cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L,
-            cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
-            bus_read_byte(cpu->bus, cpu->PC + 1),
-            bus_read_byte(cpu->bus, cpu->PC + 2),
-            bus_read_byte(cpu->bus, cpu->PC + 3));
-    fflush(cpu->log_file);
-  }
+void cpu_log_current_step(const struct cpu *cpu, FILE *output) {
+  fprintf(output,
+          "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
+          "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
+          cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L,
+          cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+          bus_read_byte(cpu->bus, cpu->PC + 1),
+          bus_read_byte(cpu->bus, cpu->PC + 2),
+          bus_read_byte(cpu->bus, cpu->PC + 3));
+  fflush(output);
 }
 
 // See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
@@ -74,7 +72,9 @@ void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
     cpu->IR = cpu_read_byte(cpu, cpu->PC);
-    log_instruction(cpu);
+    if (cpu->log_file) {
+      cpu_log_current_step(cpu, cpu->log_file);
+    }
 
     if (cpu->halt_bug) {
       cpu->halt_bug = false;

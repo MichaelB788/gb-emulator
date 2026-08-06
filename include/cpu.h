@@ -40,6 +40,8 @@ struct cpu {
 bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file);
 void cpu_step(struct cpu *cpu);
 
+void cpu_log_current_step(const struct cpu *cpu, FILE *output);
+
 /// Register pair operations
 
 uint16_t cpu_get_bc(const struct cpu *cpu);
