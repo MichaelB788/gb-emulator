@@ -11,8 +11,8 @@ struct debugger {
   struct u16_dynamic_vec watch_addresses;
 };
 
-bool debugger_init(struct debugger *debugger);
-void debugger_close(struct debugger *debugger);
+bool debugger_create(struct debugger *debugger);
+void debugger_destroy(struct debugger *debugger);
 
 void debugger_step(struct debugger *debugger, struct cpu *cpu);
 // TODO: Allow user to edit debugger variables through the terminal

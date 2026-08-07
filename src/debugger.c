@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdio.h>
 
-bool debugger_init(struct debugger *debugger) {
+bool debugger_create(struct debugger *debugger) {
   return u16_dynamic_vec_create(&debugger->breakpoints, 10) &&
          u16_dynamic_vec_create(&debugger->watch_addresses, 10);
 }
@@ -22,7 +22,7 @@ void debugger_step(struct debugger *debugger, struct cpu *cpu) {
   }
 }
 
-void debugger_close(struct debugger *debugger) {
+void debugger_destroy(struct debugger *debugger) {
   u16_dynamic_vec_destroy(&debugger->breakpoints);
   u16_dynamic_vec_destroy(&debugger->watch_addresses);
 }
