@@ -66,7 +66,12 @@ void cpu_step(struct cpu *cpu) {
       cpu->IME = true;
     }
 
-    unprefixed_ins[cpu->IR](cpu);
+    if (cpu->executing_cb_op) {
+      cbprefixed_ins[cpu->IR](cpu);
+      cpu->executing_cb_op = false;
+    } else {
+      unprefixed_ins[cpu->IR](cpu);
+    }
     break;
   case CPU_HALTED:
     bus_tick(cpu->bus);

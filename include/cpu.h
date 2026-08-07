@@ -29,6 +29,7 @@ struct cpu {
   bool IME;
   bool ei_called;
   bool halt_bug;
+  bool executing_cb_op;
 
   uint8_t IR;
   enum cpu_state state;

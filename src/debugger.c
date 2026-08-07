@@ -2,6 +2,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "gameboy.h"
+#include "mnemonics.h"
 #include "vector.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -53,8 +54,8 @@ void debugger_check_for_breakpoints(struct debugger *debugger,
   }
 }
 
-static void debugger_log_watches(struct u16_dynamic_vec *watch_addresses,
-                                 struct bus *bus) {
+static void debugger_log_watches(const struct u16_dynamic_vec *watch_addresses,
+                                 const struct bus *bus) {
   printf("\nwatch: ");
   for (size_t i = 0; i < watch_addresses->size; ++i) {
     const uint16_t addr = watch_addresses->data[i];
@@ -63,11 +64,17 @@ static void debugger_log_watches(struct u16_dynamic_vec *watch_addresses,
   printf("\n\n");
 }
 
-static void debugger_step(struct debugger *debugger, struct gameboy *gb) {
+static void debugger_log_state(struct debugger *debugger,
+                               const struct gameboy *gb) {
   debugger_log_watches(&debugger->watch_addresses, &gb->bus);
+
+  if (gb->cpu.executing_cb_op) {
+    printf("%s\n", mnemonic_cbprefixed[gb->cpu.IR]);
+  } else {
+    printf("%s\n", mnemonic_unprefixed[gb->cpu.IR]);
+  }
   cpu_log_current_step(&gb->cpu, stdout);
   printf("\n");
-  gameboy_step(gb);
 }
 
 void debugger_interactive_menu(struct debugger *debugger, struct gameboy *gb) {
@@ -77,7 +84,8 @@ void debugger_interactive_menu(struct debugger *debugger, struct gameboy *gb) {
   scanf(" %c", &user_input);
   switch (user_input) {
   case 's':
-    debugger_step(debugger, gb);
+    debugger_log_state(debugger, gb);
+    gameboy_step(gb);
     break;
   case 'b':
     printf("value: ");
