@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool cart_init(struct cartridge *cart, const char *path_to_rom) {
+bool cartridge_create(struct cartridge *cart, const char *path_to_rom) {
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     perror("Could not open file");
@@ -60,7 +60,7 @@ fail_exit:
   return false;
 }
 
-void cart_close(struct cartridge *cart) {
+void cartridge_destroy(struct cartridge *cart) {
   u8_fixed_vec_destroy(&cart->rom);
   u8_fixed_vec_destroy(&cart->ram);
 }

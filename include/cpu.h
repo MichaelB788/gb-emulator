@@ -37,7 +37,7 @@ struct cpu {
   FILE *log_file; // Observer, non-owning
 };
 
-bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file);
+bool cpu_init(struct cpu *cpu, struct bus *bus);
 void cpu_step(struct cpu *cpu);
 
 void cpu_log_current_step(const struct cpu *cpu, FILE *output);

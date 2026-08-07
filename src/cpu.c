@@ -7,12 +7,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool cpu_init(struct cpu *cpu, struct bus *bus, FILE *log_file) {
+bool cpu_init(struct cpu *cpu, struct bus *bus) {
   if (!bus) {
     fprintf(stderr, "Invalid bus pointer given to CPU");
     return false;
   }
-  cpu->log_file = log_file;
 
   cpu->bus = bus;
 

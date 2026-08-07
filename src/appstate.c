@@ -1,63 +1,38 @@
 #include "appstate.h"
+#include "cpu.h"
 #include "gameboy.h"
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
-#include <SDL3/SDL_init.h>
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
-void app_init(struct appstate *app, const char *path_to_rom,
-              bool logging_enabled) {
-  app->status = APP_RUNNING;
+bool appstate_init(struct appstate *app, char **argv) {
+  // Gameboy initialization
+  if (!gameboy_init(&app->gb, argv[1])) {
+    fprintf(stderr, "Failed to initialize the cartridge\n");
+    return false;
+  }
 
-  if (logging_enabled) {
+  // Log file initialization if enabled with "--log"
+  if (argv[2] && strncmp(argv[2], "--log", 5) == 0) {
     app->log_file = fopen("log.txt", "w");
-    if (!app->log_file) {
-      app->msg = strerror(errno);
+    if (app->log_file) {
+      app->gb.cpu.log_file = app->log_file;
+    } else {
+      perror("Failed to create log file");
+      return false;
     }
   }
 
-  if (!SDL_Init(SDL_INIT_EVENTS)) {
-    app->status = APP_FAILURE;
-    app->msg = SDL_GetError();
-  }
-
-  if (!gameboy_init(&app->gb, path_to_rom, app->log_file)) {
-    app->status = APP_FAILURE;
-    app->msg = "Could not init emulator";
-  }
+  return true;
 }
 
-static void app_handle_events(struct appstate *app) {
-  while (SDL_PollEvent(&app->event)) {
-    switch (app->event.type) {
-    case SDL_EVENT_QUIT:
-      app->status = APP_SUCCESS;
-      break;
-    default:
-      break;
-    }
-  }
+void appstate_update(struct appstate *app) {
+  // TODO: rendering, keyboard input, etc.
+  gameboy_update(&app->gb);
 }
 
-void app_run(struct appstate *app) {
-  while (app->status == APP_RUNNING) {
-    app_handle_events(app);
-    gameboy_update(&app->gb);
-    // TODO: rendering, keyboard input, etc.
-  }
-}
-
-void app_close(struct appstate *app) {
-  gameboy_close(&app->gb);
+void appstate_quit(struct appstate *app) {
   if (app->log_file) {
     fclose(app->log_file);
   }
-
-  if (app->status == APP_SUCCESS) {
-    printf("App exited successfully.\n");
-  } else if (app->status == APP_FAILURE) {
-    fprintf(stderr, "An error occurred: %s\n", app->msg);
-  }
+  gameboy_quit(&app->gb);
 }

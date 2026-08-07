@@ -9,35 +9,27 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool bus_init(struct bus *bus, const char *rom_path) {
+bool bus_init(struct bus *bus, struct cartridge *cart) {
   bus->joypad.JOYP = 0x3F;
-
-  bus->interrupt.IE = bus->interrupt.IF = 0;
-
-  bus->serial.SB = 0;
-  bus->serial.SC = 0;
-
-  bus->timer.elapsed_cycles = 0;
-  bus->timer.system_counter = 0;
-  bus->timer.DIV = bus->timer.TIMA = bus->timer.TMA = 0;
-  bus->timer.TAC = 0;
-
-  return cart_init(&bus->cartridge, rom_path);
+  if (cart) {
+    bus->cartridge = cart;
+    return true;
+  }
+  fprintf(stderr, "Cannot initialize bus, invalid cart\n");
+  return false;
 }
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
 
-void bus_close(struct bus *bus) { cart_close(&bus->cartridge); }
-
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
   if (addr <= 0x7FFF) /* ROM */ {
-    return mapper_read_rom(&bus->cartridge, addr);
+    return mapper_read_rom(bus->cartridge, addr);
   }
   if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     return bus->vram[addr - 0x8000];
   }
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return mapper_read_ram(&bus->cartridge, addr);
+    return mapper_read_ram(bus->cartridge, addr);
   }
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     return bus->wram[addr - 0xC000];
@@ -63,11 +55,11 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   if (addr <= 0x7FFF) /* ROM */ {
-    mapper_write_rom(&bus->cartridge, addr, val);
+    mapper_write_rom(bus->cartridge, addr, val);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     bus->vram[addr - 0x8000] = val;
   } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    mapper_write_ram(&bus->cartridge, addr, val);
+    mapper_write_ram(bus->cartridge, addr, val);
   } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     bus->wram[addr - 0xC000] = val;
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {

@@ -1,20 +1,20 @@
 #include "gameboy.h"
+#include "bus.h"
+#include "cartridge.h"
 #include "cpu.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
 
-bool gameboy_init(struct gb_emulator *gb, const char *path_to_rom,
-                  FILE *log_file) {
-  if (!path_to_rom) {
-    fprintf(stderr, "Could not start emulator, no ROM given.\n");
+bool gameboy_init(struct gameboy *gb, const char *path_to_rom) {
+  if (path_to_rom && cartridge_create(&gb->cartridge, path_to_rom)) {
+    return bus_init(&gb->bus, &gb->cartridge) && cpu_init(&gb->cpu, &gb->bus);
+  } else {
+    fprintf(stderr, "Could not initialize gameboy, invalid ROM\n");
     return false;
   }
-
-  return bus_init(&gb->bus, path_to_rom) &&
-         cpu_init(&gb->cpu, &gb->bus, log_file);
 }
 
-void gameboy_update(struct gb_emulator *gb) { cpu_step(&gb->cpu); }
+void gameboy_quit(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
 
-void gameboy_close(struct gb_emulator *gb) { bus_close(&gb->bus); }
+void gameboy_update(struct gameboy *gb) { cpu_step(&gb->cpu); }
