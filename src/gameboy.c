@@ -2,6 +2,7 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "cpu.h"
+#include "interrupts.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -17,4 +18,7 @@ bool gameboy_init(struct gameboy *gb, const char *path_to_rom) {
 
 void gameboy_quit(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
 
-void gameboy_update(struct gameboy *gb) { cpu_step(&gb->cpu); }
+void gameboy_update(struct gameboy *gb) {
+  cpu_step(&gb->cpu);
+  interrupts_service_pending(&gb->bus.interrupt, &gb->cpu);
+}

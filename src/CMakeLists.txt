@@ -12,8 +12,10 @@ add_library(GB_Core
   cartridge.c
   cpu.c
   cpu_instrs.c
+  debugger.c
   gameboy.c
   impl_cpu_instrs.c
+  interrupts.c
   main.c
   mapper.c
   mbc1.c

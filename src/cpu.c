@@ -47,26 +47,6 @@ void cpu_log_current_step(const struct cpu *cpu, FILE *output) {
   fflush(output);
 }
 
-// See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
-static void service_interrupts(struct cpu *cpu, struct interrupts *interrupts) {
-  const uint8_t pending = interrupts->IE & interrupts->IF;
-  for (uint8_t i = 0; i < 5; ++i) {
-    if ((pending & (1 << i)) != 0) {
-      // Two wait states are executed
-      bus_tick(cpu->bus);
-      bus_tick(cpu->bus);
-
-      // Call the interrupt handler at it's address around 0x40
-      cpu_call_a16(cpu, (uint16_t)(0x40 | (i << 3)), true);
-
-      // Interrupt handled
-      interrupts->IF &= ~(1 << i);
-      cpu->IME = false;
-      return;
-    }
-  }
-}
-
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
@@ -94,14 +74,6 @@ void cpu_step(struct cpu *cpu) {
   case CPU_STOPPED:
     // TODO
     break;
-  }
-
-  struct interrupts *interrupts = &cpu->bus->interrupt;
-  if ((interrupts->IE & interrupts->IF) != 0) {
-    cpu->state = CPU_RUNNING;
-    if (cpu->IME) {
-      service_interrupts(cpu, interrupts);
-    }
   }
 }
 
