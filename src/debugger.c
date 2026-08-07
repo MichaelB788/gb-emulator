@@ -46,6 +46,8 @@ void debugger_check_for_breakpoints(struct debugger *debugger,
   for (size_t i = 0; i < debugger->breakpoints.size; ++i) {
     if (cpu->PC == debugger->breakpoints.data[i]) {
       debugger->debug_mode_active = true;
+      printf("\nBreakpoint 0x%04X hit. Entered debug mode\n\n",
+             debugger->breakpoints.data[i]);
       return;
     }
   }
@@ -53,10 +55,10 @@ void debugger_check_for_breakpoints(struct debugger *debugger,
 
 static void debugger_log_watches(struct u16_dynamic_vec *watch_addresses,
                                  struct bus *bus) {
-  printf("\nWATCH: ");
+  printf("\nwatch: ");
   for (size_t i = 0; i < watch_addresses->size; ++i) {
     const uint16_t addr = watch_addresses->data[i];
-    printf("0x%04X: 0x%02X ", addr, bus_read_byte(bus, addr));
+    printf("%04X:%02X ", addr, bus_read_byte(bus, addr));
   }
   printf("\n\n");
 }
