@@ -31,7 +31,7 @@ bool u8_fixed_vec_create_from_file(struct u8_fixed_vec *vec, size_t capacity,
 
   bool file_read_success = true;
   rewind(file);
-  fread(file_data, 1, capacity, file);
+  fread(file_data, sizeof(uint8_t), capacity, file);
   if (feof(file)) {
     perror("EOF error");
     file_read_success = false;
