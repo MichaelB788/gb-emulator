@@ -1,7 +1,7 @@
 #include "cartridge.h"
-#include "byte_vector.h"
 #include "constants.h"
 #include "mapper.h"
+#include "vector.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -40,14 +40,14 @@ bool cart_init(struct cartridge *cart, const char *path_to_rom) {
     goto fail_exit;
   }
 
-  if (!byte_vector_create_from_file(&cart->rom, KiB_32 * (1 << rom_size_byte),
-                                    rom_file)) {
+  if (!u8_fixed_vec_create_from_file(&cart->rom, KiB_32 * (1 << rom_size_byte),
+                                     rom_file)) {
     fprintf(stderr, "Could not initialize ROM\n");
     goto fail_exit;
   }
 
   const size_t ram_size = ram_sizes[ram_size_byte];
-  if (ram_size > 0 && !byte_vector_create(&cart->ram, ram_size)) {
+  if (ram_size > 0 && !u8_fixed_vec_create(&cart->ram, ram_size)) {
     fprintf(stderr, "Could not initialize RAM\n");
     goto fail_exit;
   }
@@ -61,6 +61,6 @@ fail_exit:
 }
 
 void cart_close(struct cartridge *cart) {
-  byte_vector_destroy(&cart->rom);
-  byte_vector_destroy(&cart->ram);
+  u8_fixed_vec_destroy(&cart->rom);
+  u8_fixed_vec_destroy(&cart->ram);
 }
