@@ -33,10 +33,14 @@ bool appstate_init(struct appstate *app, char **argv) {
 
 void appstate_update(struct appstate *app) {
   if (app->debug_enabled) {
-    // TODO: Debug stuff
-    gameboy_update(&app->gb);
+    if (app->debugger.debug_mode_active) {
+      debugger_interactive_menu(&app->debugger, &app->gb);
+    } else {
+      debugger_check_for_breakpoints(&app->debugger, &app->gb.cpu);
+      gameboy_step(&app->gb);
+    }
   } else {
-    gameboy_update(&app->gb);
+    gameboy_step(&app->gb);
   }
 }
 

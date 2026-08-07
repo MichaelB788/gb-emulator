@@ -18,7 +18,7 @@ bool gameboy_init(struct gameboy *gb, const char *path_to_rom) {
 
 void gameboy_quit(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
 
-void gameboy_update(struct gameboy *gb) {
+void gameboy_step(struct gameboy *gb) {
   cpu_step(&gb->cpu);
   interrupts_service_pending(&gb->bus.interrupt, &gb->cpu);
 }

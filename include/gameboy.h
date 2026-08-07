@@ -12,4 +12,4 @@ struct gameboy {
 bool gameboy_init(struct gameboy *gb, const char *path_to_rom);
 void gameboy_quit(struct gameboy *gb);
 
-void gameboy_update(struct gameboy *gb);
+void gameboy_step(struct gameboy *gb);
