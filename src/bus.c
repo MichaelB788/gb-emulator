@@ -19,7 +19,7 @@ bool bus_init(struct bus *bus, struct cartridge *cart) {
   return false;
 }
 
-void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
+void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }
 
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
   if (addr <= 0x7FFF) /* ROM */ {
@@ -93,9 +93,9 @@ uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   case 0xFF07:
     return bus->timer.TAC;
   case 0xFF0F:
-    return bus->interrupt.IF;
+    return bus->interrupts.IF;
   case 0xFFFF:
-    return bus->interrupt.IE;
+    return bus->interrupts.IE;
   default:
     return 0xFF;
   }
@@ -121,7 +121,7 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
       putchar(bus->serial.SB);
       fflush(stdout);
     }
-    bus->interrupt.IF |= INTERRUPT_SERIAL;
+    bus->interrupts.IF |= INTERRUPT_SERIAL;
     break;
   case 0xFF04:
     bus->timer.system_counter = 0;
@@ -137,10 +137,10 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     bus->timer.TAC = val & ~TAC_UNUSED;
     break;
   case 0xFF0F:
-    bus->interrupt.IF = val & ~INTERRUPT_UNUSED;
+    bus->interrupts.IF = val & ~INTERRUPT_UNUSED;
     break;
   case 0xFFFF:
-    bus->interrupt.IE = val & ~INTERRUPT_UNUSED;
+    bus->interrupts.IE = val & ~INTERRUPT_UNUSED;
     break;
   default:
     break;

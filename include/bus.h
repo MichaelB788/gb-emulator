@@ -10,7 +10,7 @@ struct cartridge;
 struct bus {
   struct cartridge *cartridge;
   struct joypad joypad;
-  struct interrupts interrupt;
+  struct interrupts interrupts;
   struct serial serial;
   struct timer timer;
 

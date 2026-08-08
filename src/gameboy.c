@@ -20,5 +20,5 @@ void gameboy_quit(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
 
 void gameboy_step(struct gameboy *gb) {
   cpu_step(&gb->cpu);
-  interrupts_service_pending(&gb->bus.interrupt, &gb->cpu);
+  interrupts_service_pending(&gb->bus.interrupts, &gb->cpu);
 }
