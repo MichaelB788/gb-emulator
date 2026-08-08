@@ -35,11 +35,23 @@ bool cpu_init(struct cpu *cpu, struct bus *bus) {
   return true;
 }
 
-void cpu_log_current_step(const struct cpu *cpu, FILE *output) {
+void cpu_log_step_reg8(const struct cpu *cpu, FILE *output) {
   fprintf(output,
           "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
           "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
           cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L,
+          cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+          bus_read_byte(cpu->bus, cpu->PC + 1),
+          bus_read_byte(cpu->bus, cpu->PC + 2),
+          bus_read_byte(cpu->bus, cpu->PC + 3));
+  fflush(output);
+}
+
+void cpu_log_step_reg16(const struct cpu *cpu, FILE *output) {
+  fprintf(output,
+          "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X "
+          "PCMEM:%02X,%02X,%02X,%02X\n",
+          cpu_get_af(cpu), cpu_get_bc(cpu), cpu_get_de(cpu), cpu_get_hl(cpu),
           cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
           bus_read_byte(cpu->bus, cpu->PC + 1),
           bus_read_byte(cpu->bus, cpu->PC + 2),
@@ -52,7 +64,7 @@ void cpu_step(struct cpu *cpu) {
   case CPU_RUNNING:
     cpu->IR = cpu_read_byte(cpu, cpu->PC);
     if (cpu->log_file) {
-      cpu_log_current_step(cpu, cpu->log_file);
+      cpu_log_step_reg8(cpu, cpu->log_file);
     }
 
     if (cpu->halt_bug) {

@@ -42,18 +42,6 @@ void debugger_destroy(struct debugger *debugger) {
   u16_dynamic_vec_destroy(&debugger->watch_addresses);
 }
 
-void debugger_check_for_breakpoints(struct debugger *debugger,
-                                    const struct cpu *cpu) {
-  for (size_t i = 0; i < debugger->breakpoints.size; ++i) {
-    if (cpu->PC == debugger->breakpoints.data[i]) {
-      debugger->debug_mode_active = true;
-      printf("\nBreakpoint 0x%04X hit. Entered debug mode\n\n",
-             debugger->breakpoints.data[i]);
-      return;
-    }
-  }
-}
-
 static void debugger_log_watches(const struct u16_dynamic_vec *watch_addresses,
                                  const struct bus *bus) {
   printf("\nwatch: ");
@@ -65,16 +53,29 @@ static void debugger_log_watches(const struct u16_dynamic_vec *watch_addresses,
 }
 
 static void debugger_log_state(struct debugger *debugger,
-                               const struct gameboy *gb) {
-  debugger_log_watches(&debugger->watch_addresses, &gb->bus);
+                               const struct cpu *cpu) {
+  debugger_log_watches(&debugger->watch_addresses, cpu->bus);
 
-  if (gb->cpu.executing_cb_op) {
-    printf("%s\n", mnemonic_cbprefixed[gb->cpu.IR]);
+  if (cpu->executing_cb_op) {
+    printf("%s\n", mnemonic_cbprefixed[cpu->IR]);
   } else {
-    printf("%s\n", mnemonic_unprefixed[gb->cpu.IR]);
+    printf("%s\n", mnemonic_unprefixed[cpu->IR]);
   }
-  cpu_log_current_step(&gb->cpu, stdout);
+  cpu_log_step_reg16(cpu, stdout);
   printf("\n");
+}
+
+void debugger_check_for_breakpoints(struct debugger *debugger,
+                                    const struct cpu *cpu) {
+  for (size_t i = 0; i < debugger->breakpoints.size; ++i) {
+    if (cpu->PC == debugger->breakpoints.data[i]) {
+      debugger->debug_mode_active = true;
+      printf("\nBreakpoint 0x%04X hit. Entered debug mode\n",
+             debugger->breakpoints.data[i]);
+      debugger_log_state(debugger, cpu);
+      return;
+    }
+  }
 }
 
 void debugger_interactive_menu(struct debugger *debugger, struct gameboy *gb) {
@@ -84,7 +85,7 @@ void debugger_interactive_menu(struct debugger *debugger, struct gameboy *gb) {
   scanf(" %c", &user_input);
   switch (user_input) {
   case 's':
-    debugger_log_state(debugger, gb);
+    debugger_log_state(debugger, &gb->cpu);
     gameboy_step(gb);
     break;
   case 'b':

@@ -41,7 +41,8 @@ struct cpu {
 bool cpu_init(struct cpu *cpu, struct bus *bus);
 void cpu_step(struct cpu *cpu);
 
-void cpu_log_current_step(const struct cpu *cpu, FILE *output);
+void cpu_log_step_reg8(const struct cpu *cpu, FILE *output);
+void cpu_log_step_reg16(const struct cpu *cpu, FILE *output);
 
 /// Register pair operations
 
