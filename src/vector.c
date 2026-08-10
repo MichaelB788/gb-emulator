@@ -4,29 +4,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool u8_fixed_vec_create(struct u8_fixed_vec *vec, size_t capacity) {
+struct u8_fixed_vec create_u8_fixed_vec(size_t capacity) {
+  struct u8_fixed_vec vec = {.data = NULL, .capacity = 0};
   if (capacity == 0) {
-    fprintf(stderr, "Cannot create u8_fixed_vec of size 0\n");
-    return false;
+    return vec;
   }
 
   uint8_t *buf = malloc(capacity * sizeof(uint8_t));
   if (buf) {
-    vec->data = buf;
-    vec->capacity = capacity;
-    return true;
-  } else {
-    perror("u8_fixed_vec data malloc failed");
-    return false;
+    vec.data = buf;
+    vec.capacity = capacity;
   }
+  return vec;
 }
 
-bool u8_fixed_vec_create_from_file(struct u8_fixed_vec *vec, size_t capacity,
-                                   FILE *file) {
+struct u8_fixed_vec create_u8_fixed_vec_from_file(size_t capacity, FILE *file) {
+  struct u8_fixed_vec vec = {.data = NULL, .capacity = 0};
+
   uint8_t *file_data = malloc(capacity * sizeof(uint8_t));
   if (!file_data) {
     perror("file data malloc failed");
-    return false;
+    return vec;
   }
 
   bool file_read_success = true;
@@ -42,15 +40,13 @@ bool u8_fixed_vec_create_from_file(struct u8_fixed_vec *vec, size_t capacity,
   }
 
   if (file_read_success) {
-    vec->data = file_data;
-    vec->capacity = capacity;
-    return true;
-  } else {
-    return false;
+    vec.data = file_data;
+    vec.capacity = capacity;
   }
+  return vec;
 }
 
-void u8_fixed_vec_destroy(struct u8_fixed_vec *vec) {
+void destroy_u8_fixed_vec(struct u8_fixed_vec *vec) {
   vec->capacity = 0;
   if (vec->data) {
     free(vec->data);
@@ -58,24 +54,24 @@ void u8_fixed_vec_destroy(struct u8_fixed_vec *vec) {
   }
 }
 
-bool u16_dynamic_vec_create(struct u16_dynamic_vec *vec, size_t capacity) {
+struct u16_dynamic_vec create_u16_dynamic_vec(size_t capacity) {
+  struct u16_dynamic_vec vec = {.data = NULL, .size = 0, .capacity = 0};
   if (capacity == 0) {
     fprintf(stderr, "Cannot create u16_dynamic_vec of size 0\n");
-    return false;
+    return vec;
   }
 
-  vec->capacity = capacity;
   uint16_t *buf = malloc(capacity * sizeof(uint16_t));
   if (buf) {
-    vec->data = buf;
-    return true;
+    vec.data = buf;
+    vec.capacity = capacity;
   } else {
     fprintf(stderr, "Failed to malloc u16_dynamic_vec data\n");
-    return false;
   }
+  return vec;
 }
 
-void u16_dynamic_vec_destroy(struct u16_dynamic_vec *vec) {
+void destroy_u16_dynamic_vec(struct u16_dynamic_vec *vec) {
   vec->size = 0;
   vec->capacity = 0;
   if (vec->data) {

@@ -9,37 +9,41 @@
 #include <stdio.h>
 
 bool debugger_create(struct debugger *debugger) {
-  if (u16_dynamic_vec_create(&debugger->breakpoints, 10) &&
-      u16_dynamic_vec_create(&debugger->watch_addresses, 10)) {
-    while (true) {
-      char user_input;
-      unsigned value;
-      printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
-      scanf(" %c", &user_input);
-      switch (user_input) {
-      case 'b':
-        printf("value: ");
-        scanf("%x", &value);
-        u16_dynamic_vec_push_unique(&debugger->breakpoints, value);
-        break;
-      case 'w':
-        printf("value: ");
-        scanf("%x", &value);
-        u16_dynamic_vec_push_unique(&debugger->watch_addresses, value);
-        break;
-      case 'c':
-        return true;
-      default:
-        break;
-      }
+  debugger->breakpoints = create_u16_dynamic_vec(10);
+  debugger->watch_addresses = create_u16_dynamic_vec(10);
+  if (debugger->breakpoints.data == NULL ||
+      debugger->watch_addresses.data == NULL) {
+    fprintf(stderr, "Could not create the debugger");
+    return false;
+  }
+
+  while (true) {
+    char user_input;
+    unsigned value;
+    printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
+    scanf(" %c", &user_input);
+    switch (user_input) {
+    case 'b':
+      printf("value: ");
+      scanf("%x", &value);
+      u16_dynamic_vec_push_unique(&debugger->breakpoints, value);
+      break;
+    case 'w':
+      printf("value: ");
+      scanf("%x", &value);
+      u16_dynamic_vec_push_unique(&debugger->watch_addresses, value);
+      break;
+    case 'c':
+      return true;
+    default:
+      break;
     }
   }
-  return false;
 }
 
 void debugger_destroy(struct debugger *debugger) {
-  u16_dynamic_vec_destroy(&debugger->breakpoints);
-  u16_dynamic_vec_destroy(&debugger->watch_addresses);
+  destroy_u16_dynamic_vec(&debugger->breakpoints);
+  destroy_u16_dynamic_vec(&debugger->watch_addresses);
 }
 
 static void debugger_log_watches(const struct u16_dynamic_vec *watch_addresses,
