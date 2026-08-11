@@ -87,6 +87,7 @@ void debugger_initialize_variables_menu(struct debugger *debugger) {
     break;
   case 'c':
     debugger->state = DEBUG_CONTINUE;
+    break;
   default:
     break;
   }
