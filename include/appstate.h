@@ -12,6 +12,8 @@ struct appstate {
   FILE *log_file;
 };
 
-bool appstate_init(struct appstate *app, char **argv);
-void appstate_update(struct appstate *app);
-void appstate_quit(struct appstate *state);
+struct appstate *create_appstate(int argc, char **argv);
+
+void destroy_appstate(struct appstate *state);
+
+void appstate_iterate(struct appstate *app);

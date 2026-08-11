@@ -1,16 +1,17 @@
-#include <stdio.h>
-#define SDL_MAIN_USE_CALLBACKS
 #include "appstate.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
-#include <SDL3/SDL_main.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
-  *appstate = malloc(sizeof(struct appstate));
+#define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_main.h>
 
+SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   // Appstate initialization
-  if (!appstate_init(*appstate, argv)) {
+  *appstate = create_appstate(argc, argv);
+  if (*appstate == NULL) {
+    fprintf(stderr, "Could not create appstate\n");
     return SDL_APP_FAILURE;
   }
 
@@ -24,7 +25,7 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-  appstate_update(appstate);
+  appstate_iterate(appstate);
   return SDL_APP_CONTINUE;
 }
 
@@ -39,8 +40,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
   // Close emulator subsystems
-  appstate_quit(appstate);
-  free(appstate);
+  destroy_appstate(appstate);
 
   // Print app result
   if (result == SDL_APP_SUCCESS) {
