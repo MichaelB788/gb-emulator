@@ -2,34 +2,34 @@
 #include "cartridge.h"
 #include "interrupts.h"
 #include "joypad.h"
-#include "mapper.h"
 #include "serial.h"
 #include "timer.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
-bool bus_init(struct bus *bus, struct cartridge *cart) {
-  bus->joypad.JOYP = 0x3F;
-  if (cart) {
-    bus->cartridge = cart;
-    return true;
+bool create_bus(struct bus *bus, const char *path_to_rom) {
+  if (!create_cartridge(&bus->cartridge, path_to_rom)) {
+    return false;
   }
-  fprintf(stderr, "Cannot initialize bus, invalid cart\n");
-  return false;
+  bus->joypad.JOYP = 0x3F;
+  return true;
 }
+
+void destroy_bus(struct bus *bus) { destroy_cartridge(&bus->cartridge); }
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }
 
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
   if (addr <= 0x7FFF) /* ROM */ {
-    return cartridge_read_rom(bus->cartridge, addr);
+    return cartridge_read_rom(&bus->cartridge, addr);
   }
   if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     return bus->vram[addr - 0x8000];
   }
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return cartridge_read_ram(bus->cartridge, addr);
+    return cartridge_read_ram(&bus->cartridge, addr);
   }
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     return bus->wram[addr - 0xC000];
@@ -55,11 +55,11 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   if (addr <= 0x7FFF) /* ROM */ {
-    cartridge_write_rom(bus->cartridge, addr, val);
+    cartridge_write_rom(&bus->cartridge, addr, val);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     bus->vram[addr - 0x8000] = val;
   } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    cartridge_write_ram(bus->cartridge, addr, val);
+    cartridge_write_ram(&bus->cartridge, addr, val);
   } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     bus->wram[addr - 0xC000] = val;
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {

@@ -1,14 +1,13 @@
 #pragma once
+#include "cartridge.h"
 #include "constants.h"
 #include "interrupts.h"
 #include "joypad.h"
 #include "serial.h"
 #include "timer.h"
 
-struct cartridge;
-
 struct bus {
-  struct cartridge *cartridge;
+  struct cartridge cartridge;
   struct joypad joypad;
   struct interrupts interrupts;
   struct serial serial;
@@ -19,7 +18,8 @@ struct bus {
   uint8_t hram[127];
 };
 
-bool bus_init(struct bus *bus, struct cartridge *cart);
+bool create_bus(struct bus *bus, const char *path_to_rom);
+void destroy_bus(struct bus *bus);
 
 // Ticks all subsytems by 1 M-cycle / 4 T-cycles
 void bus_tick(struct bus *bus);

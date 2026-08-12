@@ -9,10 +9,14 @@
 #include <SDL3/SDL_main.h>
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
+  if (argc < 2) {
+    fprintf(stderr, "No ROM provided!\n");
+    return SDL_APP_FAILURE;
+  }
+
   // Appstate initialization
   *appstate = create_appstate(argc, argv);
   if (*appstate == NULL) {
-    fprintf(stderr, "Could not create appstate\n");
     return SDL_APP_FAILURE;
   }
 

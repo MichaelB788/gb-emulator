@@ -19,7 +19,7 @@ struct appstate *create_appstate(int argc, char **argv) {
   struct appstate *app = malloc(sizeof(struct appstate));
 
   // Gameboy initialization
-  if (!gameboy_init(&app->gb, argv[1])) {
+  if (!create_gameboy(&app->gb, argv[1])) {
     return appstate_fail(app, "Could not create GameBoy");
   }
 
@@ -71,7 +71,7 @@ void destroy_appstate(struct appstate *app) {
       fclose(app->log_file);
     }
     destroy_debugger(&app->debugger);
-    gameboy_quit(&app->gb);
+    destroy_gameboy(&app->gb);
     free(app);
   }
 }

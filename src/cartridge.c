@@ -14,7 +14,8 @@
 static bool cartridge_fail(struct cartridge *cart, FILE *rom_file,
                            const char *msg) {
   fprintf(stderr, "Failed to create cartridge: %s\n", msg);
-  fclose(rom_file);
+  if (rom_file)
+    fclose(rom_file);
   destroy_cartridge(cart);
   return false;
 }
@@ -24,7 +25,6 @@ bool create_cartridge(struct cartridge *cart, const char *path_to_rom) {
 
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
-    perror("Could not open file");
     return cartridge_fail(cart, rom_file, strerror(errno));
   }
 
@@ -63,7 +63,7 @@ void destroy_cartridge(struct cartridge *cart) {
   destroy_u8_fixed_vec(&cart->ram);
 }
 
-uint8_t cartridge_read_rom(struct cartridge *cart, uint16_t addr) {
+uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr) {
   return mapper_read_rom(&cart->mapper, &cart->rom, addr);
 }
 
@@ -71,7 +71,7 @@ void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val) {
   mapper_write_rom(&cart->mapper, &cart->rom, addr, val);
 }
 
-uint8_t cartridge_read_ram(struct cartridge *cart, uint16_t addr) {
+uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr) {
   return mapper_read_ram(&cart->mapper, &cart->ram, addr);
 }
 
