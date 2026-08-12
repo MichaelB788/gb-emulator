@@ -7,7 +7,12 @@
 struct gameboy;
 struct cpu;
 
-enum debugger_state { DEBUG_CONTINUE, DEBUG_BREAKPOINT, DEBUG_INIT };
+enum debugger_state {
+  DEBUG_DISABLED,
+  DEBUG_INIT,
+  DEBUG_CONTINUE,
+  DEBUG_BREAKPOINT
+};
 
 struct debugger {
   enum debugger_state state;
@@ -15,10 +20,7 @@ struct debugger {
   struct u16_dynamic_vec watch_addresses;
 };
 
-bool debugger_has_init(struct debugger *debugger);
-
-struct debugger create_debugger();
-
+bool create_debugger(struct debugger *debugger);
 void destroy_debugger(struct debugger *debugger);
 
 void debugger_check_for_breakpoints(struct debugger *debugger,

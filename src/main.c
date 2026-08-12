@@ -1,5 +1,6 @@
 #include "appstate.h"
 #include <SDL3/SDL_error.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <stdio.h>
 #include <stdlib.h>

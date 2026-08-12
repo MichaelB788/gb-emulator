@@ -3,13 +3,19 @@
 #include "mbc1.h"
 #include "vector.h"
 #include <stdbool.h>
+#include <stdint.h>
 
 struct cartridge {
-  enum mapper mapper;
-  struct mbc1 mbc1;
+  struct mapper mapper;
   struct u8_fixed_vec rom;
   struct u8_fixed_vec ram;
 };
 
-bool cartridge_create(struct cartridge *cart, const char *path_to_rom);
-void cartridge_destroy(struct cartridge *cart);
+bool create_cartridge(struct cartridge *cart, const char *path_to_rom);
+void destroy_cartridge(struct cartridge *cart);
+
+uint8_t cartridge_read_rom(struct cartridge *cart, uint16_t addr);
+void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val);
+
+uint8_t cartridge_read_ram(struct cartridge *cart, uint16_t addr);
+void cartridge_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val);

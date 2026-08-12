@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 bool gameboy_init(struct gameboy *gb, const char *path_to_rom) {
-  if (path_to_rom && cartridge_create(&gb->cartridge, path_to_rom)) {
+  if (path_to_rom && create_cartridge(&gb->cartridge, path_to_rom)) {
     return bus_init(&gb->bus, &gb->cartridge) && cpu_init(&gb->cpu, &gb->bus);
   } else {
     fprintf(stderr, "Could not initialize gameboy, invalid ROM\n");
@@ -16,7 +16,7 @@ bool gameboy_init(struct gameboy *gb, const char *path_to_rom) {
   }
 }
 
-void gameboy_quit(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
+void gameboy_quit(struct gameboy *gb) { destroy_cartridge(&gb->cartridge); }
 
 void gameboy_step(struct gameboy *gb) {
   cpu_step(&gb->cpu);

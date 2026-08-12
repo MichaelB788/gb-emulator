@@ -5,11 +5,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void mbc1_init(struct mbc1 *mbc1) {
-  mbc1->rom_bank = 1;
-  mbc1->ram_bank = 0;
-  mbc1->advanced_banking_enabled = false;
-  mbc1->ram_enabled = false;
+struct mbc1 create_mbc1() {
+  struct mbc1 mbc1 = {.rom_bank = 1,
+                      .ram_bank = 0,
+                      .advanced_banking_enabled = false,
+                      .ram_enabled = false};
+  return mbc1;
 }
 
 uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct u8_fixed_vec *rom,

@@ -8,20 +8,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
-bool debugger_has_init(struct debugger *debugger) {
-  return debugger->breakpoints.data != NULL &&
-         debugger->watch_addresses.data != NULL;
+static bool debugger_fail(char *msg) {
+  fprintf(stderr, "Could not create debugger: %s\n", msg);
+  return false;
 }
 
-struct debugger create_debugger() {
-  struct debugger debugger = {.state = DEBUG_INIT,
-                              .breakpoints = create_u16_dynamic_vec(10),
-                              .watch_addresses = create_u16_dynamic_vec(10)};
-  if (debugger.breakpoints.data == NULL ||
-      debugger.watch_addresses.data == NULL) {
-    fprintf(stderr, "Failed to create debugger vectors\n");
+bool create_debugger(struct debugger *debugger) {
+  if (!create_u16_dynamic_vec(&debugger->breakpoints, 10)) {
+    return debugger_fail("Failed to create breakpoints");
   }
-  return debugger;
+  if (!create_u16_dynamic_vec(&debugger->watch_addresses, 10)) {
+    return debugger_fail("Failed to create watch addresses");
+  }
+  debugger->state = DEBUG_INIT;
+  return true;
 }
 
 void destroy_debugger(struct debugger *debugger) {

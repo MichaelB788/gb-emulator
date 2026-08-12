@@ -23,13 +23,13 @@ void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }
 
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
   if (addr <= 0x7FFF) /* ROM */ {
-    return mapper_read_rom(bus->cartridge, addr);
+    return cartridge_read_rom(bus->cartridge, addr);
   }
   if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     return bus->vram[addr - 0x8000];
   }
   if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return mapper_read_ram(bus->cartridge, addr);
+    return cartridge_read_ram(bus->cartridge, addr);
   }
   if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     return bus->wram[addr - 0xC000];
@@ -55,11 +55,11 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   if (addr <= 0x7FFF) /* ROM */ {
-    mapper_write_rom(bus->cartridge, addr, val);
+    cartridge_write_rom(bus->cartridge, addr, val);
   } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
     bus->vram[addr - 0x8000] = val;
   } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    mapper_write_ram(bus->cartridge, addr, val);
+    cartridge_write_ram(bus->cartridge, addr, val);
   } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
     bus->wram[addr - 0xC000] = val;
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {

@@ -9,11 +9,12 @@ struct u8_fixed_vec {
   size_t capacity;
 };
 
-// Success of this function should be checked by ensuring vec.data != NULL
-struct u8_fixed_vec create_u8_fixed_vec(size_t capacity);
+/// Will destroy the vector passed in before allocating memory
+bool create_u8_fixed_vec(struct u8_fixed_vec *vec, size_t capacity);
 
-// Success of this function should be checked by ensuring vec.data != NULL
-struct u8_fixed_vec create_u8_fixed_vec_from_file(size_t capacity, FILE *file);
+/// Will destroy the vector passed in before allocating memory
+bool create_u8_fixed_vec_from_file(struct u8_fixed_vec *vec, FILE *file,
+                                   size_t capacity);
 
 void destroy_u8_fixed_vec(struct u8_fixed_vec *vec);
 
@@ -23,8 +24,8 @@ struct u16_dynamic_vec {
   size_t capacity;
 };
 
-// Success of this function should be checked by ensuring vec.data != NULL
-struct u16_dynamic_vec create_u16_dynamic_vec(size_t capacity);
+/// Will destroy the vector passed in before allocating memory
+bool create_u16_dynamic_vec(struct u16_dynamic_vec *vec, size_t capacity);
 
 void destroy_u16_dynamic_vec(struct u16_dynamic_vec *vec);
 

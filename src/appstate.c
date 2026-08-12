@@ -2,70 +2,66 @@
 #include "cpu.h"
 #include "debugger.h"
 #include "gameboy.h"
+#include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+void *appstate_fail(struct appstate *app, char *msg) {
+  fprintf(stderr, "Failed to create appstate: %s\n", msg);
+  destroy_appstate(app);
+  return NULL;
+}
+
 struct appstate *create_appstate(int argc, char **argv) {
   struct appstate *app = malloc(sizeof(struct appstate));
 
   // Gameboy initialization
   if (!gameboy_init(&app->gb, argv[1])) {
-    fprintf(stderr, "Failed to create the GameBoy\n");
-    goto appstate_fail;
+    return appstate_fail(app, "Could not create GameBoy");
   }
+
+  // Disable debug, just in case
+  app->debugger.state = DEBUG_DISABLED;
 
   // Initialize submodules based on terminal arguments
   for (size_t i = 1; i < argc; ++i) {
     if (strncmp(argv[i], "--log", 5) == 0) {
-      // Log file initialization
+      // Logging enabled
       app->log_file = fopen("log.txt", "w");
-      if (app->log_file) {
-        app->gb.cpu.log_file = app->log_file;
-        continue;
-      } else {
-        perror("Failed to create log file");
-        goto appstate_fail;
+      if (!app->log_file) {
+        return appstate_fail(app, strerror(errno));
       }
+      app->gb.cpu.log_file = app->log_file;
     }
     if (strncmp(argv[i], "--debug", 7) == 0) {
-      // Debug mode initialization
+      // Debug mode enabled
       app->debug_enabled = true;
-      app->debugger = create_debugger();
-      if (debugger_has_init(&app->debugger)) {
-        continue;
-      } else {
-        fprintf(stderr, "Failed to create the debugger\n");
-        goto appstate_fail;
+      if (!create_debugger(&app->debugger)) {
+        return appstate_fail(app, "Could not create debugger");
       }
     }
   }
-
   return app;
-
-appstate_fail:
-  free(app);
-  return NULL;
 }
 
 void appstate_iterate(struct appstate *app) {
-  if (app->debug_enabled) {
-    switch (app->debugger.state) {
-    case DEBUG_INIT:
-      debugger_initialize_variables_menu(&app->debugger);
-      break;
-    case DEBUG_BREAKPOINT:
-      debugger_breakpoint_menu(&app->debugger, &app->gb);
-      break;
-    case DEBUG_CONTINUE:
-      debugger_check_for_breakpoints(&app->debugger, &app->gb.cpu);
-      gameboy_step(&app->gb);
-      break;
-    }
-  } else {
+  switch (app->debugger.state) {
+  case DEBUG_INIT:
+    debugger_initialize_variables_menu(&app->debugger);
+    break;
+  case DEBUG_BREAKPOINT:
+    debugger_breakpoint_menu(&app->debugger, &app->gb);
+    break;
+  case DEBUG_CONTINUE:
+    debugger_check_for_breakpoints(&app->debugger, &app->gb.cpu);
     gameboy_step(&app->gb);
+    break;
+  case DEBUG_DISABLED:
+    gameboy_step(&app->gb);
+    break;
   }
 }
 
