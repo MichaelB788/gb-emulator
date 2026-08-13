@@ -1,5 +1,4 @@
 #include "appstate.h"
-#include "cpu.h"
 #include "debugger.h"
 #include "gameboy.h"
 #include <errno.h>
@@ -23,9 +22,6 @@ struct appstate *create_appstate(int argc, char **argv) {
     return appstate_fail(app, "Could not create GameBoy");
   }
 
-  // Disable debug, just in case
-  app->debugger.state = DEBUG_DISABLED;
-
   // Initialize submodules based on terminal arguments
   for (size_t i = 1; i < argc; ++i) {
     if (strncmp(argv[i], "--log", 5) == 0) {
@@ -34,7 +30,6 @@ struct appstate *create_appstate(int argc, char **argv) {
       if (!app->log_file) {
         return appstate_fail(app, strerror(errno));
       }
-      app->gb.cpu.log_file = app->log_file;
     }
     if (strncmp(argv[i], "--debug", 7) == 0) {
       // Debug mode enabled
@@ -48,20 +43,10 @@ struct appstate *create_appstate(int argc, char **argv) {
 }
 
 void appstate_iterate(struct appstate *app) {
-  switch (app->debugger.state) {
-  case DEBUG_INIT:
-    debugger_initialize_variables_menu(&app->debugger);
-    break;
-  case DEBUG_BREAKPOINT:
-    debugger_breakpoint_menu(&app->debugger, &app->gb);
-    break;
-  case DEBUG_CONTINUE:
-    debugger_check_for_breakpoints(&app->debugger, &app->gb.cpu);
-    gameboy_step(&app->gb);
-    break;
-  case DEBUG_DISABLED:
-    gameboy_step(&app->gb);
-    break;
+  if (app->debug_enabled) {
+    debugger_step(&app->debugger, &app->gb, app->log_file);
+  } else {
+    gameboy_step(&app->gb, app->log_file);
   }
 }
 

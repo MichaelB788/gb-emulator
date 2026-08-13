@@ -15,7 +15,10 @@ bool create_gameboy(struct gameboy *gb, const char *path_to_rom) {
 
 void destroy_gameboy(struct gameboy *gb) { destroy_bus(&gb->bus); }
 
-void gameboy_step(struct gameboy *gb) {
+void gameboy_step(struct gameboy *gb, FILE *log_file) {
+  if (log_file) {
+    cpu_log_step_reg16(&gb->cpu, log_file);
+  }
   cpu_step(&gb->cpu);
   interrupts_service_pending(&gb->bus.interrupts, &gb->cpu);
 }

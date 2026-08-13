@@ -80,6 +80,15 @@ void destroy_u16_dynamic_vec(struct u16_dynamic_vec *vec) {
   }
 }
 
+bool u16_dynamic_vec_contains(const struct u16_dynamic_vec *vec, uint16_t u16) {
+  for (size_t i = 0; i < vec->size; ++i) {
+    if (vec->data[i] == u16) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool u16_dynamic_vec_push(struct u16_dynamic_vec *vec, uint16_t u16) {
   if (vec->size == vec->capacity) {
     const size_t new_cap = (vec->capacity * 2) + 1;
@@ -94,13 +103,4 @@ bool u16_dynamic_vec_push(struct u16_dynamic_vec *vec, uint16_t u16) {
   }
   vec->data[vec->size++] = u16;
   return true;
-}
-
-bool u16_dynamic_vec_push_unique(struct u16_dynamic_vec *vec, uint16_t u16) {
-  for (size_t i = 0; i < vec->size; ++i) {
-    if (vec->data[i] == u16) {
-      return false;
-    }
-  }
-  return u16_dynamic_vec_push(vec, u16);
 }

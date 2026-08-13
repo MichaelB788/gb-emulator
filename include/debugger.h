@@ -7,12 +7,7 @@
 struct gameboy;
 struct cpu;
 
-enum debugger_state {
-  DEBUG_DISABLED,
-  DEBUG_INIT,
-  DEBUG_CONTINUE,
-  DEBUG_BREAKPOINT
-};
+enum debugger_state { DEBUG_INIT, DEBUG_CONTINUE, DEBUG_BREAKPOINT };
 
 struct debugger {
   enum debugger_state state;
@@ -23,9 +18,5 @@ struct debugger {
 bool create_debugger(struct debugger *debugger);
 void destroy_debugger(struct debugger *debugger);
 
-void debugger_check_for_breakpoints(struct debugger *debugger,
-                                    const struct cpu *cpu);
-
-void debugger_initialize_variables_menu(struct debugger *debugger);
-
-void debugger_breakpoint_menu(struct debugger *debugger, struct gameboy *gb);
+void debugger_step(struct debugger *debugger, struct gameboy *gb,
+                   FILE *log_file);

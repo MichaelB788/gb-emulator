@@ -29,8 +29,19 @@ void destroy_debugger(struct debugger *debugger) {
   destroy_u16_dynamic_vec(&debugger->watch_addresses);
 }
 
-static void debugger_log_state(struct debugger *debugger,
-                               const struct cpu *cpu) {
+// Pushes a u16 address to `out` via terminal input
+static void add_unique_address(struct u16_dynamic_vec *out) {
+  unsigned address;
+  printf("address: ");
+  scanf("%x", &address);
+  if (!u16_dynamic_vec_contains(out, address)) {
+    u16_dynamic_vec_push(out, address);
+  }
+}
+
+// Prints the current CPU state to `stdout`
+static void debugger_print_cpu_step(struct debugger *debugger,
+                                    const struct cpu *cpu) {
   // Current opcode name
   printf("\n%s\n\n", cpu->executing_cb_op ? mnemonic_cbprefixed[cpu->IR]
                                           : mnemonic_unprefixed[cpu->IR]);
@@ -56,67 +67,56 @@ static void debugger_log_state(struct debugger *debugger,
   printf("\n");
 }
 
-void debugger_check_for_breakpoints(struct debugger *debugger,
-                                    const struct cpu *cpu) {
-  for (size_t i = 0; i < debugger->breakpoints.size; ++i) {
-    if (cpu->PC == debugger->breakpoints.data[i]) {
-      debugger->state = DEBUG_BREAKPOINT;
-      printf("\nBreakpoint 0x%04X hit. Entered debug mode\n",
-             debugger->breakpoints.data[i]);
-      debugger_log_state(debugger, cpu);
-      return;
+void debugger_step(struct debugger *debugger, struct gameboy *gb,
+                   FILE *log_file) {
+  switch (debugger->state) {
+  case DEBUG_INIT: {
+    printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
+    char user_input;
+    scanf(" %c", &user_input);
+    switch (user_input) {
+    case 'b':
+      add_unique_address(&debugger->breakpoints);
+      break;
+    case 'w':
+      add_unique_address(&debugger->watch_addresses);
+      break;
+    case 'c':
+      debugger->state = DEBUG_CONTINUE;
+      break;
+    default:
+      break;
     }
-  }
-}
-
-void debugger_initialize_variables_menu(struct debugger *debugger) {
-  char user_input;
-  unsigned value;
-  printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
-  scanf(" %c", &user_input);
-  switch (user_input) {
-  case 'b':
-    printf("value: ");
-    scanf("%x", &value);
-    u16_dynamic_vec_push_unique(&debugger->breakpoints, value);
-    break;
-  case 'w':
-    printf("value: ");
-    scanf("%x", &value);
-    u16_dynamic_vec_push_unique(&debugger->watch_addresses, value);
-    break;
-  case 'c':
-    debugger->state = DEBUG_CONTINUE;
-    break;
-  default:
-    break;
-  }
-}
-
-void debugger_breakpoint_menu(struct debugger *debugger, struct gameboy *gb) {
-  char user_input;
-  unsigned value;
-  printf("[(s)tep | (b)reakpoint | (w)atch | (c)ontinue]: ");
-  scanf(" %c", &user_input);
-  switch (user_input) {
-  case 's':
-    debugger_log_state(debugger, &gb->cpu);
-    gameboy_step(gb);
-    break;
-  case 'b':
-    printf("value: ");
-    scanf("%x", &value);
-    u16_dynamic_vec_push_unique(&debugger->breakpoints, value);
-    break;
-  case 'w':
-    printf("value: ");
-    scanf("%x", &value);
-    u16_dynamic_vec_push_unique(&debugger->watch_addresses, value);
-    break;
-  case 'c':
-    debugger->state = DEBUG_CONTINUE;
-    break;
-  default:
-    break;
+  } break;
+  case DEBUG_BREAKPOINT: {
+    printf("[(s)tep | (b)reakpoint | (w)atch | (c)ontinue]: ");
+    char user_input;
+    scanf(" %c", &user_input);
+    switch (user_input) {
+    case 's':
+      debugger_print_cpu_step(debugger, &gb->cpu);
+      gameboy_step(gb, log_file);
+      break;
+    case 'b':
+      add_unique_address(&debugger->breakpoints);
+      break;
+    case 'w':
+      add_unique_address(&debugger->watch_addresses);
+      break;
+    case 'c':
+      debugger->state = DEBUG_CONTINUE;
+      break;
+    default:
+      break;
+    }
+  } break;
+  case DEBUG_CONTINUE: {
+    if (u16_dynamic_vec_contains(&debugger->breakpoints, gb->cpu.PC)) {
+      printf("\nBreakpoint 0x%04X hit.\n\n", gb->cpu.PC);
+      debugger->state = DEBUG_BREAKPOINT;
+    } else {
+      gameboy_step(gb, log_file);
+    }
+  } break;
   }
 }

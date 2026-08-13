@@ -35,11 +35,17 @@ struct cpu {
   enum cpu_state state;
 
   struct bus *bus;
-  FILE *log_file; // Observer, non-owning
 };
 
+/// Creation
+
 struct cpu create_cpu(struct bus *bus);
+
+/// Control flow
+
 void cpu_step(struct cpu *cpu);
+
+/// Logging
 
 void cpu_log_step_reg8(const struct cpu *cpu, FILE *output);
 void cpu_log_step_reg16(const struct cpu *cpu, FILE *output);

@@ -29,6 +29,6 @@ bool create_u16_dynamic_vec(struct u16_dynamic_vec *vec, size_t capacity);
 
 void destroy_u16_dynamic_vec(struct u16_dynamic_vec *vec);
 
-bool u16_dynamic_vec_push(struct u16_dynamic_vec *vec, uint16_t u16);
+bool u16_dynamic_vec_contains(const struct u16_dynamic_vec *vec, uint16_t u16);
 
-bool u16_dynamic_vec_push_unique(struct u16_dynamic_vec *vec, uint16_t u16);
+bool u16_dynamic_vec_push(struct u16_dynamic_vec *vec, uint16_t u16);
