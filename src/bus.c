@@ -38,7 +38,7 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
     return bus->wram[addr - 0xE000];
   }
   if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
-    assert(false && "Error: Attempt to read OAM\n");
+    assert(false && "OAM read");
   }
   if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to read from prohibited space\n");
@@ -65,7 +65,7 @@ void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
   } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
     bus->wram[addr - 0xE000] = val;
   } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
-    assert(false && "Error: Attempt to write OAM\n");
+    assert(false && "OAM write");
   } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
     fprintf(stderr, "Warn: Attempt to write to prohibited space\n");
   } else if (0xFF00 <= addr && addr <= 0xFF7F ||

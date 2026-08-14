@@ -21,8 +21,6 @@ static bool cartridge_fail(struct cartridge *cart, FILE *rom_file,
 }
 
 bool create_cartridge(struct cartridge *cart, const char *path_to_rom) {
-  bool success = true;
-
   FILE *rom_file = fopen(path_to_rom, "rb");
   if (!rom_file) {
     return cartridge_fail(cart, rom_file, strerror(errno));
@@ -30,7 +28,6 @@ bool create_cartridge(struct cartridge *cart, const char *path_to_rom) {
 
   uint8_t header[0x50] = {0};
   if (fseek(rom_file, 0x100, SEEK_SET) == 0) {
-    char *buf;
     fread(header, 1, 0x50, rom_file);
     if (ferror(rom_file) || feof(rom_file)) {
       return cartridge_fail(cart, rom_file, strerror(errno));
@@ -48,9 +45,10 @@ bool create_cartridge(struct cartridge *cart, const char *path_to_rom) {
     return cartridge_fail(cart, rom_file, "Could not create ROM");
   }
 
-  const size_t ram_capacities[] = {0ul, 0ul, KiB_8, KiB_32, KiB_128, KiB_64};
+  const size_t ram_capacities[] = {KiB_8,  KiB_8,   KiB_8,
+                                   KiB_32, KiB_128, KiB_64};
   const size_t ram_capacity = ram_capacities[header[0x49]];
-  if (ram_capacity > 0 && !create_u8_fixed_vec(&cart->ram, ram_capacity)) {
+  if (!create_u8_fixed_vec(&cart->ram, ram_capacity)) {
     return cartridge_fail(cart, rom_file, "Could not create RAM");
   }
 

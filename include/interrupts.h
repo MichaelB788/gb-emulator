@@ -16,6 +16,6 @@ struct interrupts {
   uint8_t IE; // Interrupt enable, calls interrupts
 };
 
-uint8_t interrupts_pending(const struct interrupts *interrupts);
+uint8_t interrupts_pending(struct interrupts interrupts);
 
 void interrupts_service_pending(struct interrupts *interrupts, struct cpu *cpu);

@@ -3,14 +3,14 @@
 #include "cpu.h"
 #include <stdint.h>
 
-uint8_t interrupts_pending(const struct interrupts *interrupts) {
-  return interrupts->IE & interrupts->IF;
+uint8_t interrupts_pending(struct interrupts interrupts) {
+  return interrupts.IE & interrupts.IF;
 }
 
 // See: https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
 void interrupts_service_pending(struct interrupts *interrupts,
                                 struct cpu *cpu) {
-  const uint8_t pending = interrupts_pending(interrupts);
+  const uint8_t pending = interrupts_pending(*interrupts);
   if (pending != 0) {
     cpu->state = CPU_RUNNING;
   } else {
