@@ -36,9 +36,7 @@ bool create_cartridge(struct cartridge *cart, const char *path_to_rom) {
     return cartridge_fail(cart, rom_file, strerror(errno));
   }
 
-  if (!create_mapper(&cart->mapper, header[0x47])) {
-    return cartridge_fail(cart, rom_file, "Could not create mapper");
-  }
+  cart->mapper = mapper_create(header[0x47]);
 
   if (!create_u8_fixed_vec_from_file(&cart->rom, rom_file,
                                      KiB_32 * (1 << header[0x48]))) {
@@ -62,7 +60,7 @@ void destroy_cartridge(struct cartridge *cart) {
 }
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr) {
-  return mapper_read_rom(&cart->mapper, &cart->rom, addr);
+  return mapper_read_rom(cart->mapper, &cart->rom, addr);
 }
 
 void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val) {
@@ -70,9 +68,9 @@ void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val) {
 }
 
 uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr) {
-  return mapper_read_ram(&cart->mapper, &cart->ram, addr);
+  return mapper_read_ram(cart->mapper, &cart->ram, addr);
 }
 
 void cartridge_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val) {
-  mapper_write_ram(&cart->mapper, &cart->ram, addr, val);
+  mapper_write_ram(cart->mapper, &cart->ram, addr, val);
 }

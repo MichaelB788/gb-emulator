@@ -11,7 +11,7 @@ struct mbc1 {
   bool ram_enabled;
 };
 
-struct mbc1 create_mbc1();
+struct mbc1 mbc1_create();
 
 uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct u8_fixed_vec *rom,
                       uint16_t addr);
