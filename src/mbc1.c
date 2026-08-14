@@ -25,13 +25,13 @@ void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_fixed_vec *rom,
   if (addr <= 0x1FFF) {
     mbc1->ram_enabled = (val & 0xF) == 0xA;
   } else if (0x2000 <= addr && addr <= 0x3FFF) {
-    const uint8_t bits_needed = rom->capacity / KiB_16;
-    if (bits_needed > 5) {
+    const uint8_t bank_mask = (rom->capacity / KiB_16) - 1;
+    if (bank_mask > 0x1F) {
       const uint8_t bank = val & 0x1F;
       mbc1->rom_bank =
           mbc1->advanced_banking_enabled ? (mbc1->ram_bank << 5) | bank : bank;
     } else {
-      mbc1->rom_bank = val & ((1 << bits_needed) - 1);
+      mbc1->rom_bank = val & bank_mask;
     }
 
     if ((mbc1->rom_bank & 0x1F) == 0) {
@@ -46,14 +46,14 @@ void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_fixed_vec *rom,
 
 uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_fixed_vec *ram,
                       const uint16_t addr) {
-  return ram->capacity > 0 && mbc1->ram_enabled
+  return mbc1->ram_enabled
              ? ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB_8)]
              : 0xFF;
 }
 
 void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_fixed_vec *ram,
                     const uint16_t addr, const uint8_t val) {
-  if (ram->capacity > 0 && mbc1->ram_enabled) {
+  if (mbc1->ram_enabled) {
     ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB_8)] = val;
   }
 }
