@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 [[nodiscard]] static bool cart_type_create(struct cartridge *cart,
                                            uint8_t type) {

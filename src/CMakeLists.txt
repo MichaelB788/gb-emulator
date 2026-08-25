@@ -17,8 +17,10 @@ add_library(${LIBRARY_NAME}
   gameboy.c
   impl_cpu_instrs.c
   interrupts.c
+  joypad.c
   main.c
   mbc1.c
+  serial.c
   timer.c
   u8_buf.c
 )

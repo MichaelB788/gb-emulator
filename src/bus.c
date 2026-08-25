@@ -8,12 +8,11 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 
 [[nodiscard]] static uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   switch (addr) {
   case JOYPAD_P1:
-    return bus->joypad.JOYP;
+    return bus->joypad.P1;
   case SERIAL_SB:
     return bus->serial.SB;
   case SERIAL_SC:
@@ -37,28 +36,17 @@
 
 static void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
   switch (addr) {
-  case JOYPAD_P1: {
-    const uint8_t written = val & JOYP_MODE_SELECT;
-    if (written == JOYP_MODE_SELECT) {
-      bus->joypad.JOYP = 0xFF;
-    } else {
-      bus->joypad.JOYP &= ~JOYP_BUTTONS_SELECT;
-      bus->joypad.JOYP |= written;
-    }
-  } break;
+  case JOYPAD_P1:
+    joypad_write(&bus->joypad, val);
+    break;
   case SERIAL_SB:
     bus->serial.SB = val;
     break;
   case SERIAL_SC:
-    bus->serial.SC = val | SC_UNUSED;
-    if (val == 0x81) {
-      putchar(bus->serial.SB);
-      fflush(stdout);
-    }
+    serial_write_sc(&bus->serial, val);
     break;
   case TIMER_DIV:
-    bus->timer.system_counter = 0;
-    bus->timer.DIV = 0;
+    timer_write_div(&bus->timer, val);
     break;
   case TIMER_TIMA:
     bus->timer.TIMA = val;
@@ -67,13 +55,13 @@ static void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     bus->timer.TMA = val;
     break;
   case TIMER_TAC:
-    bus->timer.TAC = val & ~TAC_UNUSED;
+    bus->timer.TAC = val;
     break;
   case INTERRUPTS_IF:
-    bus->interrupts.IF = val & ~INTERRUPT_UNUSED;
+    bus->interrupts.IF = val;
     break;
   case INTERRUPTS_IE:
-    bus->interrupts.IE = val & ~INTERRUPT_UNUSED;
+    bus->interrupts.IE = val;
     break;
   default:
     break;
@@ -83,7 +71,7 @@ static void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
 void bus_init(struct bus *bus, struct cartridge *cart) {
   assert(cart != nullptr);
   bus->cart = cart;
-  bus->joypad.JOYP = 0x3F;
+  joypad_init(&bus->joypad);
 }
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }

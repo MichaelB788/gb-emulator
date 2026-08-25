@@ -423,7 +423,8 @@ void di(struct cpu *cpu) {
 void ei(struct cpu *cpu) { cpu->ei_called = true; }
 
 void halt(struct cpu *cpu) {
-  if (!cpu->IME && interrupts_pending(cpu->bus->interrupts) != 0) {
+  const struct interrupts *in = &cpu->bus->interrupts;
+  if (!cpu->IME && (in->IF & in->IE) != 0) {
     cpu->halt_bug = true;
   } else {
     cpu->state = CPU_HALTED;
