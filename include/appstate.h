@@ -11,7 +11,7 @@ struct appstate {
   FILE *log_file;
 };
 
-struct appstate *appstate_malloc(int argc, char **argv);
+[[nodiscard]] struct appstate *appstate_malloc(int argc, char **argv);
 
 void appstate_free(struct appstate *state);
 

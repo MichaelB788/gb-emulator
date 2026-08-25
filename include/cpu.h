@@ -45,10 +45,10 @@ void cpu_log_step_reg16(const struct cpu *cpu, FILE *output);
 
 /// Register pair operations
 
-uint16_t cpu_get_bc(const struct cpu *cpu);
-uint16_t cpu_get_de(const struct cpu *cpu);
-uint16_t cpu_get_hl(const struct cpu *cpu);
-uint16_t cpu_get_af(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_bc(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_de(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_hl(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_af(const struct cpu *cpu);
 
 void cpu_set_bc(struct cpu *cpu, uint16_t val);
 void cpu_set_de(struct cpu *cpu, uint16_t val);
@@ -62,10 +62,10 @@ void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
 /// Memory operations
 
 // M-cycles: 1
-uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr);
+[[nodiscard]] uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr);
 
 // M-cycles: 2
-uint16_t cpu_read_word(struct cpu *cpu, uint16_t addr);
+[[nodiscard]] uint16_t cpu_read_word(struct cpu *cpu, uint16_t addr);
 
 // M-cycles: 1
 void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val);
@@ -84,12 +84,11 @@ void cpu_return(struct cpu *cpu, bool cond);
 
 /// Opcode dispatching
 
-uint16_t cpu_get_r16(const struct cpu *cpu);
-void cpu_set_r16(struct cpu *cpu, uint16_t val);
+[[nodiscard]] uint16_t cpu_get_r16(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_r16stk(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_r16mem(struct cpu *cpu);
 
-uint16_t cpu_get_r16stk(const struct cpu *cpu);
+void cpu_set_r16(struct cpu *cpu, uint16_t val);
 void cpu_set_r16stk(struct cpu *cpu, uint16_t val);
 
-uint16_t cpu_get_r16mem(struct cpu *cpu);
-
-bool cpu_test_cond(const struct cpu *cpu);
+[[nodiscard]] bool cpu_test_cond(const struct cpu *cpu);

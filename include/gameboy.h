@@ -9,7 +9,7 @@ struct gameboy {
   struct cpu cpu;
 };
 
-bool gameboy_create(struct gameboy *gb, const char *path_to_rom);
+[[nodiscard]] bool gameboy_create(struct gameboy *gb, const char *path_to_rom);
 
 void gameboy_destroy(struct gameboy *gb);
 

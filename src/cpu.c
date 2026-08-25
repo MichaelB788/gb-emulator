@@ -185,10 +185,8 @@ void cpu_return(struct cpu *cpu, bool cond) {
 
 /// Opcode dispatching
 
-#define R16_BIT_FIELD(opcode) ((opcode >> 4) & 0x3)
-
 uint16_t cpu_get_r16(const struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->IR)) {
+  switch (cpu->IR >> 4 & 0x3) {
   case 0:
     return cpu_get_bc(cpu);
   case 1:
@@ -202,8 +200,44 @@ uint16_t cpu_get_r16(const struct cpu *cpu) {
   }
 }
 
+uint16_t cpu_get_r16stk(const struct cpu *cpu) {
+  switch (cpu->IR >> 4 & 0x3) {
+  case 0:
+    return cpu_get_bc(cpu);
+  case 1:
+    return cpu_get_de(cpu);
+  case 2:
+    return cpu_get_hl(cpu);
+  case 3:
+    return cpu_get_af(cpu);
+  default:
+    assert(false && "cpu_get_r16stk fail");
+  }
+}
+
+uint16_t cpu_get_r16mem(struct cpu *cpu) {
+  switch (cpu->IR >> 4 & 0x3) {
+  case 0:
+    return cpu_get_bc(cpu);
+  case 1:
+    return cpu_get_de(cpu);
+  case 2: {
+    const uint16_t ret = cpu_get_hl(cpu);
+    cpu_set_hl(cpu, ret + 1);
+    return ret;
+  }
+  case 3: {
+    const uint16_t ret = cpu_get_hl(cpu);
+    cpu_set_hl(cpu, ret - 1);
+    return ret;
+  }
+  default:
+    assert(false && "cpu_get_r16mem fail");
+  }
+}
+
 void cpu_set_r16(struct cpu *cpu, uint16_t val) {
-  switch (R16_BIT_FIELD(cpu->IR)) {
+  switch (cpu->IR >> 4 & 0x3) {
   case 0:
     cpu_set_bc(cpu, val);
     break;
@@ -221,23 +255,8 @@ void cpu_set_r16(struct cpu *cpu, uint16_t val) {
   }
 }
 
-uint16_t cpu_get_r16stk(const struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->IR)) {
-  case 0:
-    return cpu_get_bc(cpu);
-  case 1:
-    return cpu_get_de(cpu);
-  case 2:
-    return cpu_get_hl(cpu);
-  case 3:
-    return cpu_get_af(cpu);
-  default:
-    assert(false && "cpu_get_r16stk fail");
-  }
-}
-
 void cpu_set_r16stk(struct cpu *cpu, uint16_t val) {
-  switch (R16_BIT_FIELD(cpu->IR)) {
+  switch (cpu->IR >> 4 & 0x3) {
   case 0:
     cpu_set_bc(cpu, val);
     break;
@@ -252,27 +271,6 @@ void cpu_set_r16stk(struct cpu *cpu, uint16_t val) {
     break;
   default:
     assert(false && "cpu_set_r16stk fail");
-  }
-}
-
-uint16_t cpu_get_r16mem(struct cpu *cpu) {
-  switch (R16_BIT_FIELD(cpu->IR)) {
-  case 0:
-    return cpu_get_bc(cpu);
-  case 1:
-    return cpu_get_de(cpu);
-  case 2: {
-    const uint16_t ret = cpu_get_hl(cpu);
-    cpu_set_hl(cpu, ret + 1);
-    return ret;
-  }
-  case 3: {
-    const uint16_t ret = cpu_get_hl(cpu);
-    cpu_set_hl(cpu, ret - 1);
-    return ret;
-  }
-  default:
-    assert(false && "cpu_get_r16mem fail");
   }
 }
 

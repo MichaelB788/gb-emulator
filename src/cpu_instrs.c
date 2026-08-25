@@ -382,11 +382,13 @@ void scf(struct cpu *cpu) {
 /// Stack manipulation instructions
 
 void add_sp_e8(struct cpu *cpu) {
-  cpu->SP = impl_add_sp_e8(cpu);
+  cpu->SP = impl_add_sp_e8(cpu, bus_read_byte(cpu->bus, cpu->PC++));
   bus_tick(cpu->bus); // Internal tick, likely when setting SP
 }
 
-void ld_hl_sp_e8(struct cpu *cpu) { cpu_set_hl(cpu, impl_add_sp_e8(cpu)); }
+void ld_hl_sp_e8(struct cpu *cpu) {
+  cpu_set_hl(cpu, impl_add_sp_e8(cpu, bus_read_byte(cpu->bus, cpu->PC++)));
+}
 
 void ld_u16_ind_sp(struct cpu *cpu) {
   const uint16_t addr = cpu_read_word(cpu, cpu->PC);
@@ -462,7 +464,6 @@ void daa(struct cpu *cpu) {
 void nop(struct cpu *cpu) {}
 
 void stop(struct cpu *cpu) {
-  cpu_read_byte(cpu, cpu->PC++);
   cpu->state = CPU_STOPPED;
   cpu->bus->timer.system_counter = 0;
   cpu->bus->timer.DIV = 0;

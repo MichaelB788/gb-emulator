@@ -102,8 +102,7 @@ void impl_add_r16(struct cpu *cpu, uint16_t operand) {
   bus_tick(cpu->bus); // Internal tick, likely when setting HL
 }
 
-uint16_t impl_add_sp_e8(struct cpu *cpu) {
-  const int8_t e8 = (int8_t)cpu_read_byte(cpu, cpu->PC++);
+uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8) {
   const uint16_t SP = cpu->SP;
   const uint16_t sum = SP + e8;
 
