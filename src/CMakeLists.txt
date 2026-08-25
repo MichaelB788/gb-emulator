@@ -1,11 +1,13 @@
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(EXECUTABLE_NAME ${CMAKE_PROJECT_NAME})
+set(LIBRARY_NAME ${CMAKE_PROJECT_NAME}Source)
 
-add_executable(${CMAKE_PROJECT_NAME} main.c)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-  PROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+add_executable(${EXECUTABLE_NAME} main.c)
+target_compile_options(${EXECUTABLE_NAME} PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
 
-add_library(GB_Core
+add_library(${LIBRARY_NAME}
   appstate.c
   bus.c
   vector.c
@@ -22,7 +24,7 @@ add_library(GB_Core
   timer.c
 )
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE
-  GB_Core
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE
+  ${LIBRARY_NAME}
   SDL3::SDL3
 )
