@@ -1,7 +1,6 @@
 #pragma once
 #include "debugger.h"
 #include "gameboy.h"
-#include <stdbool.h>
 
 struct appstate {
   struct gameboy gb;

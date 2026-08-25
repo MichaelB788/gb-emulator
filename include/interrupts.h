@@ -1,5 +1,4 @@
 #pragma once
-#include <stdbool.h>
 #include <stdint.h>
 
 #define INTERRUPT_VBLANK (1 << 0)

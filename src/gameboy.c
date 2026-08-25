@@ -3,7 +3,6 @@
 #include "cpu.h"
 #include "interrupts.h"
 #include <assert.h>
-#include <stdbool.h>
 
 bool create_gameboy(struct gameboy *gb, const char *path_to_rom) {
   if (create_bus(&gb->bus, path_to_rom)) {

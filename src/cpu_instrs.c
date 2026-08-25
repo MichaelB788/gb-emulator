@@ -3,7 +3,6 @@
 #include "cpu.h"
 #include "impl_cpu_instrs.h"
 #include "interrupts.h"
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
