@@ -20,11 +20,10 @@ struct bus {
 
 void bus_init(struct bus *bus, struct cartridge *cart);
 
-// Ticks all subsytems by 1 M-cycle / 4 T-cycles
-void bus_tick(struct bus *bus);
+void bus_tick(struct bus *bus); // Advances by 1 M-cycle / 4 T-cycles
 
-uint8_t bus_read_byte(const struct bus *bus, uint16_t addr);
+// Read and writes
+
+[[nodiscard]] uint8_t bus_read_byte(const struct bus *bus, uint16_t addr);
+
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val);
-
-uint8_t bus_read_io(const struct bus *bus, uint16_t addr);
-void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val);

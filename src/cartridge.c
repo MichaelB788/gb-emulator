@@ -16,7 +16,7 @@
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_create(&cart->mbc1);
+    mbc1_init(&cart->mbc1);
     return true;
   default:
     return false;
