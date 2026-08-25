@@ -3,39 +3,59 @@
 #include "cpu.h"
 #include "gameboy.h"
 #include "mnemonics.h"
-#include "vector.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-static bool debugger_fail(char *msg) {
-  fprintf(stderr, "Could not create debugger: %s\n", msg);
+static void u16_stk_create(struct u16_stk *stk) {
+  stk->size = 0;
+  stk->data = malloc(stk->capacity = 10);
+}
+
+static void u16_stk_destroy(struct u16_stk *stk) {
+  stk->size = stk->capacity = 0;
+  if (stk->data)
+    free(stk->data);
+}
+
+static bool u16_stk_contains(const struct u16_stk *stk, uint16_t u16) {
+  for (size_t i = 0; i < stk->size; ++i) {
+    if (stk->data[i] == u16)
+      return true;
+  }
   return false;
 }
 
-bool create_debugger(struct debugger *debugger) {
-  if (!create_u16_dynamic_vec(&debugger->breakpoints, 10)) {
-    return debugger_fail("Failed to create breakpoints");
+static bool u16_stk_push(struct u16_stk *stk, uint16_t u16) {
+  if (stk->size == stk->capacity) {
+    stk->capacity *= 2;
+    stk->data = realloc(stk->data, stk->capacity * 2);
   }
-  if (!create_u16_dynamic_vec(&debugger->watch_addresses, 10)) {
-    return debugger_fail("Failed to create watch addresses");
-  }
+
+  stk->data[stk->size++] = u16;
+  return true;
+}
+
+bool debugger_create(struct debugger *debugger) {
+  u16_stk_create(&debugger->breakpoints);
+  u16_stk_create(&debugger->watch_addresses);
   debugger->state = DEBUG_INIT;
   return true;
 }
 
-void destroy_debugger(struct debugger *debugger) {
-  destroy_u16_dynamic_vec(&debugger->breakpoints);
-  destroy_u16_dynamic_vec(&debugger->watch_addresses);
+void debugger_destroy(struct debugger *debugger) {
+  u16_stk_destroy(&debugger->breakpoints);
+  u16_stk_destroy(&debugger->watch_addresses);
 }
 
 // Pushes a u16 address to `out` via terminal input
-static void add_unique_address(struct u16_dynamic_vec *out) {
+static void add_unique_address(struct u16_stk *out) {
   unsigned address;
   printf("address: ");
   scanf("%x", &address);
-  if (!u16_dynamic_vec_contains(out, address)) {
-    u16_dynamic_vec_push(out, address);
+  if (!u16_stk_contains(out, address)) {
+    u16_stk_push(out, address);
   }
 }
 
@@ -111,7 +131,7 @@ void debugger_step(struct debugger *debugger, struct gameboy *gb,
     }
   } break;
   case DEBUG_CONTINUE: {
-    if (u16_dynamic_vec_contains(&debugger->breakpoints, gb->cpu.PC)) {
+    if (u16_stk_contains(&debugger->breakpoints, gb->cpu.PC)) {
       printf("\nBreakpoint 0x%04X hit.\n\n", gb->cpu.PC);
       debugger->state = DEBUG_BREAKPOINT;
     } else {
