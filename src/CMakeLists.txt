@@ -10,7 +10,6 @@ target_compile_options(${EXECUTABLE_NAME} PRIVATE
 add_library(${LIBRARY_NAME}
   appstate.c
   bus.c
-  vector.c
   cartridge.c
   cpu.c
   cpu_instrs.c
@@ -19,9 +18,9 @@ add_library(${LIBRARY_NAME}
   impl_cpu_instrs.c
   interrupts.c
   main.c
-  mapper.c
   mbc1.c
   timer.c
+  u8_buf.c
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE

@@ -2,7 +2,6 @@
 #include "debugger.h"
 #include "gameboy.h"
 #include <errno.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,7 +33,7 @@ struct appstate *create_appstate(int argc, char **argv) {
     if (strncmp(argv[i], "--debug", 7) == 0) {
       // Debug mode enabled
       app->debug_enabled = true;
-      if (!create_debugger(&app->debugger)) {
+      if (!debugger_create(&app->debugger)) {
         return appstate_fail(app, "Could not create debugger");
       }
     }
@@ -55,7 +54,7 @@ void destroy_appstate(struct appstate *app) {
     if (app->log_file) {
       fclose(app->log_file);
     }
-    destroy_debugger(&app->debugger);
+    debugger_destroy(&app->debugger);
     destroy_gameboy(&app->gb);
     free(app);
   }

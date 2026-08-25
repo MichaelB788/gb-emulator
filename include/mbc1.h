@@ -1,24 +1,27 @@
 #pragma once
-#include <stdbool.h>
 #include <stdint.h>
 
-struct u8_fixed_vec;
+struct u8_buf;
+
+enum banking_mode { BANKING_SIMPLE = 0, BANKING_ADVANCED = 1 };
 
 struct mbc1 {
+  enum banking_mode mode;
   uint8_t rom_bank;
   uint8_t ram_bank;
-  bool advanced_banking_enabled;
   bool ram_enabled;
 };
 
-struct mbc1 mbc1_create();
+void mbc1_create(struct mbc1 *mbc);
 
-uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct u8_fixed_vec *rom,
-                      uint16_t addr);
-void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_fixed_vec *rom,
-                    uint16_t addr, uint8_t val);
+[[nodiscard]] uint8_t mbc1_read_rom(const struct mbc1 *mbc1,
+                                    const struct u8_buf *rom, uint16_t addr);
 
-uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_fixed_vec *ram,
-                      uint16_t addr);
-void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_fixed_vec *ram,
-                    uint16_t addr, uint8_t val);
+[[nodiscard]] uint8_t mbc1_read_ram(const struct mbc1 *mbc1,
+                                    const struct u8_buf *ram, uint16_t addr);
+
+void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_buf *rom, uint16_t addr,
+                    uint8_t val);
+
+void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_buf *ram, uint16_t addr,
+                    uint8_t val);

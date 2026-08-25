@@ -5,19 +5,18 @@
 #include "serial.h"
 #include "timer.h"
 #include <assert.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
 bool create_bus(struct bus *bus, const char *path_to_rom) {
-  if (!create_cartridge(&bus->cartridge, path_to_rom)) {
+  if (!cartridge_create(&bus->cartridge, path_to_rom)) {
     return false;
   }
   bus->joypad.JOYP = 0x3F;
   return true;
 }
 
-void destroy_bus(struct bus *bus) { destroy_cartridge(&bus->cartridge); }
+void destroy_bus(struct bus *bus) { cartridge_destroy(&bus->cartridge); }
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }
 
