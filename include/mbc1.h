@@ -12,7 +12,7 @@ struct mbc1 {
   bool ram_enabled;
 };
 
-void mbc1_create(struct mbc1 *mbc);
+void mbc1_init(struct mbc1 *mbc);
 
 [[nodiscard]] uint8_t mbc1_read_rom(const struct mbc1 *mbc1,
                                     const struct u8_buf *rom, uint16_t addr);

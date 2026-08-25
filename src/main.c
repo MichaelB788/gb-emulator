@@ -10,19 +10,19 @@
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   if (argc < 2) {
-    fprintf(stderr, "No ROM provided!\n");
+    fprintf(stderr, "SDL_AppInit: No ROM provided!\n");
     return SDL_APP_FAILURE;
   }
 
   // Appstate initialization
-  *appstate = create_appstate(argc, argv);
+  *appstate = appstate_malloc(argc, argv);
   if (*appstate == NULL) {
     return SDL_APP_FAILURE;
   }
 
   // SDL subsystems initialization
   if (!SDL_Init(SDL_INIT_EVENTS)) {
-    fprintf(stderr, "Could not initialize SDL: %s\n", SDL_GetError());
+    fprintf(stderr, "SDL_AppInit: %s\n", SDL_GetError());
     return SDL_APP_FAILURE;
   }
 
@@ -46,7 +46,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
   // Close emulator subsystems
-  destroy_appstate(appstate);
+  appstate_free(appstate);
 
   // Print app result
   if (result == SDL_APP_SUCCESS) {

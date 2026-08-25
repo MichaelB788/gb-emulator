@@ -19,7 +19,7 @@ static void mbc1_set_rom_bank(struct mbc1 *mbc1, uint8_t val, size_t rom_cap) {
     ++mbc1->rom_bank;
 }
 
-void mbc1_create(struct mbc1 *mbc) {
+void mbc1_init(struct mbc1 *mbc) {
   mbc->rom_bank = 1;
   mbc->ram_bank = 0;
   mbc->mode = BANKING_SIMPLE;

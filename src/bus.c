@@ -5,74 +5,78 @@
 #include "serial.h"
 #include "timer.h"
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
-bool create_bus(struct bus *bus, const char *path_to_rom) {
-  if (!cartridge_create(&bus->cartridge, path_to_rom)) {
-    return false;
-  }
+void bus_init(struct bus *bus, struct cartridge *cart) {
+  assert(cart != nullptr);
+  bus->cart = cart;
   bus->joypad.JOYP = 0x3F;
-  return true;
 }
-
-void destroy_bus(struct bus *bus) { cartridge_destroy(&bus->cartridge); }
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupts); }
 
 uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
-  if (addr <= 0x7FFF) /* ROM */ {
-    return cartridge_read_rom(&bus->cartridge, addr);
-  }
-  if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
+  if (addr <= 0x7FFF)
+    return cartridge_read_rom(bus->cart, addr);
+
+  if (0x8000 <= addr && addr <= 0x9FFF)
     return bus->vram[addr - 0x8000];
-  }
-  if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    return cartridge_read_ram(&bus->cartridge, addr);
-  }
-  if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
+
+  if (0xA000 <= addr && addr <= 0xBFFF)
+    return cartridge_read_ram(bus->cart, addr);
+
+  if (0xC000 <= addr && addr <= 0xDFFF)
     return bus->wram[addr - 0xC000];
-  }
-  if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
+
+  if (0xE000 <= addr && addr <= 0xFDFF)
     return bus->wram[addr - 0xE000];
-  }
-  if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
+
+  if (0xFE00 <= addr && addr <= 0xFE9F)
     assert(false && "OAM read");
-  }
-  if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
-    fprintf(stderr, "Warn: Attempt to read from prohibited space\n");
+
+  if (0xFEA0 <= addr && addr <= 0xFEFF)
     return 0xFF;
-  }
-  if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF) /* IO Registers */ {
+
+  if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF)
     return bus_read_io(bus, addr);
-  }
-  if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
+
+  if (0xFF80 <= addr && addr <= 0xFFFE)
     return bus->hram[addr - 0xFF80];
-  }
-  assert(0 && "impossible bus read");
+
+  unreachable();
 }
 
 void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
-  if (addr <= 0x7FFF) /* ROM */ {
-    cartridge_write_rom(&bus->cartridge, addr, val);
-  } else if (0x8000 <= addr && addr <= 0x9FFF) /* VRAM */ {
+  if (addr <= 0x7FFF)
+    cartridge_write_rom(bus->cart, addr, val);
+
+  else if (0x8000 <= addr && addr <= 0x9FFF)
     bus->vram[addr - 0x8000] = val;
-  } else if (0xA000 <= addr && addr <= 0xBFFF) /* EXRAM */ {
-    cartridge_write_ram(&bus->cartridge, addr, val);
-  } else if (0xC000 <= addr && addr <= 0xDFFF) /* WRAM */ {
+
+  else if (0xA000 <= addr && addr <= 0xBFFF)
+    cartridge_write_ram(bus->cart, addr, val);
+
+  else if (0xC000 <= addr && addr <= 0xDFFF)
     bus->wram[addr - 0xC000] = val;
-  } else if (0xE000 <= addr && addr <= 0xFDFF) /* Echo RAM */ {
+
+  else if (0xE000 <= addr && addr <= 0xFDFF)
     bus->wram[addr - 0xE000] = val;
-  } else if (0xFE00 <= addr && addr <= 0xFE9F) /* OAM */ {
+
+  else if (0xFE00 <= addr && addr <= 0xFE9F)
     assert(false && "OAM write");
-  } else if (0xFEA0 <= addr && addr <= 0xFEFF) /* Prohibited */ {
-    fprintf(stderr, "Warn: Attempt to write to prohibited space\n");
-  } else if (0xFF00 <= addr && addr <= 0xFF7F ||
-             addr == 0xFFFF) /* IO Registers */ {
+
+  else if (0xFEA0 <= addr && addr <= 0xFEFF)
+    return;
+
+  else if (0xFF00 <= addr && addr <= 0xFF7F || addr == 0xFFFF)
     bus_write_io(bus, addr, val);
-  } else if (0xFF80 <= addr && addr <= 0xFFFE) /* HRAM */ {
+
+  else if (0xFF80 <= addr && addr <= 0xFFFE)
     bus->hram[addr - 0xFF80] = val;
-  }
+
+  unreachable();
 }
 
 uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
@@ -116,11 +120,10 @@ void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
     break;
   case 0xFF02:
     bus->serial.SC = val | SC_UNUSED;
-    if ((bus->serial.SC & SC_TRANSFER_ENABLE) != 0) {
+    if (val == 0x81) {
       putchar(bus->serial.SB);
       fflush(stdout);
     }
-    bus->interrupts.IF |= INTERRUPT_SERIAL;
     break;
   case 0xFF04:
     bus->timer.system_counter = 0;

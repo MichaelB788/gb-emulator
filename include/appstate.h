@@ -3,16 +3,16 @@
 #include "gameboy.h"
 
 struct appstate {
-  struct gameboy gb;
-
   bool debug_enabled;
+
+  struct gameboy gameboy;
   struct debugger debugger;
 
   FILE *log_file;
 };
 
-struct appstate *create_appstate(int argc, char **argv);
+struct appstate *appstate_malloc(int argc, char **argv);
 
-void destroy_appstate(struct appstate *state);
+void appstate_free(struct appstate *state);
 
 void appstate_iterate(struct appstate *app);

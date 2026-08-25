@@ -6,30 +6,25 @@
 #include <stdint.h>
 #include <stdio.h>
 
-/// Creation
-
-struct cpu create_cpu(struct bus *bus) {
-  assert(bus != NULL);
-  struct cpu cpu = {.bus = bus,
-                    .A = 0x01,
-                    .F = 0xB0,
-                    .B = 0x00,
-                    .C = 0x13,
-                    .D = 0x00,
-                    .E = 0xD8,
-                    .H = 0x01,
-                    .L = 0x4D,
-                    .PC = 0x0100,
-                    .SP = 0xFFFE,
-                    .IME = false,
-                    .ei_called = false,
-                    .halt_bug = false,
-                    .IR = 0,
-                    .state = CPU_RUNNING};
-  return cpu;
+void cpu_init(struct cpu *cpu, struct bus *bus) {
+  assert(bus != nullptr);
+  cpu->bus = bus;
+  cpu->A = 0x01;
+  cpu->F = 0xB0;
+  cpu->B = 0x00;
+  cpu->C = 0x13;
+  cpu->D = 0x00;
+  cpu->E = 0xD8;
+  cpu->H = 0x01;
+  cpu->L = 0x4D;
+  cpu->PC = 0x0100;
+  cpu->SP = 0xFFFE;
+  cpu->IME = false;
+  cpu->ei_called = false;
+  cpu->halt_bug = false;
+  cpu->IR = 0;
+  cpu->state = CPU_RUNNING;
 }
-
-/// Control flow
 
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
@@ -62,8 +57,6 @@ void cpu_step(struct cpu *cpu) {
     break;
   }
 }
-
-/// Logging
 
 void cpu_log_step_reg8(const struct cpu *cpu, FILE *output) {
   fprintf(output,

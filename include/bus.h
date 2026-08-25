@@ -7,7 +7,7 @@
 #include "timer.h"
 
 struct bus {
-  struct cartridge cartridge;
+  struct cartridge *cart;
   struct joypad joypad;
   struct interrupts interrupts;
   struct serial serial;
@@ -18,8 +18,7 @@ struct bus {
   uint8_t hram[127];
 };
 
-bool create_bus(struct bus *bus, const char *path_to_rom);
-void destroy_bus(struct bus *bus);
+void bus_init(struct bus *bus, struct cartridge *cart);
 
 // Ticks all subsytems by 1 M-cycle / 4 T-cycles
 void bus_tick(struct bus *bus);

@@ -20,7 +20,7 @@ struct debugger {
   struct u16_stk watch_addresses;
 };
 
-bool debugger_create(struct debugger *debugger);
+void debugger_create(struct debugger *debugger);
 
 void debugger_destroy(struct debugger *debugger);
 

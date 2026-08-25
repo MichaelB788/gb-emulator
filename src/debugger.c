@@ -37,11 +37,10 @@ static bool u16_stk_push(struct u16_stk *stk, uint16_t u16) {
   return true;
 }
 
-bool debugger_create(struct debugger *debugger) {
+void debugger_create(struct debugger *debugger) {
   u16_stk_create(&debugger->breakpoints);
   u16_stk_create(&debugger->watch_addresses);
   debugger->state = DEBUG_INIT;
-  return true;
 }
 
 void debugger_destroy(struct debugger *debugger) {
