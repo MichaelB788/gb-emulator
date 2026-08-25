@@ -2,19 +2,20 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define FLAG_Z (1 << 7)
-#define FLAG_N (1 << 6)
-#define FLAG_H (1 << 5)
-#define FLAG_C (1 << 4)
-
 struct bus;
+
+static constexpr uint8_t FLAG_Z = 1 << 7;
+static constexpr uint8_t FLAG_N = 1 << 6;
+static constexpr uint8_t FLAG_H = 1 << 5;
+static constexpr uint8_t FLAG_C = 1 << 4;
 
 enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED };
 
-/**
- * The GameBoy's CPU
- */
+// The GameBoy's CPU
 struct cpu {
+  enum cpu_state state;
+  uint8_t IR;
+
   union {
     struct {
       uint8_t B, C, D, E, H, L, F, A;
@@ -29,9 +30,6 @@ struct cpu {
   bool ei_called;
   bool halt_bug;
   bool executing_cb_op;
-
-  uint8_t IR;
-  enum cpu_state state;
 
   struct bus *bus;
 };

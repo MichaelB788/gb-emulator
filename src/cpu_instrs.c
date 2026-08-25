@@ -6,8 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define OPCODE_Y 0x38
-#define OPCODE_Z 0x7
+static constexpr uint8_t OPCODE_Y = 0x38;
+static constexpr uint8_t OPCODE_Z = 0x7;
 
 #define REG8_Y(opcode) ((opcode & OPCODE_Y) >> 3)
 #define REG8_Z(opcode) (opcode & OPCODE_Z)
