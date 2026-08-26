@@ -1,5 +1,4 @@
 #include "impl_cpu_instrs.h"
-#include "bus.h"
 #include "cpu.h"
 #include <stdint.h>
 
@@ -91,15 +90,14 @@ uint8_t impl_dec_u8(struct cpu *cpu, uint8_t operand) {
 /// 16-bit arithmetic instructions
 
 void impl_add_r16(struct cpu *cpu, uint16_t operand) {
-  const uint16_t HL = cpu_get_hl(cpu);
+  const uint16_t HL = cpu->HL;
   const uint32_t sum = HL + operand;
 
   cpu->F &= ~FLAG_N;
   cpu_write_flags(cpu, FLAG_H, (HL & 0xFFF) + (operand & 0xFFF) > 0xFFF);
   cpu_write_flags(cpu, FLAG_C, sum > 0xFFFF);
 
-  cpu_set_hl(cpu, sum);
-  bus_tick(cpu->bus); // Internal tick, likely when setting HL
+  cpu->HL = sum;
 }
 
 uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8) {
@@ -110,7 +108,6 @@ uint16_t impl_add_sp_e8(struct cpu *cpu, int8_t e8) {
   cpu_write_flags(cpu, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
   cpu_write_flags(cpu, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
 
-  bus_tick(cpu->bus); // Internal tick, likely when setting r16
   return sum;
 }
 

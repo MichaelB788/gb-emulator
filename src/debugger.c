@@ -76,10 +76,8 @@ static void debugger_print_cpu_step(struct debugger *debugger,
 
   // R16 memory watches
   printf("[BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X\n\n",
-         bus_read_byte(cpu->bus, cpu_get_bc(cpu)),
-         bus_read_byte(cpu->bus, cpu_get_de(cpu)),
-         bus_read_byte(cpu->bus, cpu_get_hl(cpu)),
-         bus_read_byte(cpu->bus, cpu->SP));
+         bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
+         bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP));
 
   cpu_log_step_reg16(cpu, stdout);
 

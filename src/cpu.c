@@ -3,6 +3,7 @@
 #include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -20,7 +21,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
   cpu->PC = 0x0100;
   cpu->SP = 0xFFFE;
   cpu->IME = false;
-  cpu->ei_called = false;
+  cpu->ime_pending = false;
   cpu->halt_bug = false;
   cpu->IR = 0;
   cpu->state = CPU_RUNNING;
@@ -29,7 +30,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
-    cpu->IR = cpu_read_byte(cpu, cpu->PC);
+    cpu->IR = cpu_read_u8(cpu, cpu->PC);
 
     if (cpu->halt_bug) {
       cpu->halt_bug = false;
@@ -37,8 +38,8 @@ void cpu_step(struct cpu *cpu) {
       ++cpu->PC;
     }
 
-    if (cpu->ei_called) {
-      cpu->ei_called = false;
+    if (cpu->ime_pending) {
+      cpu->ime_pending = false;
       cpu->IME = true;
     }
 
@@ -74,217 +75,174 @@ void cpu_log_step_reg16(const struct cpu *cpu, FILE *output) {
   fprintf(output,
           "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X "
           "PCMEM:%02X,%02X,%02X,%02X\n",
-          cpu_get_af(cpu), cpu_get_bc(cpu), cpu_get_de(cpu), cpu_get_hl(cpu),
-          cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+          cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+          bus_read_byte(cpu->bus, cpu->PC),
           bus_read_byte(cpu->bus, cpu->PC + 1),
           bus_read_byte(cpu->bus, cpu->PC + 2),
           bus_read_byte(cpu->bus, cpu->PC + 3));
   fflush(output);
 }
 
-/// Register pair operations
-
-static uint16_t get_regpair(uint8_t hi, uint8_t lo) {
-  return (uint16_t)hi << 8 | lo;
-}
-
-uint16_t cpu_get_bc(const struct cpu *cpu) {
-  return get_regpair(cpu->B, cpu->C);
-}
-
-uint16_t cpu_get_de(const struct cpu *cpu) {
-  return get_regpair(cpu->D, cpu->E);
-}
-
-uint16_t cpu_get_hl(const struct cpu *cpu) {
-  return get_regpair(cpu->H, cpu->L);
-}
-
-uint16_t cpu_get_af(const struct cpu *cpu) {
-  return get_regpair(cpu->A, cpu->F);
-}
-
-static void set_regpair(uint8_t *hi, uint8_t *lo, uint16_t val) {
-  *hi = val >> 8;
-  *lo = val & 0xFF;
-}
-
-void cpu_set_bc(struct cpu *cpu, uint16_t val) {
-  set_regpair(&cpu->B, &cpu->C, val);
-}
-
-void cpu_set_de(struct cpu *cpu, uint16_t val) {
-  set_regpair(&cpu->D, &cpu->E, val);
-}
-
-void cpu_set_hl(struct cpu *cpu, uint16_t val) {
-  set_regpair(&cpu->H, &cpu->L, val);
-}
-
-void cpu_set_af(struct cpu *cpu, uint16_t val) {
-  cpu->A = val >> 8;
-  cpu->F = val & 0xF0;
-}
-
-/// Flags operations
-
-void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
-  cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
-}
-
 /// Memory operations
 
-uint8_t cpu_read_byte(struct cpu *cpu, uint16_t addr) {
+uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr) {
   const uint8_t ret = bus_read_byte(cpu->bus, addr);
   bus_tick(cpu->bus);
   return ret;
 }
 
-uint16_t cpu_read_word(struct cpu *cpu, uint16_t addr) {
-  const uint8_t lo = cpu_read_byte(cpu, addr);
-  const uint8_t hi = cpu_read_byte(cpu, addr + 1);
+uint16_t cpu_read_u16(const struct cpu *cpu, uint16_t addr) {
+  const uint8_t lo = cpu_read_u8(cpu, addr);
+  const uint8_t hi = cpu_read_u8(cpu, addr + 1);
   return (uint16_t)hi << 8 | lo;
 }
 
-void cpu_write_byte(struct cpu *cpu, uint16_t addr, uint8_t val) {
+void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val) {
   bus_write_byte(cpu->bus, addr, val);
   bus_tick(cpu->bus);
 }
 
-void cpu_write_word(struct cpu *cpu, uint16_t addr, uint16_t val) {
-  const uint8_t hi = val >> 8;
-  const uint8_t lo = val & 0xFF;
-  cpu_write_byte(cpu, addr, lo);
-  cpu_write_byte(cpu, addr + 1, hi);
+void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val) {
+  cpu_write_u8(cpu, addr, val & 0xFF);
+  cpu_write_u8(cpu, addr + 1, val >> 8);
 }
 
-void cpu_jump_a16(struct cpu *cpu, uint16_t addr, bool cond) {
+void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond) {
   if (cond) {
     cpu->PC = addr;
-    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+    bus_tick(cpu->bus);
   }
 }
 
-void cpu_call_a16(struct cpu *cpu, uint16_t addr, bool cond) {
+void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond) {
+  if (cond) {
+    cpu->PC += offset;
+    bus_tick(cpu->bus);
+  }
+}
+
+void cpu_call(struct cpu *cpu, uint16_t addr, bool cond) {
   if (cond) {
     cpu->SP -= 2;
-    cpu_write_word(cpu, cpu->SP, cpu->PC);
+    cpu_write_u16(cpu, cpu->SP, cpu->PC);
     cpu->PC = addr;
-    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+    bus_tick(cpu->bus);
   }
 }
 
 void cpu_return(struct cpu *cpu, bool cond) {
   if (cond) {
-    const uint16_t jmp_addr = cpu_read_word(cpu, cpu->SP);
+    const uint16_t jmp_addr = cpu_read_u16(cpu, cpu->SP);
     cpu->SP += 2;
     cpu->PC = jmp_addr;
-    bus_tick(cpu->bus); // Internal cycle, possibly when setting PC
+    bus_tick(cpu->bus);
   }
 }
 
 /// Opcode dispatching
 
+// clang-format off
+static uint8_t cpu_get_r8(const struct cpu *cpu, uint8_t idx) {
+  switch (idx) {
+  case 0: return cpu->B;
+  case 1: return cpu->C;
+  case 2: return cpu->D;
+  case 3: return cpu->E;
+  case 4: return cpu->H;
+  case 5: return cpu->L;
+  case 6: return cpu_read_u8(cpu, cpu->HL);
+  case 7: return cpu->A;
+  default: unreachable();
+  }
+}
+
+uint8_t cpu_get_r8_y(const struct cpu *cpu) {
+  return cpu_get_r8(cpu, cpu->IR >> 3 & 0x7);
+}
+
+uint8_t cpu_get_r8_z(const struct cpu *cpu) {
+  return cpu_get_r8(cpu, cpu->IR & 0x7);
+}
+
+static void cpu_set_r8(struct cpu *cpu, uint8_t idx, uint8_t val) {
+  switch (idx) {
+  case 0: cpu->B = val; break;
+  case 1: cpu->C = val; break;
+  case 2: cpu->D = val; break;
+  case 3: cpu->E = val; break;
+  case 4: cpu->H = val; break;
+  case 5: cpu->L = val; break;
+  case 6: cpu_write_u8(cpu, cpu->HL, val); break;
+  case 7: cpu->A = val; break;
+  default: unreachable();
+  }
+}
+
+void cpu_set_r8_y(struct cpu *cpu, uint8_t val) {
+  cpu_set_r8(cpu, cpu->IR >> 3 & 0x7, val);
+}
+
+void cpu_set_r8_z(struct cpu *cpu, uint8_t val) {
+  cpu_set_r8(cpu, cpu->IR & 0x7, val);
+}
+
 uint16_t cpu_get_r16(const struct cpu *cpu) {
   switch (cpu->IR >> 4 & 0x3) {
-  case 0:
-    return cpu_get_bc(cpu);
-  case 1:
-    return cpu_get_de(cpu);
-  case 2:
-    return cpu_get_hl(cpu);
-  case 3:
-    return cpu->SP;
-  default:
-    assert(false && "cpu_get_r16 fail");
+  case 0: return cpu->BC;
+  case 1: return cpu->DE;
+  case 2: return cpu->HL;
+  case 3: return cpu->SP;
+  default: unreachable();
   }
 }
 
 uint16_t cpu_get_r16stk(const struct cpu *cpu) {
   switch (cpu->IR >> 4 & 0x3) {
-  case 0:
-    return cpu_get_bc(cpu);
-  case 1:
-    return cpu_get_de(cpu);
-  case 2:
-    return cpu_get_hl(cpu);
-  case 3:
-    return cpu_get_af(cpu);
-  default:
-    assert(false && "cpu_get_r16stk fail");
+  case 0: return cpu->BC;
+  case 1: return cpu->DE;
+  case 2: return cpu->HL;
+  case 3: return cpu->AF;
+  default: unreachable();
   }
 }
 
 uint16_t cpu_get_r16mem(struct cpu *cpu) {
   switch (cpu->IR >> 4 & 0x3) {
-  case 0:
-    return cpu_get_bc(cpu);
-  case 1:
-    return cpu_get_de(cpu);
-  case 2: {
-    const uint16_t ret = cpu_get_hl(cpu);
-    cpu_set_hl(cpu, ret + 1);
-    return ret;
-  }
-  case 3: {
-    const uint16_t ret = cpu_get_hl(cpu);
-    cpu_set_hl(cpu, ret - 1);
-    return ret;
-  }
-  default:
-    assert(false && "cpu_get_r16mem fail");
+  case 0: return cpu->BC;
+  case 1: return cpu->DE;
+  case 2: return cpu->HL++;
+  case 3: return cpu->HL--;
+  default: unreachable();
   }
 }
 
 void cpu_set_r16(struct cpu *cpu, uint16_t val) {
   switch (cpu->IR >> 4 & 0x3) {
-  case 0:
-    cpu_set_bc(cpu, val);
-    break;
-  case 1:
-    cpu_set_de(cpu, val);
-    break;
-  case 2:
-    cpu_set_hl(cpu, val);
-    break;
-  case 3:
-    cpu->SP = val;
-    break;
-  default:
-    assert(false && "cpu_set_r16 fail");
+  case 0: cpu->BC = val; break;
+  case 1: cpu->DE = val; break;
+  case 2: cpu->HL = val; break;
+  case 3: cpu->SP = val; break;
+  default: unreachable();
   }
 }
 
 void cpu_set_r16stk(struct cpu *cpu, uint16_t val) {
   switch (cpu->IR >> 4 & 0x3) {
-  case 0:
-    cpu_set_bc(cpu, val);
-    break;
-  case 1:
-    cpu_set_de(cpu, val);
-    break;
-  case 2:
-    cpu_set_hl(cpu, val);
-    break;
-  case 3:
-    cpu_set_af(cpu, val);
-    break;
-  default:
-    assert(false && "cpu_set_r16stk fail");
+  case 0: cpu->BC = val; break;
+  case 1: cpu->DE = val; break;
+  case 2: cpu->HL = val; break;
+  case 3: cpu->AF = val & 0xFFF0; break;
+  default: unreachable();
   }
 }
 
-bool cpu_test_cond(const struct cpu *cpu) {
-  switch ((cpu->IR >> 3) & 0x3) {
-  case 0:
-    return ((cpu->F & FLAG_Z) == 0);
-  case 1:
-    return ((cpu->F & FLAG_Z) != 0);
-  case 2:
-    return ((cpu->F & FLAG_C) == 0);
-  case 3:
-    return ((cpu->F & FLAG_C) != 0);
-  default:
-    assert(false && "cpu_check_cond fail");
+bool cpu_cc(const struct cpu *cpu) {
+  switch (cpu->IR >> 3 & 0x3) {
+  case 0: return (cpu->F & FLAG_Z) == 0;
+  case 1: return (cpu->F & FLAG_Z) != 0;
+  case 2: return (cpu->F & FLAG_C) == 0;
+  case 3: return (cpu->F & FLAG_C) != 0;
+  default: unreachable();
   }
 }
+// clang-format on

@@ -9,11 +9,6 @@ void ld_r8_u8(struct cpu *cpu);
 
 void ld_r16_u16(struct cpu *cpu);
 
-void ld_hl_ind_r8(struct cpu *cpu);
-void ld_hl_ind_u8(struct cpu *cpu);
-
-void ld_r8_hl_ind(struct cpu *cpu);
-
 void ld_r16_ind_a(struct cpu *cpu);
 void ld_u16_ind_a(struct cpu *cpu);
 
@@ -28,30 +23,22 @@ void ldh_a_c_ind(struct cpu *cpu);
 
 /// 8-bit arithmetic instructions
 void adc_r8(struct cpu *cpu);
-void adc_hl_ind(struct cpu *cpu);
 void adc_u8(struct cpu *cpu);
 
 void add_r8(struct cpu *cpu);
-void add_hl_ind(struct cpu *cpu);
 void add_u8(struct cpu *cpu);
 
 void sbc_r8(struct cpu *cpu);
-void sbc_hl_ind(struct cpu *cpu);
 void sbc_u8(struct cpu *cpu);
 
 void sub_r8(struct cpu *cpu);
-void sub_hl_ind(struct cpu *cpu);
 void sub_u8(struct cpu *cpu);
 
 void cp_r8(struct cpu *cpu);
-void cp_hl_ind(struct cpu *cpu);
 void cp_u8(struct cpu *cpu);
 
 void inc_r8(struct cpu *cpu);
-void inc_hl_ind(struct cpu *cpu);
-
 void dec_r8(struct cpu *cpu);
-void dec_hl_ind(struct cpu *cpu);
 
 /// 16-bit arithmetic instructions
 void add_hl_r16(struct cpu *cpu);
@@ -60,57 +47,40 @@ void dec_r16(struct cpu *cpu);
 
 /// Bitwise logic instructions
 void and_r8(struct cpu *cpu);
-void and_hl_ind(struct cpu *cpu);
 void and_u8(struct cpu *cpu);
 
 void or_r8(struct cpu *cpu);
-void or_hl_ind(struct cpu *cpu);
 void or_u8(struct cpu *cpu);
 
 void xor_r8(struct cpu *cpu);
-void xor_hl_ind(struct cpu *cpu);
 void xor_u8(struct cpu *cpu);
 
 void cpl(struct cpu *cpu);
 
 /// Bit flag instructions
 void bit_b3_r8(struct cpu *cpu);
-void bit_b3_hl_ind(struct cpu *cpu);
 
 void res_b3_r8(struct cpu *cpu);
-void res_b3_hl_ind(struct cpu *cpu);
 
 void set_b3_r8(struct cpu *cpu);
-void set_b3_hl_ind(struct cpu *cpu);
 
 /// Bit shift instructions
 void rl_r8(struct cpu *cpu);
-void rl_hl_ind(struct cpu *cpu);
 void rla(struct cpu *cpu);
 
 void rlc_r8(struct cpu *cpu);
-void rlc_hl_ind(struct cpu *cpu);
 void rlca(struct cpu *cpu);
 
 void rr_r8(struct cpu *cpu);
-void rr_hl_ind(struct cpu *cpu);
 void rra(struct cpu *cpu);
 
 void rrc_r8(struct cpu *cpu);
-void rrc_hl_ind(struct cpu *cpu);
 void rrca(struct cpu *cpu);
 
 void sla_r8(struct cpu *cpu);
-void sla_hl_ind(struct cpu *cpu);
-
 void sra_r8(struct cpu *cpu);
-void sra_hl_ind(struct cpu *cpu);
-
 void srl_r8(struct cpu *cpu);
-void srl_hl_ind(struct cpu *cpu);
-
 void swap_r8(struct cpu *cpu);
-void swap_hl_ind(struct cpu *cpu);
 
 /// Jumps and subroutine instructions
 void call_a16(struct cpu *cpu);

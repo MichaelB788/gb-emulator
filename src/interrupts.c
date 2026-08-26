@@ -19,7 +19,7 @@ void interrupts_service_pending(struct interrupts *in, struct cpu *cpu) {
         bus_tick(cpu->bus);
 
         // Call the interrupt handler at it's address around 0x40
-        cpu_call_a16(cpu, (uint16_t)(0x40 | (i << 3)), true);
+        cpu_call(cpu, (uint16_t)(0x40 | (i << 3)), true);
 
         // Interrupt handled
         in->IF &= ~(1 << i);
