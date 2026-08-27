@@ -18,7 +18,7 @@ void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
 
 void gameboy_step(struct gameboy *gb, FILE *log_file) {
   if (log_file) {
-    cpu_log_step_reg16(&gb->cpu, log_file);
+    cpu_log_state_reg16(&gb->cpu, log_file);
   }
   cpu_step(&gb->cpu);
   interrupts_service_pending(&gb->bus.interrupts, &gb->cpu);

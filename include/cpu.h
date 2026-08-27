@@ -54,15 +54,17 @@ void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_step(struct cpu *cpu);
 
-void cpu_log_step_reg8(const struct cpu *cpu, FILE *output);
-void cpu_log_step_reg16(const struct cpu *cpu, FILE *output);
-
 /// Sets the flag(s) to the given boolean value
 static inline void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
   cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
 }
 
-/// Memory operations
+// Logging
+
+void cpu_log_state_reg8(const struct cpu *cpu, FILE *output);
+void cpu_log_state_reg16(const struct cpu *cpu, FILE *output);
+
+// Memory operations
 
 // M-cycles: 1
 [[nodiscard]] uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr);
@@ -82,7 +84,7 @@ void cpu_call(struct cpu *cpu, uint16_t addr, bool cond);
 // M-cycles: 0 untaken / 3 taken
 void cpu_return(struct cpu *cpu, bool cond);
 
-/// Opcode dispatching
+// Opcode dispatching
 
 /**
  * The GameBoy makes frequent use of the following bit pattern to decode

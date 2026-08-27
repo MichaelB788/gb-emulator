@@ -79,7 +79,7 @@ static void debugger_print_cpu_step(struct debugger *debugger,
          bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
          bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP));
 
-  cpu_log_step_reg16(cpu, stdout);
+  cpu_log_state_reg16(cpu, stdout);
 
   printf("\n");
 }

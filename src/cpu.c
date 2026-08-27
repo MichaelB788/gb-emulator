@@ -10,20 +10,13 @@
 void cpu_init(struct cpu *cpu, struct bus *bus) {
   assert(bus != nullptr);
   cpu->bus = bus;
-  cpu->A = 0x01;
-  cpu->F = 0xB0;
-  cpu->B = 0x00;
-  cpu->C = 0x13;
-  cpu->D = 0x00;
-  cpu->E = 0xD8;
-  cpu->H = 0x01;
-  cpu->L = 0x4D;
-  cpu->PC = 0x0100;
-  cpu->SP = 0xFFFE;
-  cpu->IME = false;
-  cpu->ime_pending = false;
-  cpu->halt_bug = false;
   cpu->IR = 0;
+
+  // This skips the bootrom, though it should be emulated at some point
+  cpu->PC = 0x100;
+
+  cpu->AF = cpu->BC = cpu->DE = cpu->HL = cpu->SP = 0;
+  cpu->IME = cpu->ime_pending = cpu->halt_bug = false;
   cpu->state = CPU_RUNNING;
 }
 
@@ -32,11 +25,10 @@ void cpu_step(struct cpu *cpu) {
   case CPU_RUNNING:
     cpu->IR = cpu_read_u8(cpu, cpu->PC);
 
-    if (cpu->halt_bug) {
+    if (cpu->halt_bug)
       cpu->halt_bug = false;
-    } else {
+    else
       ++cpu->PC;
-    }
 
     if (cpu->ime_pending) {
       cpu->ime_pending = false;
@@ -59,7 +51,9 @@ void cpu_step(struct cpu *cpu) {
   }
 }
 
-void cpu_log_step_reg8(const struct cpu *cpu, FILE *output) {
+// Logging
+
+void cpu_log_state_reg8(const struct cpu *cpu, FILE *output) {
   fprintf(output,
           "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
           "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
@@ -71,7 +65,7 @@ void cpu_log_step_reg8(const struct cpu *cpu, FILE *output) {
   fflush(output);
 }
 
-void cpu_log_step_reg16(const struct cpu *cpu, FILE *output) {
+void cpu_log_state_reg16(const struct cpu *cpu, FILE *output) {
   fprintf(output,
           "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X "
           "PCMEM:%02X,%02X,%02X,%02X\n",
@@ -83,7 +77,7 @@ void cpu_log_step_reg16(const struct cpu *cpu, FILE *output) {
   fflush(output);
 }
 
-/// Memory operations
+// Memory operations
 
 uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr) {
   const uint8_t ret = bus_read_byte(cpu->bus, addr);
@@ -139,7 +133,7 @@ void cpu_return(struct cpu *cpu, bool cond) {
   }
 }
 
-/// Opcode dispatching
+// Opcode dispatching
 
 // clang-format off
 static uint8_t cpu_get_r8(const struct cpu *cpu, uint8_t idx) {
