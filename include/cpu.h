@@ -55,9 +55,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus);
 void cpu_step(struct cpu *cpu);
 
 /// Sets the flag(s) to the given boolean value
-static inline void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
-  cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
-}
+void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
 
 // Logging
 

@@ -51,6 +51,10 @@ void cpu_step(struct cpu *cpu) {
   }
 }
 
+void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
+  cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
+}
+
 // Logging
 
 void cpu_log_state_reg8(const struct cpu *cpu, FILE *output) {
