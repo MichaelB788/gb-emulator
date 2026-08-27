@@ -19,30 +19,12 @@ struct cpu {
   bool halt_bug;
   bool executing_cb_op;
 
-  union {
-    struct {
-      uint8_t F, A;
-    };
-    uint16_t AF;
-  };
-  union {
-    struct {
-      uint8_t C, B;
-    };
-    uint16_t BC;
-  };
-  union {
-    struct {
-      uint8_t E, D;
-    };
-    uint16_t DE;
-  };
-  union {
-    struct {
-      uint8_t L, H;
-    };
-    uint16_t HL;
-  };
+  // clang-format off
+  union { struct { uint8_t F, A; }; uint16_t AF; };
+  union { struct { uint8_t C, B; }; uint16_t BC; };
+  union { struct { uint8_t E, D; }; uint16_t DE; };
+  union { struct { uint8_t L, H; }; uint16_t HL; };
+  // clang-format on
 
   uint16_t PC;
   uint16_t SP;

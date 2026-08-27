@@ -36,10 +36,10 @@ void cpu_step(struct cpu *cpu) {
     }
 
     if (cpu->executing_cb_op) {
-      cbprefixed_ins[cpu->IR](cpu);
+      optable_cb[cpu->IR](cpu);
       cpu->executing_cb_op = false;
     } else {
-      unprefixed_ins[cpu->IR](cpu);
+      optable_base[cpu->IR](cpu);
     }
     break;
   case CPU_HALTED:

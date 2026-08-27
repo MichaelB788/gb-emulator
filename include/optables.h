@@ -2,9 +2,9 @@
 #include "cpu_instrs.h"
 #include <stdint.h>
 
-typedef void (*handler)(struct cpu *);
+typedef void (*cpu_instr_fp)(struct cpu *);
 
-static const handler unprefixed_ins[256] = {
+static const cpu_instr_fp optable_base[256] = {
     [0x00] = nop,          [0x10] = stop,         [0x20] = jr_cc_e8,
     [0x30] = jr_cc_e8,     [0x01] = ld_r16_u16,   [0x11] = ld_r16_u16,
     [0x21] = ld_r16_u16,   [0x31] = ld_r16_u16,   [0x02] = ld_r16_ind_a,
@@ -97,7 +97,7 @@ static const handler unprefixed_ins[256] = {
     [0xCF] = rst_vec,      [0xDF] = rst_vec,      [0xEF] = rst_vec,
     [0xFF] = rst_vec};
 
-static const handler cbprefixed_ins[256] = {
+static const cpu_instr_fp optable_cb[256] = {
     [0x00] = rlc_r8,    [0x01] = rlc_r8,    [0x02] = rlc_r8,
     [0x03] = rlc_r8,    [0x04] = rlc_r8,    [0x05] = rlc_r8,
     [0x06] = rlc_r8,    [0x07] = rlc_r8,    [0x08] = rrc_r8,

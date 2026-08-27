@@ -31,8 +31,8 @@ static void add_unique_address(struct u16_stk *out) {
 // Prints the current CPU state to `stdout`
 static void dbg_print_cpu_step(struct cpu_debugger *dbg,
                                const struct cpu *cpu) {
-  printf("\n%s\n\n", cpu->executing_cb_op ? mnemonic_cbprefixed[cpu->IR]
-                                          : mnemonic_unprefixed[cpu->IR]);
+  printf("\n%s\n\n", cpu->executing_cb_op ? opcode_mnemonics_cb[cpu->IR]
+                                          : opcode_mnemonics_base[cpu->IR]);
 
   if (dbg->watch_addresses.size > 0) {
     for (size_t i = 0; i < dbg->watch_addresses.size; ++i) {
