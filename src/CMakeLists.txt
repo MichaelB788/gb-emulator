@@ -13,7 +13,7 @@ add_library(${LIBRARY_NAME}
   cartridge.c
   cpu.c
   cpu_instrs.c
-  debugger.c
+  cpu_debugger.c
   gameboy.c
   impl_cpu_instrs.c
   interrupts.c
@@ -23,6 +23,7 @@ add_library(${LIBRARY_NAME}
   serial.c
   timer.c
   u8_buf.c
+  u16_stk.c
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE

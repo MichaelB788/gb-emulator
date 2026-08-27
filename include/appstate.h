@@ -1,12 +1,13 @@
 #pragma once
-#include "debugger.h"
+#include "cpu_debugger.h"
 #include "gameboy.h"
+#include <stdio.h>
 
 struct appstate {
   bool debug_enabled;
 
   struct gameboy gameboy;
-  struct debugger debugger;
+  struct cpu_debugger cpu_dbg;
 
   FILE *log_file;
 };
