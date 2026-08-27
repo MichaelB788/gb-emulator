@@ -213,13 +213,11 @@ void jp_cc_a16(struct cpu *cpu) {
 }
 
 void jr_e8(struct cpu *cpu) {
-  const int8_t offset = (int8_t)cpu_read_u8(cpu, cpu->PC++);
-  cpu_jump(cpu, cpu->PC + offset, true);
+  cpu_jump_rotation(cpu, cpu_read_u8(cpu, cpu->PC++), true);
 }
 
 void jr_cc_e8(struct cpu *cpu) {
-  const int8_t offset = (int8_t)cpu_read_u8(cpu, cpu->PC++);
-  cpu_jump(cpu, cpu->PC + offset, cpu_cc(cpu));
+  cpu_jump_rotation(cpu, cpu_read_u8(cpu, cpu->PC++), cpu_cc(cpu));
 }
 
 void ret_cc(struct cpu *cpu) {
