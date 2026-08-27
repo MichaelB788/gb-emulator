@@ -6,22 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-[[nodiscard]] static bool cart_type_create(struct cartridge *cart,
-                                           uint8_t type) {
-  cart->type = (enum cartridge_type)type;
-  switch (type) {
-  case ROM_ONLY_CART:
-    return true;
-  case MBC1_CART:
-  case MBC1_RAM_CART:
-  case MBC1_RAM_BATTERY_CART:
-    mbc1_init(&cart->mbc1);
-    return true;
-  default:
-    return false;
-  }
-};
-
 bool cartridge_create(struct cartridge *cart, const char *rom_path) {
   FILE *rom_f = fopen(rom_path, "rb");
   if (rom_f == nullptr) {
@@ -37,15 +21,25 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
     return false;
   }
 
-  static constexpr size_t ram_capacities[] = {KiB_8,  KiB_8,   KiB_8,
-                                              KiB_32, KiB_128, KiB_64};
-  if (!cart_type_create(cart, header[0x147])) {
+  switch (header[0x147]) {
+  case ROM_ONLY_CART:
+    break;
+  case MBC1_CART:
+  case MBC1_RAM_CART:
+  case MBC1_RAM_BATTERY_CART:
+    mbc1_init(&cart->mbc1);
+    break;
+  default:
     fprintf(stderr, "cartridge_create: Unknown mapper 0x%02X", header[0x147]);
     fclose(rom_f);
     return false;
   }
+
+  static constexpr size_t RAM_CAPS[] = {0ul,    0ul,     KiB_8,
+                                        KiB_32, KiB_128, KiB_64};
+  cart->type = header[0x147];
   u8_buf_create(&cart->rom, KiB_32 * (1 << header[0x148]));
-  u8_buf_create(&cart->ram, ram_capacities[header[0x149]]);
+  u8_buf_create(&cart->ram, RAM_CAPS[header[0x149]]);
 
   rewind(rom_f);
   fread(cart->rom.data, 1, cart->rom.cap, rom_f);
