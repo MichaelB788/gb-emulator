@@ -21,13 +21,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
-    if (cpu->halt_bug) {
-      cpu->IR = cpu_read_u8(cpu, cpu->PC);
-      cpu->halt_bug = false;
-    } else {
-      cpu->IR = cpu_read_u8(cpu, cpu->PC++);
-    }
-    cpu_execute(cpu, &optable_base[cpu->IR]);
+    cpu_execute_instruction(cpu, optable_base[cpu_fetch_next_opcode(cpu)]);
     break;
   case CPU_HALTED:
     bus_tick(cpu->bus);
@@ -38,13 +32,23 @@ void cpu_step(struct cpu *cpu) {
   }
 }
 
-void cpu_execute(struct cpu *cpu, const struct opcode *opcode) {
+uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
+  if (cpu->halt_bug) {
+    cpu->halt_bug = false;
+    return cpu_read_u8(cpu, cpu->PC);
+  } else {
+    return cpu_read_u8(cpu, cpu->PC++);
+  }
+}
+
+void cpu_execute_instruction(struct cpu *cpu, struct instruction instr) {
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
   }
 
-  opcode->handler(cpu);
+  cpu->IR = instr.opcode;
+  instr.handler(cpu);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {

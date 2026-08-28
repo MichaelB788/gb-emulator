@@ -339,13 +339,7 @@ void stop(struct cpu *cpu) {
 }
 
 void prefix(struct cpu *cpu) {
-  if (cpu->halt_bug) {
-    cpu->IR = cpu_read_u8(cpu, cpu->PC);
-    cpu->halt_bug = false;
-  } else {
-    cpu->IR = cpu_read_u8(cpu, cpu->PC++);
-  }
-  cpu_execute(cpu, &optable_cb[cpu->IR]);
+  cpu_execute_instruction(cpu, optable_cb[cpu_fetch_next_opcode(cpu)]);
 }
 
 void illegal(struct cpu *cpu) {

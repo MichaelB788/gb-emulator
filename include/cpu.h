@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 struct bus;
-struct opcode;
+struct instruction;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
@@ -36,7 +36,11 @@ void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_step(struct cpu *cpu);
 
-void cpu_execute(struct cpu *cpu, const struct opcode *opcode);
+// Fetches the opcode in memory at PC and updates PC depending on the halt bug
+[[nodiscard]] uint8_t cpu_fetch_next_opcode(struct cpu *cpu);
+
+// Executes the given base instruction
+void cpu_execute_instruction(struct cpu *cpu, struct instruction instr);
 
 /// Sets the flag(s) to the given boolean value
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
