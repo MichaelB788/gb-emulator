@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 struct bus;
+struct opcode;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
@@ -17,7 +18,6 @@ struct cpu {
   bool IME;
   bool ime_pending; // Setting IME has a delay
   bool halt_bug;
-  bool executing_cb_op;
 
   // clang-format off
   union { struct { uint8_t F, A; }; uint16_t AF; };
@@ -35,6 +35,8 @@ struct cpu {
 void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_step(struct cpu *cpu);
+
+void cpu_execute(struct cpu *cpu, const struct opcode *opcode);
 
 /// Sets the flag(s) to the given boolean value
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);

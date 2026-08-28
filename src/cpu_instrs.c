@@ -3,6 +3,7 @@
 #include "cpu.h"
 #include "impl_cpu_instrs.h"
 #include "interrupts.h"
+#include "optables.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -337,7 +338,15 @@ void stop(struct cpu *cpu) {
   cpu->bus->timer.system_counter = cpu->bus->timer.DIV = 0;
 }
 
-void prefix(struct cpu *cpu) { cpu->executing_cb_op = true; }
+void prefix(struct cpu *cpu) {
+  if (cpu->halt_bug) {
+    cpu->IR = cpu_read_u8(cpu, cpu->PC);
+    cpu->halt_bug = false;
+  } else {
+    cpu->IR = cpu_read_u8(cpu, cpu->PC++);
+  }
+  cpu_execute(cpu, &optable_cb[cpu->IR]);
+}
 
 void illegal(struct cpu *cpu) {
   fprintf(stderr, "Illegal instruction: 0x%02X\n", cpu->IR);

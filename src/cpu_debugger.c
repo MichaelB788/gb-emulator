@@ -2,7 +2,6 @@
 #include "bus.h"
 #include "cpu.h"
 #include "gameboy.h"
-#include "mnemonics.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -31,9 +30,6 @@ static void add_unique_address(struct u16_stk *out) {
 // Prints the current CPU state to `stdout`
 static void dbg_print_cpu_step(struct cpu_debugger *dbg,
                                const struct cpu *cpu) {
-  printf("\n%s\n\n", cpu->executing_cb_op ? opcode_mnemonics_cb[cpu->IR]
-                                          : opcode_mnemonics_base[cpu->IR]);
-
   if (dbg->watch_addresses.size > 0) {
     for (size_t i = 0; i < dbg->watch_addresses.size; ++i) {
       const uint16_t addr = dbg->watch_addresses.data[i];

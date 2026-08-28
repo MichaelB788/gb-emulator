@@ -1,19 +1,17 @@
 #include "cpu.h"
 #include "bus.h"
-#include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
 void cpu_init(struct cpu *cpu, struct bus *bus) {
   assert(bus != nullptr);
   cpu->bus = bus;
-  cpu->IR = 0;
 
   // This skips the bootrom, though it should be emulated at some point
   cpu->PC = 0x100;
+  cpu->IR = cpu_read_u8(cpu, cpu->PC++);
 
   cpu->AF = cpu->BC = cpu->DE = cpu->HL = cpu->SP = 0;
   cpu->IME = cpu->ime_pending = cpu->halt_bug = false;
@@ -23,24 +21,13 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 void cpu_step(struct cpu *cpu) {
   switch (cpu->state) {
   case CPU_RUNNING:
-    cpu->IR = cpu_read_u8(cpu, cpu->PC);
-
-    if (cpu->halt_bug)
+    if (cpu->halt_bug) {
+      cpu->IR = cpu_read_u8(cpu, cpu->PC);
       cpu->halt_bug = false;
-    else
-      ++cpu->PC;
-
-    if (cpu->ime_pending) {
-      cpu->ime_pending = false;
-      cpu->IME = true;
-    }
-
-    if (cpu->executing_cb_op) {
-      optable_cb[cpu->IR](cpu);
-      cpu->executing_cb_op = false;
     } else {
-      optable_base[cpu->IR](cpu);
+      cpu->IR = cpu_read_u8(cpu, cpu->PC++);
     }
+    cpu_execute(cpu, &optable_base[cpu->IR]);
     break;
   case CPU_HALTED:
     bus_tick(cpu->bus);
@@ -49,6 +36,15 @@ void cpu_step(struct cpu *cpu) {
     // TODO
     break;
   }
+}
+
+void cpu_execute(struct cpu *cpu, const struct opcode *opcode) {
+  if (cpu->ime_pending) {
+    cpu->ime_pending = false;
+    cpu->IME = true;
+  }
+
+  opcode->handler(cpu);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
