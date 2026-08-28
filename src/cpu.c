@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
+#include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
 #include <stdint.h>
@@ -19,6 +20,7 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 }
 
 void cpu_step(struct cpu *cpu) {
+  // Execute instructions
   switch (cpu->state) {
   case CPU_RUNNING:
     cpu_execute_instruction(cpu, optable_base[cpu_fetch_next_opcode(cpu)]);
@@ -28,7 +30,16 @@ void cpu_step(struct cpu *cpu) {
     break;
   case CPU_STOPPED:
     // TODO
+    assert(false);
     break;
+  }
+
+  // Handle interrupts
+  struct interrupts *in = &cpu->bus->interrupts;
+  if ((in->IE & in->IF) != 0) {
+    cpu->state = CPU_RUNNING;
+    if (cpu->IME)
+      interrupts_service_pending(in, cpu);
   }
 }
 

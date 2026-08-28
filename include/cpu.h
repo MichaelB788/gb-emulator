@@ -4,6 +4,7 @@
 
 struct bus;
 struct instruction;
+struct cpu_debugger;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
@@ -29,7 +30,8 @@ struct cpu {
   uint16_t PC;
   uint16_t SP;
 
-  struct bus *bus;
+  struct bus *bus;          // Non-owning pointer to bus, must not be NULL
+  struct cpu_debugger *dbg; // Non-owning pointer to debugger, can be NULL
 };
 
 void cpu_init(struct cpu *cpu, struct bus *bus);
