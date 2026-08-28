@@ -4,11 +4,7 @@
 #include <stdio.h>
 
 struct appstate {
-  bool debug_enabled;
-
   struct gameboy gameboy;
-  struct cpu_debugger cpu_dbg;
-
   FILE *log_file;
 };
 

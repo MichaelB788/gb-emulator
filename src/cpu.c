@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
+#include "cpu_debugger.h"
 #include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
@@ -23,7 +24,7 @@ void cpu_step(struct cpu *cpu) {
   // Execute instructions
   switch (cpu->state) {
   case CPU_RUNNING:
-    cpu_execute_instruction(cpu, optable_base[cpu_fetch_next_opcode(cpu)]);
+    cpu_execute_instruction(cpu, &optable_base[cpu_fetch_next_opcode(cpu)]);
     break;
   case CPU_HALTED:
     bus_tick(cpu->bus);
@@ -52,14 +53,18 @@ uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
   }
 }
 
-void cpu_execute_instruction(struct cpu *cpu, struct instruction instr) {
+void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
+  cpu->IR = instr->opcode;
+
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
   }
 
-  cpu->IR = instr.opcode;
-  instr.handler(cpu);
+  if (cpu->dbg)
+    cpu_debugger_print_cpu_step(cpu->dbg, cpu, instr);
+
+  instr->handler(cpu);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
@@ -69,26 +74,14 @@ void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
 // Logging
 
 void cpu_log_state_reg8(const struct cpu *cpu, FILE *output) {
-  fprintf(output,
-          "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X "
-          "PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
-          cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L,
-          cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
-          bus_read_byte(cpu->bus, cpu->PC + 1),
-          bus_read_byte(cpu->bus, cpu->PC + 2),
-          bus_read_byte(cpu->bus, cpu->PC + 3));
-  fflush(output);
-}
-
-void cpu_log_state_reg16(const struct cpu *cpu, FILE *output) {
-  fprintf(output,
-          "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X "
-          "PCMEM:%02X,%02X,%02X,%02X\n",
-          cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-          bus_read_byte(cpu->bus, cpu->PC),
-          bus_read_byte(cpu->bus, cpu->PC + 1),
-          bus_read_byte(cpu->bus, cpu->PC + 2),
-          bus_read_byte(cpu->bus, cpu->PC + 3));
+  fprintf(
+      output,
+      "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
+      cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L, cpu->SP,
+      cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+      bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
   fflush(output);
 }
 

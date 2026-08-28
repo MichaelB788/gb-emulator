@@ -1,10 +1,11 @@
 #pragma once
 #include "u16_stk.h"
 #include <stddef.h>
-#include <stdio.h>
+#include <stdint.h>
 
 struct gameboy;
 struct cpu;
+struct instruction;
 
 struct cpu_debugger {
   enum cpu_debugger_state {
@@ -12,13 +13,14 @@ struct cpu_debugger {
     DEBUG_CONTINUE,
     DEBUG_BREAKPOINT
   } state;
+
   struct u16_stk breakpoints;
-  struct u16_stk watch_addresses;
-  FILE *log_file;
+  struct u16_stk watches;
 };
 
 void cpu_debugger_create(struct cpu_debugger *dbg);
-
 void cpu_debugger_destroy(struct cpu_debugger *dbg);
 
-void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb, FILE *out);
+void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
+                                 const struct cpu *cpu,
+                                 const struct instruction *instr);

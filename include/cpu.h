@@ -1,6 +1,5 @@
 #pragma once
 #include <stdint.h>
-#include <stdio.h>
 
 struct bus;
 struct instruction;
@@ -42,15 +41,10 @@ void cpu_step(struct cpu *cpu);
 [[nodiscard]] uint8_t cpu_fetch_next_opcode(struct cpu *cpu);
 
 // Executes the given base instruction
-void cpu_execute_instruction(struct cpu *cpu, struct instruction instr);
+void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr);
 
 /// Sets the flag(s) to the given boolean value
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
-
-// Logging
-
-void cpu_log_state_reg8(const struct cpu *cpu, FILE *output);
-void cpu_log_state_reg16(const struct cpu *cpu, FILE *output);
 
 // Memory operations
 

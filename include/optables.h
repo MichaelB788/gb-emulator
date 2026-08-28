@@ -1,14 +1,7 @@
 #pragma once
 #include "cpu_instrs.h"
+#include "instruction.h"
 #include <stdint.h>
-
-typedef void (*cpu_instr_fp)(struct cpu *);
-
-struct instruction {
-  uint8_t opcode;
-  cpu_instr_fp handler;
-  const char *mnemonic;
-};
 
 static const struct instruction optable_base[256] = {
     [0x00] = {0x00, nop, "NOP"},

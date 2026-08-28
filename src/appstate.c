@@ -1,5 +1,4 @@
 #include "appstate.h"
-#include "cpu_debugger.h"
 #include "gameboy.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -28,26 +27,18 @@ struct appstate *appstate_malloc(int argc, char **argv) {
     }
 
     // Debug mode enabled
-    if (strncmp(argv[i], "--debug", 7) == 0) {
-      app->debug_enabled = true;
-      cpu_debugger_create(&app->cpu_dbg);
-    }
+    if (strncmp(argv[i], "--debug", 7) == 0)
+      gameboy_enable_debug(&app->gameboy);
   }
   return app;
 }
 
-void appstate_iterate(struct appstate *app) {
-  if (app->debug_enabled)
-    cpu_debugger_step(&app->cpu_dbg, &app->gameboy, app->log_file);
-  else
-    gameboy_step(&app->gameboy, app->log_file);
-}
+void appstate_iterate(struct appstate *app) { gameboy_step(&app->gameboy); }
 
 void appstate_free(struct appstate *app) {
   if (app) {
     if (app->log_file)
       fclose(app->log_file);
-    cpu_debugger_destroy(&app->cpu_dbg);
     gameboy_destroy(&app->gameboy);
     free(app);
   }

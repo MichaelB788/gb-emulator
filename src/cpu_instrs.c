@@ -339,7 +339,7 @@ void stop(struct cpu *cpu) {
 }
 
 void prefix(struct cpu *cpu) {
-  cpu_execute_instruction(cpu, optable_cb[cpu_fetch_next_opcode(cpu)]);
+  cpu_execute_instruction(cpu, &optable_cb[cpu_fetch_next_opcode(cpu)]);
 }
 
 void illegal(struct cpu *cpu) {

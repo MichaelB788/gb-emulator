@@ -2,24 +2,16 @@
 #include "bus.h"
 #include "cpu.h"
 #include "gameboy.h"
+#include "instruction.h"
+#include "u16_stk.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-void cpu_debugger_create(struct cpu_debugger *dbg) {
-  u16_stk_create(&dbg->breakpoints, 10);
-  u16_stk_create(&dbg->watch_addresses, 10);
-  dbg->state = DEBUG_INIT;
-}
-
-void cpu_debugger_destroy(struct cpu_debugger *dbg) {
-  u16_stk_destroy(&dbg->breakpoints);
-  u16_stk_destroy(&dbg->watch_addresses);
-}
+#include <string.h>
 
 // Pushes a u16 address to `out` via terminal input
-static void add_unique_address(struct u16_stk *out) {
+static void push_unique_address(struct u16_stk *out) {
   unsigned address;
   printf("address: ");
   scanf("%x", &address);
@@ -27,28 +19,57 @@ static void add_unique_address(struct u16_stk *out) {
     u16_stk_push(out, address);
 }
 
-// Prints the current CPU state to `stdout`
-static void dbg_print_cpu_step(struct cpu_debugger *dbg,
-                               const struct cpu *cpu) {
-  if (dbg->watch_addresses.size > 0) {
-    for (size_t i = 0; i < dbg->watch_addresses.size; ++i) {
-      const uint16_t addr = dbg->watch_addresses.data[i];
-      printf("%04X:%02X ", addr, bus_read_byte(cpu->bus, addr));
-    }
-    printf("\n\n");
-  }
-
-  printf("[BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X\n\n",
-         bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
-         bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP));
-
-  cpu_log_state_reg16(cpu, stdout);
-
-  printf("\n");
+void cpu_debugger_create(struct cpu_debugger *dbg) {
+  u16_stk_create(&dbg->breakpoints, 10);
+  u16_stk_create(&dbg->watches, 10);
+  dbg->state = DEBUG_INIT;
 }
 
-void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb,
-                       FILE *log_file) {
+void cpu_debugger_destroy(struct cpu_debugger *dbg) {
+  u16_stk_destroy(&dbg->breakpoints);
+  u16_stk_destroy(&dbg->watches);
+}
+
+void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
+                                 const struct cpu *cpu,
+                                 const struct instruction *instr) {
+  // Create the string containing the watch addresses
+  char watches_string[50] = "";
+  if (dbg->watches.size > 0) {
+    char *str_tgt = watches_string;
+    for (size_t i = 0; i < dbg->watches.size; ++i) {
+      const uint16_t addr = dbg->watches.data[i];
+      str_tgt +=
+          sprintf(str_tgt, "%04X:%02X ", addr, bus_read_byte(cpu->bus, addr));
+    }
+  } else {
+    strcat(watches_string, "No watch");
+  }
+
+  printf(
+      "%s" /* Instruction mnemonic */
+      "\n"
+      "\n"
+      "%s" /* Watch addresses */
+      "\n"
+      "\n"
+      "[BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X"
+      "\n"
+      "\n"
+      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
+      "\n"
+      "\n",
+      instr->mnemonic, watches_string, bus_read_byte(cpu->bus, cpu->BC),
+      bus_read_byte(cpu->bus, cpu->DE), bus_read_byte(cpu->bus, cpu->HL),
+      bus_read_byte(cpu->bus, cpu->SP), cpu->AF, cpu->BC, cpu->DE, cpu->HL,
+      cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+      bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
+}
+
+// TODO
+void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb) {
   switch (dbg->state) {
   case DEBUG_INIT: {
     printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
@@ -56,10 +77,10 @@ void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb,
     scanf(" %c", &user_input);
     switch (user_input) {
     case 'b':
-      add_unique_address(&dbg->breakpoints);
+      push_unique_address(&dbg->breakpoints);
       break;
     case 'w':
-      add_unique_address(&dbg->watch_addresses);
+      push_unique_address(&dbg->watches);
       break;
     case 'c':
       dbg->state = DEBUG_CONTINUE;
@@ -74,14 +95,14 @@ void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb,
     scanf(" %c", &user_input);
     switch (user_input) {
     case 's':
-      dbg_print_cpu_step(dbg, &gb->cpu);
-      gameboy_step(gb, log_file);
+      // TODO: Log step here
+      gameboy_step(gb);
       break;
     case 'b':
-      add_unique_address(&dbg->breakpoints);
+      push_unique_address(&dbg->breakpoints);
       break;
     case 'w':
-      add_unique_address(&dbg->watch_addresses);
+      push_unique_address(&dbg->watches);
       break;
     case 'c':
       dbg->state = DEBUG_CONTINUE;
@@ -95,7 +116,7 @@ void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb,
       printf("\nBreakpoint 0x%04X hit.\n\n", gb->cpu.PC);
       dbg->state = DEBUG_BREAKPOINT;
     } else {
-      gameboy_step(gb, log_file);
+      gameboy_step(gb);
     }
   } break;
   }

@@ -93,7 +93,7 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
     return bus->wram[addr - ECHO_RAM_BEGIN];
 
   if (OAM_BEGIN <= addr && addr <= OAM_END)
-    assert(false && "OAM read");
+    return 0xFF;
 
   if (PROHIBIT_BEGIN <= addr && addr <= PROHIBIT_END)
     return 0xFF;
