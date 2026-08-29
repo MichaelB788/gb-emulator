@@ -1,57 +1,38 @@
-#include "appstate.h"
+#include "app.h"
 #include <SDL3/SDL_error.h>
-#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define SDL_MAIN_USE_CALLBACKS
-#include <SDL3/SDL_main.h>
-
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
+int main(int argc, const char *argv[]) {
   if (argc < 2) {
-    fprintf(stderr, "SDL_AppInit: No ROM provided!\n");
-    return SDL_APP_FAILURE;
-  }
-
-  // Appstate initialization
-  *appstate = appstate_malloc(argc, argv);
-  if (*appstate == NULL) {
-    return SDL_APP_FAILURE;
+    fprintf(stderr, "main: No ROM provided!\n");
+    return EXIT_FAILURE;
   }
 
   // SDL subsystems initialization
   if (!SDL_Init(SDL_INIT_EVENTS)) {
-    fprintf(stderr, "SDL_AppInit: %s\n", SDL_GetError());
-    return SDL_APP_FAILURE;
+    fprintf(stderr, "main: %s\n", SDL_GetError());
+    SDL_Quit();
+    return EXIT_FAILURE;
   }
 
-  return SDL_APP_CONTINUE;
-}
-
-SDL_AppResult SDL_AppIterate(void *appstate) {
-  appstate_iterate(appstate);
-  return SDL_APP_CONTINUE;
-}
-
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-  (void)appstate;
-  switch (event->type) {
-  case SDL_EVENT_QUIT:
-    return SDL_APP_SUCCESS;
-  default:
-    return SDL_APP_CONTINUE;
+  // Parse program arguments
+  bool debug_enabled = false;
+  for (int i = 1; i < argc; ++i) {
+    debug_enabled = strncmp(argv[i], "--debug", 7) == 0;
   }
-}
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  // Close emulator subsystems
-  appstate_free(appstate);
-
-  // Print app result
-  if (result == SDL_APP_SUCCESS) {
-    printf("App exited successfully.\n");
-  } else if (result == SDL_APP_FAILURE) {
-    fprintf(stderr, "An error occurred.\n");
+  // Create and run the app
+  struct app *app = app_malloc(argv[1], debug_enabled);
+  if (!app) {
+    SDL_Quit();
+    return EXIT_FAILURE;
   }
+  app_loop(app);
+  app_free(app);
+  SDL_Quit();
+
+  puts("Program success!");
+  return EXIT_SUCCESS;
 }

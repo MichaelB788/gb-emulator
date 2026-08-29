@@ -8,7 +8,7 @@ target_compile_options(${EXECUTABLE_NAME} PRIVATE
 )
 
 add_library(${LIBRARY_NAME}
-  appstate.c
+  app.c
   bus.c
   cartridge.c
   cpu.c
