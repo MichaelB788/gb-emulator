@@ -3,6 +3,7 @@
 #include <SDL3/SDL_init.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, const char *argv[]) {
   if (argc < 2) {
@@ -17,6 +18,10 @@ int main(int argc, const char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  // Parse the ROM path
+  char rom_path[FILENAME_MAX];
+  strncpy(rom_path, argv[1], FILENAME_MAX);
+
   // Parse program arguments
   bool debug_enabled = false;
   for (int i = 1; i < argc; ++i) {
@@ -24,7 +29,7 @@ int main(int argc, const char *argv[]) {
   }
 
   // Create and run the app
-  struct app *app = app_malloc(argv[1], debug_enabled);
+  struct app *app = app_malloc(rom_path, debug_enabled);
   if (!app) {
     SDL_Quit();
     return EXIT_FAILURE;
