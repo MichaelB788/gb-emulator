@@ -22,6 +22,7 @@ void cpu_create(struct cpu *cpu, struct bus *bus) {
 
 void cpu_enable_debugging(struct cpu *cpu) {
   cpu->debug_enabled = true;
+  cpu->state = CPU_DEBUGGING;
   cpu_debugger_create(&cpu->debugger);
 }
 
@@ -37,9 +38,20 @@ void cpu_step(struct cpu *cpu) {
     bus_tick(cpu->bus);
     break;
   case CPU_STOPPED:
-    // TODO
-    assert(false);
+    assert(false); // TODO
     break;
+  case CPU_DEBUGGING: {
+    switch (cpu_debugger_step(&cpu->debugger)) {
+    case CPU_DEBUG_WAIT:
+      break;
+    case CPU_DEBUG_STEP:
+      cpu_execute_instruction(cpu, &optable_base[cpu_fetch_next_opcode(cpu)]);
+      break;
+    case CPU_CONTINUE:
+      cpu->state = CPU_RUNNING;
+      break;
+    }
+  } break;
   }
 
   // Handle interrupts
@@ -52,6 +64,13 @@ void cpu_step(struct cpu *cpu) {
 }
 
 uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
+  if (cpu->debug_enabled &&
+      cpu_debugger_was_breakpoint_hit(&cpu->debugger, cpu->PC)) {
+    printf("\nBreakpoint 0x%04X hit.\n", cpu->PC);
+    cpu->state = CPU_DEBUGGING;
+    cpu->debugger.state = CPU_DEBUG_BREAKPOINT_HIT;
+  }
+
   if (cpu->halt_bug) {
     cpu->halt_bug = false;
     return cpu_read_u8(cpu, cpu->PC);
@@ -68,10 +87,10 @@ void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
     cpu->IME = true;
   }
 
-  if (cpu->debug_enabled)
-    cpu_debugger_print_cpu_step(&cpu->debugger, cpu, instr);
-
   instr->handler(cpu);
+
+  if (cpu->state == CPU_DEBUGGING)
+    cpu_debugger_print_cpu_step(&cpu->debugger, cpu, instr);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {

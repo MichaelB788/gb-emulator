@@ -1,7 +1,6 @@
 #include "cpu_debugger.h"
 #include "bus.h"
 #include "cpu.h"
-#include "gameboy.h"
 #include "instruction.h"
 #include "u16_stk.h"
 #include <stddef.h>
@@ -20,14 +19,22 @@ static void push_unique_address(struct u16_stk *out) {
 }
 
 void cpu_debugger_create(struct cpu_debugger *dbg) {
+  dbg->state = CPU_DEBUG_INIT;
   u16_stk_create(&dbg->breakpoints, 10);
   u16_stk_create(&dbg->watches, 10);
-  dbg->state = DEBUG_INIT;
 }
 
 void cpu_debugger_destroy(struct cpu_debugger *dbg) {
   u16_stk_destroy(&dbg->breakpoints);
   u16_stk_destroy(&dbg->watches);
+}
+
+void cpu_debugger_watch_address(struct cpu_debugger *dbg) {
+  push_unique_address(&dbg->watches);
+}
+
+void cpu_debugger_add_breakpoint(struct cpu_debugger *dbg) {
+  push_unique_address(&dbg->breakpoints);
 }
 
 void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
@@ -47,6 +54,7 @@ void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
   }
 
   printf(
+      "\n"
       "%s" /* Instruction mnemonic */
       "\n"
       "\n"
@@ -68,56 +76,48 @@ void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
       bus_read_byte(cpu->bus, cpu->PC + 3));
 }
 
-// TODO
-void cpu_debugger_step(struct cpu_debugger *dbg, struct gameboy *gb) {
+bool cpu_debugger_was_breakpoint_hit(const struct cpu_debugger *dbg,
+                                     uint16_t pc) {
+  return u16_stk_contains(&dbg->breakpoints, pc);
+}
+
+enum res cpu_debugger_step(struct cpu_debugger *dbg) {
+  char user_input;
   switch (dbg->state) {
-  case DEBUG_INIT: {
+  case CPU_DEBUG_INIT:
     printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
-    char user_input;
     scanf(" %c", &user_input);
     switch (user_input) {
     case 'b':
-      push_unique_address(&dbg->breakpoints);
+      cpu_debugger_add_breakpoint(dbg);
       break;
     case 'w':
-      push_unique_address(&dbg->watches);
+      cpu_debugger_watch_address(dbg);
       break;
     case 'c':
-      dbg->state = DEBUG_CONTINUE;
-      break;
+      return CPU_CONTINUE;
     default:
       break;
     }
-  } break;
-  case DEBUG_BREAKPOINT: {
+    break;
+  case CPU_DEBUG_BREAKPOINT_HIT:
     printf("[(s)tep | (b)reakpoint | (w)atch | (c)ontinue]: ");
-    char user_input;
     scanf(" %c", &user_input);
     switch (user_input) {
     case 's':
-      // TODO: Log step here
-      gameboy_step(gb);
-      break;
+      return CPU_DEBUG_STEP;
     case 'b':
-      push_unique_address(&dbg->breakpoints);
+      cpu_debugger_add_breakpoint(dbg);
       break;
     case 'w':
-      push_unique_address(&dbg->watches);
+      cpu_debugger_watch_address(dbg);
       break;
     case 'c':
-      dbg->state = DEBUG_CONTINUE;
-      break;
+      return CPU_CONTINUE;
     default:
       break;
     }
-  } break;
-  case DEBUG_CONTINUE: {
-    if (u16_stk_contains(&dbg->breakpoints, gb->cpu.PC)) {
-      printf("\nBreakpoint 0x%04X hit.\n\n", gb->cpu.PC);
-      dbg->state = DEBUG_BREAKPOINT;
-    } else {
-      gameboy_step(gb);
-    }
-  } break;
+    break;
   }
+  return CPU_DEBUG_WAIT;
 }

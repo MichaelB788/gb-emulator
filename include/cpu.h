@@ -12,7 +12,12 @@ static constexpr uint8_t FLAG_C = 1 << 4;
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED } state;
+  enum cpu_state {
+    CPU_RUNNING,
+    CPU_HALTED,
+    CPU_STOPPED,
+    CPU_DEBUGGING,
+  } state;
 
   bool IME;
   bool halt_bug;

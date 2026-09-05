@@ -13,7 +13,7 @@ void u16_stk_destroy(struct u16_stk *stk) {
     free(stk->data);
 }
 
-[[nodiscard]] bool u16_stk_contains(struct u16_stk *stk, uint16_t u16) {
+bool u16_stk_contains(const struct u16_stk *stk, uint16_t u16) {
   for (size_t i = 0; i < stk->size; ++i) {
     if (stk->data[i] == u16)
       return true;
