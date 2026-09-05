@@ -1,10 +1,11 @@
 #include "app.h"
+#include "cpu.h"
 #include "gameboy.h"
 #include <SDL3/SDL_events.h>
 #include <stddef.h>
 #include <stdlib.h>
 
-struct app *app_malloc(const char *rom_path, bool debug_enabled) {
+struct app *app_malloc(const char *rom_path, bool cpu_debugging_enabled) {
   struct app *app = malloc(sizeof(struct app));
 
   // Gameboy initialization
@@ -12,8 +13,10 @@ struct app *app_malloc(const char *rom_path, bool debug_enabled) {
     free(app);
     return nullptr;
   }
-  if (debug_enabled)
-    gameboy_enable_debug(&app->gameboy);
+
+  // Enable debugging
+  if (cpu_debugging_enabled)
+    cpu_enable_debugging(&app->gameboy.cpu);
 
   return app;
 }

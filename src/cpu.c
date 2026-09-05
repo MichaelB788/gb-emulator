@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-void cpu_init(struct cpu *cpu, struct bus *bus) {
+void cpu_create(struct cpu *cpu, struct bus *bus) {
   assert(bus != nullptr);
   cpu->bus = bus;
 
@@ -19,6 +19,13 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
   cpu->IME = cpu->ime_pending = cpu->halt_bug = false;
   cpu->state = CPU_RUNNING;
 }
+
+void cpu_enable_debugging(struct cpu *cpu) {
+  cpu->debug_enabled = true;
+  cpu_debugger_create(&cpu->debugger);
+}
+
+void cpu_destroy(struct cpu *cpu) { cpu_debugger_destroy(&cpu->debugger); }
 
 void cpu_step(struct cpu *cpu) {
   // Execute instructions
@@ -61,8 +68,8 @@ void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
     cpu->IME = true;
   }
 
-  if (cpu->dbg)
-    cpu_debugger_print_cpu_step(cpu->dbg, cpu, instr);
+  if (cpu->debug_enabled)
+    cpu_debugger_print_cpu_step(&cpu->debugger, cpu, instr);
 
   instr->handler(cpu);
 }

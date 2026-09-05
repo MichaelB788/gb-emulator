@@ -293,11 +293,10 @@ void ei(struct cpu *cpu) { cpu->ime_pending = true; }
 
 void halt(struct cpu *cpu) {
   const struct interrupts *in = &cpu->bus->interrupts;
-  if (!cpu->IME && (in->IF & in->IE) != 0) {
+  if (!cpu->IME && (in->IF & in->IE) != 0)
     cpu->halt_bug = true;
-  } else {
+  else
     cpu->state = CPU_HALTED;
-  }
 }
 
 /// Misc.

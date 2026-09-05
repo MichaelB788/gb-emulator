@@ -1,9 +1,9 @@
 #pragma once
+#include "cpu_debugger.h"
 #include <stdint.h>
 
 struct bus;
 struct instruction;
-struct cpu_debugger;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
@@ -13,12 +13,23 @@ static constexpr uint8_t FLAG_C = 1 << 4;
 // The GameBoy's CPU
 struct cpu {
   enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_STOPPED } state;
-  uint8_t IR; // Instruction register, holds the current opcode
 
   bool IME;
-  bool ime_pending; // Setting IME has a delay
   bool halt_bug;
+  bool ime_pending; // Setting IME has a delay
+  bool debug_enabled;
 
+  uint8_t IR; // Instruction register, holds the current opcode
+
+  // 16-bit registers
+  uint16_t PC;
+  uint16_t SP;
+
+  /**
+   * 8-bit registers, of which can be combined to be interpreted as a 16-bit
+   * register
+   * NOTE: Ordering of 8-bit registers assumes the system is little endian
+   */
   // clang-format off
   union { struct { uint8_t F, A; }; uint16_t AF; };
   union { struct { uint8_t C, B; }; uint16_t BC; };
@@ -26,14 +37,14 @@ struct cpu {
   union { struct { uint8_t L, H; }; uint16_t HL; };
   // clang-format on
 
-  uint16_t PC;
-  uint16_t SP;
+  struct cpu_debugger debugger;
 
-  struct bus *bus;          // Non-owning pointer to bus, must not be NULL
-  struct cpu_debugger *dbg; // Non-owning pointer to debugger, can be NULL
+  struct bus *bus; // Non-owning pointer to bus, must not be NULL
 };
 
-void cpu_init(struct cpu *cpu, struct bus *bus);
+void cpu_create(struct cpu *cpu, struct bus *bus);
+void cpu_enable_debugging(struct cpu *cpu);
+void cpu_destroy(struct cpu *cpu);
 
 void cpu_step(struct cpu *cpu);
 
