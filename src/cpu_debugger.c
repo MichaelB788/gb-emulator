@@ -19,7 +19,6 @@ static void push_unique_address(struct u16_stk *out) {
 }
 
 void cpu_debugger_create(struct cpu_debugger *dbg) {
-  dbg->state = CPU_DEBUG_INIT;
   u16_stk_create(&dbg->breakpoints, 10);
   u16_stk_create(&dbg->watches, 10);
 }
@@ -76,36 +75,46 @@ void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
       bus_read_byte(cpu->bus, cpu->PC + 3));
 }
 
-bool cpu_debugger_was_breakpoint_hit(const struct cpu_debugger *dbg,
-                                     uint16_t pc) {
-  return u16_stk_contains(&dbg->breakpoints, pc);
+void cpu_debugger_check_for_breakpoints(struct cpu_debugger *dbg, uint16_t pc) {
+  if (u16_stk_contains(&dbg->breakpoints, pc)) {
+    printf("\nBreakpoint 0x%04X hit.\n", pc);
+    dbg->state = CPU_DEBUGGER_BREAKPOINT_HIT;
+  }
 }
 
-enum res cpu_debugger_step(struct cpu_debugger *dbg) {
+void cpu_debugger_init(struct cpu_debugger *dbg) {
+  char user_input;
+  printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
+  scanf(" %c", &user_input);
+  switch (user_input) {
+  case 'b':
+    cpu_debugger_add_breakpoint(dbg);
+    break;
+  case 'w':
+    cpu_debugger_watch_address(dbg);
+    break;
+  case 'c':
+    dbg->state = CPU_DEBUGGER_INACTIVE;
+    break;
+  default:
+    break;
+  }
+}
+
+void cpu_debugger_step(struct cpu_debugger *dbg, struct cpu *cpu,
+                       const struct instruction *instr) {
   char user_input;
   switch (dbg->state) {
-  case CPU_DEBUG_INIT:
-    printf("[(b)reakpoint | (w)atch | (c)ontinue]: ");
-    scanf(" %c", &user_input);
-    switch (user_input) {
-    case 'b':
-      cpu_debugger_add_breakpoint(dbg);
-      break;
-    case 'w':
-      cpu_debugger_watch_address(dbg);
-      break;
-    case 'c':
-      return CPU_CONTINUE;
-    default:
-      break;
-    }
+  case CPU_DEBUGGER_INACTIVE:
     break;
-  case CPU_DEBUG_BREAKPOINT_HIT:
+  case CPU_DEBUGGER_BREAKPOINT_HIT: {
     printf("[(s)tep | (b)reakpoint | (w)atch | (c)ontinue]: ");
     scanf(" %c", &user_input);
     switch (user_input) {
     case 's':
-      return CPU_DEBUG_STEP;
+      cpu_execute_instruction(cpu, instr);
+      cpu_debugger_print_cpu_step(dbg, cpu, instr);
+      break;
     case 'b':
       cpu_debugger_add_breakpoint(dbg);
       break;
@@ -113,11 +122,15 @@ enum res cpu_debugger_step(struct cpu_debugger *dbg) {
       cpu_debugger_watch_address(dbg);
       break;
     case 'c':
-      return CPU_CONTINUE;
+      dbg->state = CPU_DEBUGGER_INACTIVE;
+      break;
     default:
       break;
     }
-    break;
+  } break;
+  case CPU_DEBUGGER_LOGGING: {
+    cpu_execute_instruction(cpu, instr);
+    cpu_debugger_print_cpu_step(dbg, cpu, instr);
+  } break;
   }
-  return CPU_DEBUG_WAIT;
 }

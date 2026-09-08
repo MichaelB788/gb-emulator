@@ -7,14 +7,12 @@ struct gameboy;
 struct cpu;
 struct instruction;
 
-enum res { CPU_DEBUG_WAIT, CPU_DEBUG_STEP, CPU_CONTINUE };
-
 struct cpu_debugger {
-  enum cpu_debug_state {
-    CPU_DEBUG_INIT,
-    CPU_DEBUG_BREAKPOINT_HIT,
+  enum cpu_debugger_state {
+    CPU_DEBUGGER_INACTIVE,
+    CPU_DEBUGGER_BREAKPOINT_HIT,
+    CPU_DEBUGGER_LOGGING
   } state;
-
   struct u16_stk breakpoints;
   struct u16_stk watches;
 };
@@ -26,7 +24,8 @@ void cpu_debugger_print_cpu_step(const struct cpu_debugger *dbg,
                                  const struct cpu *cpu,
                                  const struct instruction *instr);
 
-[[nodiscard]] enum res cpu_debugger_step(struct cpu_debugger *dbg);
+void cpu_debugger_init(struct cpu_debugger *dbg);
+void cpu_debugger_step(struct cpu_debugger *dbg, struct cpu *cpu,
+                       const struct instruction *instr);
 
-[[nodiscard]] bool
-cpu_debugger_was_breakpoint_hit(const struct cpu_debugger *dbg, uint16_t pc);
+void cpu_debugger_check_for_breakpoints(struct cpu_debugger *dbg, uint16_t pc);
