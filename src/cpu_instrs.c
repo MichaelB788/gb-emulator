@@ -4,6 +4,7 @@
 #include "impl_cpu_instrs.h"
 #include "interrupts.h"
 #include "optables.h"
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -296,7 +297,7 @@ void halt(struct cpu *cpu) {
   if (!cpu->IME && (in->IF & in->IE) != 0)
     cpu->halt_bug = true;
   else
-    cpu->state = CPU_HALTED;
+    cpu->is_halted = true;
 }
 
 /// Misc.
@@ -333,7 +334,7 @@ void daa(struct cpu *cpu) {
 void nop(struct cpu *cpu) {}
 
 void stop(struct cpu *cpu) {
-  cpu->state = CPU_STOPPED;
+  assert(false); // TODO
   cpu->bus->timer.system_counter = cpu->bus->timer.DIV = 0;
 }
 

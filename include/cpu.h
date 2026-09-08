@@ -12,17 +12,11 @@ static constexpr uint8_t FLAG_C = 1 << 4;
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_state {
-    CPU_RUNNING,
-    CPU_HALTED,
-    CPU_STOPPED,
-    CPU_DEBUGGING,
-  } state;
-
   bool IME;
   bool halt_bug;
   bool ime_pending; // Setting IME has a delay
   bool debug_enabled;
+  bool is_halted;
 
   uint8_t IR; // Instruction register, holds the current opcode
 
@@ -42,21 +36,17 @@ struct cpu {
   union { struct { uint8_t L, H; }; uint16_t HL; };
   // clang-format on
 
-  struct cpu_debugger debugger;
-
   struct bus *bus; // Non-owning pointer to bus, must not be NULL
 };
 
-void cpu_create(struct cpu *cpu, struct bus *bus);
-void cpu_enable_debugging(struct cpu *cpu);
-void cpu_destroy(struct cpu *cpu);
+void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_step(struct cpu *cpu);
 
 // Fetches the opcode in memory at PC and updates PC depending on the halt bug
 [[nodiscard]] uint8_t cpu_fetch_next_opcode(struct cpu *cpu);
 
-// Executes the given base instruction
+// Executes the given instruction
 void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr);
 
 /// Sets the flag(s) to the given boolean value

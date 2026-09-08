@@ -1,13 +1,14 @@
 #include "cpu.h"
 #include "bus.h"
 #include "cpu_debugger.h"
+#include "instruction.h"
 #include "interrupts.h"
 #include "optables.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
-void cpu_create(struct cpu *cpu, struct bus *bus) {
+void cpu_init(struct cpu *cpu, struct bus *bus) {
   assert(bus != nullptr);
   cpu->bus = bus;
 
@@ -16,61 +17,24 @@ void cpu_create(struct cpu *cpu, struct bus *bus) {
   cpu->IR = cpu_read_u8(cpu, cpu->PC++);
 
   cpu->AF = cpu->BC = cpu->DE = cpu->HL = cpu->SP = 0;
-  cpu->IME = cpu->ime_pending = cpu->halt_bug = false;
-  cpu->state = CPU_RUNNING;
+  cpu->IME = cpu->ime_pending = cpu->halt_bug = cpu->is_halted = false;
 }
-
-void cpu_enable_debugging(struct cpu *cpu) {
-  cpu->debug_enabled = true;
-  cpu->state = CPU_DEBUGGING;
-  cpu_debugger_create(&cpu->debugger);
-}
-
-void cpu_destroy(struct cpu *cpu) { cpu_debugger_destroy(&cpu->debugger); }
 
 void cpu_step(struct cpu *cpu) {
-  // Execute instructions
-  switch (cpu->state) {
-  case CPU_RUNNING:
-    cpu_execute_instruction(cpu, &optable_base[cpu_fetch_next_opcode(cpu)]);
-    break;
-  case CPU_HALTED:
+  if (cpu->is_halted)
     bus_tick(cpu->bus);
-    break;
-  case CPU_STOPPED:
-    assert(false); // TODO
-    break;
-  case CPU_DEBUGGING: {
-    switch (cpu_debugger_step(&cpu->debugger)) {
-    case CPU_DEBUG_WAIT:
-      break;
-    case CPU_DEBUG_STEP:
-      cpu_execute_instruction(cpu, &optable_base[cpu_fetch_next_opcode(cpu)]);
-      break;
-    case CPU_CONTINUE:
-      cpu->state = CPU_RUNNING;
-      break;
-    }
-  } break;
-  }
+  else
+    cpu_execute_instruction(cpu, &optable_base[cpu_fetch_next_opcode(cpu)]);
 
-  // Handle interrupts
   struct interrupts *in = &cpu->bus->interrupts;
-  if ((in->IE & in->IF) != 0) {
-    cpu->state = CPU_RUNNING;
+  if (in->IE & in->IF) {
+    cpu->is_halted = false;
     if (cpu->IME)
       interrupts_service_pending(in, cpu);
   }
 }
 
 uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
-  if (cpu->debug_enabled &&
-      cpu_debugger_was_breakpoint_hit(&cpu->debugger, cpu->PC)) {
-    printf("\nBreakpoint 0x%04X hit.\n", cpu->PC);
-    cpu->state = CPU_DEBUGGING;
-    cpu->debugger.state = CPU_DEBUG_BREAKPOINT_HIT;
-  }
-
   if (cpu->halt_bug) {
     cpu->halt_bug = false;
     return cpu_read_u8(cpu, cpu->PC);
@@ -80,17 +44,15 @@ uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
 }
 
 void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
-  cpu->IR = instr->opcode;
-
+  // Update IME after delay
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
   }
 
+  // Execute instruction
+  cpu->IR = instr->opcode;
   instr->handler(cpu);
-
-  if (cpu->state == CPU_DEBUGGING)
-    cpu_debugger_print_cpu_step(&cpu->debugger, cpu, instr);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {

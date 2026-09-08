@@ -8,7 +8,7 @@ struct app {
   SDL_Event event;
 };
 
-[[nodiscard]] struct app *app_malloc(const char *rom_path, bool debug_enabled);
+[[nodiscard]] struct app *app_malloc(const char *rom_path);
 void app_free(struct app *state);
 
 void app_loop(struct app *app);
