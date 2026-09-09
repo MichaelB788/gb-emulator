@@ -43,6 +43,44 @@ uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
   }
 }
 
+static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
+  switch (cpu->log_level) {
+  case CPU_LOGGING_NONE:
+    break;
+  case CPU_LOGGING_BREIF:
+    printf(
+        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
+        "\n",
+        cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+        bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
+        bus_read_byte(cpu->bus, cpu->PC + 2),
+        bus_read_byte(cpu->bus, cpu->PC + 3));
+    fflush(stdout);
+    break;
+  case CPU_LOGGING_VERBOSE:
+    printf(
+        "\n"
+        "%s" /* Instruction mnemonic */
+        "\n"
+        "\n"
+        "[BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X"
+        "\n"
+        "\n"
+        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
+        "\n"
+        "\n",
+        instr->mnemonic, bus_read_byte(cpu->bus, cpu->BC),
+        bus_read_byte(cpu->bus, cpu->DE), bus_read_byte(cpu->bus, cpu->HL),
+        bus_read_byte(cpu->bus, cpu->SP), cpu->AF, cpu->BC, cpu->DE, cpu->HL,
+        cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+        bus_read_byte(cpu->bus, cpu->PC + 1),
+        bus_read_byte(cpu->bus, cpu->PC + 2),
+        bus_read_byte(cpu->bus, cpu->PC + 3));
+    fflush(stdout);
+    break;
+  }
+}
+
 void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
   // Update IME after delay
   if (cpu->ime_pending) {
@@ -53,24 +91,13 @@ void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
   // Execute instruction
   cpu->IR = instr->opcode;
   instr->handler(cpu);
+
+  // Log the instruction, if permitted
+  cpu_log_step(cpu, instr);
 }
 
 void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
   cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
-}
-
-// Logging
-
-void cpu_log_state_reg8(const struct cpu *cpu, FILE *output) {
-  fprintf(
-      output,
-      "A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X\n",
-      cpu->A, cpu->F, cpu->B, cpu->C, cpu->D, cpu->E, cpu->H, cpu->L, cpu->SP,
-      cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
-      bus_read_byte(cpu->bus, cpu->PC + 1),
-      bus_read_byte(cpu->bus, cpu->PC + 2),
-      bus_read_byte(cpu->bus, cpu->PC + 3));
-  fflush(output);
 }
 
 // Memory operations

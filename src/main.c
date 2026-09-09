@@ -22,21 +22,16 @@ int main(int argc, const char *argv[]) {
   char rom_path[FILENAME_MAX];
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
-  /*
   // Parse program arguments
   bool debug_enabled = false;
   for (int i = 1; i < argc; ++i) {
     debug_enabled = strncmp(argv[i], "--debug", 7) == 0;
   }
-  */
 
   // Create and run the app
-  struct app *app = app_malloc(rom_path);
-  if (!app) {
-    SDL_Quit();
-    return EXIT_FAILURE;
-  }
-  app_loop(app);
+  struct app *app = app_malloc(rom_path, debug_enabled);
+  if (app)
+    app_loop(app);
   app_free(app);
   SDL_Quit();
 

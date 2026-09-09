@@ -1,9 +1,9 @@
 #pragma once
-#include "cpu_debugger.h"
 #include <stdint.h>
 
 struct bus;
 struct instruction;
+struct cpu_debugger;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
@@ -12,10 +12,15 @@ static constexpr uint8_t FLAG_C = 1 << 4;
 
 // The GameBoy's CPU
 struct cpu {
+  enum cpu_log_level {
+    CPU_LOGGING_NONE,
+    CPU_LOGGING_BREIF,
+    CPU_LOGGING_VERBOSE
+  } log_level;
+
   bool IME;
   bool halt_bug;
   bool ime_pending; // Setting IME has a delay
-  bool debug_enabled;
   bool is_halted;
 
   uint8_t IR; // Instruction register, holds the current opcode
@@ -36,7 +41,7 @@ struct cpu {
   union { struct { uint8_t L, H; }; uint16_t HL; };
   // clang-format on
 
-  struct bus *bus; // Non-owning pointer to bus, must not be NULL
+  struct bus *bus; // Must not be nullptr
 };
 
 void cpu_init(struct cpu *cpu, struct bus *bus);

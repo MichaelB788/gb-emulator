@@ -4,14 +4,17 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-struct app *app_malloc(const char *rom_path) {
+struct app *app_malloc(const char *rom, bool debug_enabled) {
   struct app *app = malloc(sizeof(struct app));
 
   // Gameboy initialization
-  if (!gameboy_create(&app->gameboy, rom_path)) {
+  if (!gameboy_create(&app->gameboy, rom)) {
     free(app);
     return nullptr;
   }
+
+  if (debug_enabled)
+    gameboy_enable_debugging(&app->gameboy);
 
   return app;
 }
@@ -33,5 +36,6 @@ void app_free(struct app *app) {
   if (app) {
     gameboy_destroy(&app->gameboy);
     free(app);
+    app = nullptr;
   }
 }
