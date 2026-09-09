@@ -66,7 +66,7 @@ static constexpr uint16_t IO_REGISTERS_END = 0xFF7F;
 static constexpr uint16_t HRAM_BEGIN = 0xFF80;
 static constexpr uint16_t HRAM_END = 0xFFFE;
 
-static constexpr uint16_t INTERRUPTS_IE = 0xFFFF;
+static constexpr uint16_t IO_IE = 0xFFFF;
 
 // CPU clock freq
 

@@ -27,10 +27,9 @@
     return bus->timer.TAC;
   case IO_IF:
     return bus->interrupts.IF;
-  case INTERRUPTS_IE:
+  case IO_IE:
     return bus->interrupts.IE;
-  case IO_LY: // Stub this value for now, important for blargg's halt bug
-              // However, this segfaults on cpu_instrs.gb?
+  case IO_LY:
     return 0x90;
   default:
     return 0xFF;
@@ -63,7 +62,7 @@ static void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
   case IO_IF:
     bus->interrupts.IF = val;
     break;
-  case INTERRUPTS_IE:
+  case IO_IE:
     bus->interrupts.IE = val;
     break;
   default:
@@ -101,8 +100,7 @@ uint8_t bus_read_byte(const struct bus *bus, uint16_t addr) {
   if (PROHIBIT_BEGIN <= addr && addr <= PROHIBIT_END)
     return 0xFF;
 
-  if (IO_REGISTERS_BEGIN <= addr && addr <= IO_REGISTERS_END ||
-      addr == INTERRUPTS_IE)
+  if (IO_REGISTERS_BEGIN <= addr && addr <= IO_REGISTERS_END || addr == IO_IE)
     return bus_read_io(bus, addr);
 
   if (HRAM_BEGIN <= addr && addr <= HRAM_END)
@@ -134,7 +132,7 @@ void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val) {
     return;
 
   else if (IO_REGISTERS_BEGIN <= addr && addr <= IO_REGISTERS_END ||
-           addr == INTERRUPTS_IE)
+           addr == IO_IE)
     bus_write_io(bus, addr, val);
 
   else if (HRAM_BEGIN <= addr && addr <= HRAM_END)
