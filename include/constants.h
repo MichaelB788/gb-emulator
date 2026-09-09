@@ -44,17 +44,22 @@ static constexpr uint16_t PROHIBIT_END = 0xFEFF;
 
 static constexpr uint16_t IO_REGISTERS_BEGIN = 0xFF00;
 
-static constexpr uint16_t JOYPAD_P1 = 0xFF00;
+static constexpr uint16_t IO_JOYPAD = 0xFF00;
 
-static constexpr uint16_t SERIAL_SB = 0xFF01;
-static constexpr uint16_t SERIAL_SC = 0xFF02;
+static constexpr uint16_t IO_SB = 0xFF01;
+static constexpr uint16_t IO_SC = 0xFF02;
 
-static constexpr uint16_t TIMER_DIV = 0xFF04;
-static constexpr uint16_t TIMER_TIMA = 0xFF05;
-static constexpr uint16_t TIMER_TMA = 0xFF06;
-static constexpr uint16_t TIMER_TAC = 0xFF07;
+static constexpr uint16_t IO_DIV = 0xFF04;
+static constexpr uint16_t IO_TIMA = 0xFF05;
+static constexpr uint16_t IO_TMA = 0xFF06;
+static constexpr uint16_t IO_TAC = 0xFF07;
 
-static constexpr uint16_t INTERRUPTS_IF = 0xFF0F;
+static constexpr uint16_t IO_IF = 0xFF0F;
+
+static constexpr uint16_t IO_LCDC = 0xFF40;
+static constexpr uint16_t IO_STAT = 0xFF41;
+static constexpr uint16_t IO_LY = 0xFF44;
+static constexpr uint16_t IO_LYC = 0xFF45;
 
 static constexpr uint16_t IO_REGISTERS_END = 0xFF7F;
 

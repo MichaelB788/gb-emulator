@@ -11,24 +11,27 @@
 
 [[nodiscard]] static uint8_t bus_read_io(const struct bus *bus, uint16_t addr) {
   switch (addr) {
-  case JOYPAD_P1:
+  case IO_JOYPAD:
     return bus->joypad.P1;
-  case SERIAL_SB:
+  case IO_SB:
     return bus->serial.SB;
-  case SERIAL_SC:
+  case IO_SC:
     return bus->serial.SC;
-  case TIMER_DIV:
+  case IO_DIV:
     return bus->timer.DIV;
-  case TIMER_TIMA:
+  case IO_TIMA:
     return bus->timer.TIMA;
-  case TIMER_TMA:
+  case IO_TMA:
     return bus->timer.TMA;
-  case TIMER_TAC:
+  case IO_TAC:
     return bus->timer.TAC;
-  case INTERRUPTS_IF:
+  case IO_IF:
     return bus->interrupts.IF;
   case INTERRUPTS_IE:
     return bus->interrupts.IE;
+  case IO_LY: // Stub this value for now, important for blargg's halt bug
+              // However, this segfaults on cpu_instrs.gb?
+    return 0x90;
   default:
     return 0xFF;
   }
@@ -36,28 +39,28 @@
 
 static void bus_write_io(struct bus *bus, uint16_t addr, uint8_t val) {
   switch (addr) {
-  case JOYPAD_P1:
+  case IO_JOYPAD:
     joypad_write(&bus->joypad, val);
     break;
-  case SERIAL_SB:
+  case IO_SB:
     bus->serial.SB = val;
     break;
-  case SERIAL_SC:
+  case IO_SC:
     serial_write_sc(&bus->serial, val);
     break;
-  case TIMER_DIV:
+  case IO_DIV:
     timer_write_div(&bus->timer, val);
     break;
-  case TIMER_TIMA:
+  case IO_TIMA:
     bus->timer.TIMA = val;
     break;
-  case TIMER_TMA:
+  case IO_TMA:
     bus->timer.TMA = val;
     break;
-  case TIMER_TAC:
+  case IO_TAC:
     bus->timer.TAC = val;
     break;
-  case INTERRUPTS_IF:
+  case IO_IF:
     bus->interrupts.IF = val;
     break;
   case INTERRUPTS_IE:

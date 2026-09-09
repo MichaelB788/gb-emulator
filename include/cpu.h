@@ -3,7 +3,6 @@
 
 struct bus;
 struct instruction;
-struct cpu_debugger;
 
 static constexpr uint8_t FLAG_Z = 1 << 7;
 static constexpr uint8_t FLAG_N = 1 << 6;
