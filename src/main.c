@@ -25,12 +25,14 @@ int main(int argc, const char *argv[]) {
 
   // Parse program arguments
   enum gb_debug_option opt = GB_DEBUG_ENABLE_NONE;
-  if (strncmp(argv[2], "--breakpoint", 7) == 0)
-    opt = GB_DEBUG_ENABLE_BREAKPOINTS;
-  else if (strncmp(argv[2], "--logv", 6) == 0)
-    opt = GB_DEBUG_ENABLE_LOG_VERBOSE;
-  else if (strncmp(argv[2], "--logb", 6) == 0)
-    opt = GB_DEBUG_ENABLE_LOG_BRIEF;
+  if (argc > 2) {
+    if (strncmp(argv[2], "--breakpoint", 7) == 0)
+      opt = GB_DEBUG_ENABLE_BREAKPOINTS;
+    else if (strncmp(argv[2], "--logv", 6) == 0)
+      opt = GB_DEBUG_ENABLE_LOG_VERBOSE;
+    else if (strncmp(argv[2], "--logb", 6) == 0)
+      opt = GB_DEBUG_ENABLE_LOG_BRIEF;
+  }
 
   // Create and run the app
   struct app *app = app_malloc(rom_path, opt);
