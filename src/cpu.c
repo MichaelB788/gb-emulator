@@ -45,9 +45,9 @@ uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
 
 static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
   switch (cpu->log_level) {
-  case CPU_LOGGING_NONE:
+  case CPU_LOG_NONE:
     break;
-  case CPU_LOGGING_BREIF:
+  case CPU_LOG_BREIF:
     printf(
         "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
         "\n",
@@ -57,7 +57,7 @@ static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
         bus_read_byte(cpu->bus, cpu->PC + 3));
     fflush(stdout);
     break;
-  case CPU_LOGGING_VERBOSE:
+  case CPU_LOG_VERBOSE:
     printf(
         "\n"
         "%s" /* Instruction mnemonic */

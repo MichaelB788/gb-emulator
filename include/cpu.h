@@ -12,11 +12,7 @@ static constexpr uint8_t FLAG_C = 1 << 4;
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_log_level {
-    CPU_LOGGING_NONE,
-    CPU_LOGGING_BREIF,
-    CPU_LOGGING_VERBOSE
-  } log_level;
+  enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BREIF, CPU_LOG_VERBOSE } log_level;
 
   bool IME;
   bool halt_bug;

@@ -45,10 +45,9 @@ void cpu_debugger_step(struct cpu_debugger *dbg, struct cpu *cpu) {
     if (u16_stk_contains(&dbg->breakpoints, cpu->PC)) {
       printf("\nBreakpoint 0x%04X hit.\n", cpu->PC);
       dbg->state = CPU_DEBUGGER_BREAKPOINT_HIT;
-      cpu->log_level = CPU_LOGGING_VERBOSE;
-    } else {
-      cpu_step(cpu);
+      cpu->log_level = CPU_LOG_VERBOSE;
     }
+    cpu_step(cpu);
   } break;
   case CPU_DEBUGGER_BREAKPOINT_HIT: {
     char user_input;
@@ -63,7 +62,7 @@ void cpu_debugger_step(struct cpu_debugger *dbg, struct cpu *cpu) {
       break;
     case 'c':
       dbg->state = CPU_DEBUGGER_WATCH_FOR_BREAKPOINTS;
-      cpu->log_level = CPU_LOGGING_NONE;
+      cpu->log_level = CPU_LOG_NONE;
       break;
     default:
       break;

@@ -1,4 +1,5 @@
 #include "app.h"
+#include "gameboy.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
 #include <stdio.h>
@@ -23,18 +24,20 @@ int main(int argc, const char *argv[]) {
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
   // Parse program arguments
-  bool debug_enabled = false;
-  for (int i = 1; i < argc; ++i) {
-    debug_enabled = strncmp(argv[i], "--debug", 7) == 0;
-  }
+  enum gb_debug_option opt = GB_DEBUG_ENABLE_NONE;
+  if (strncmp(argv[2], "--breakpoint", 7) == 0)
+    opt = GB_DEBUG_ENABLE_BREAKPOINTS;
+  else if (strncmp(argv[2], "--logv", 6) == 0)
+    opt = GB_DEBUG_ENABLE_LOG_VERBOSE;
+  else if (strncmp(argv[2], "--logb", 6) == 0)
+    opt = GB_DEBUG_ENABLE_LOG_BRIEF;
 
   // Create and run the app
-  struct app *app = app_malloc(rom_path, debug_enabled);
+  struct app *app = app_malloc(rom_path, opt);
   if (app)
     app_loop(app);
   app_free(app);
   SDL_Quit();
 
-  puts("Program success!");
   return EXIT_SUCCESS;
 }
