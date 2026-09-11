@@ -18,7 +18,7 @@ bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
     break;
   case GB_DEBUG_ENABLE_BREAKPOINTS:
     gb->debug_enabled = true;
-    cpu_debugger_create(&gb->dbg);
+    cpu_debugger_init(&gb->dbg);
     break;
   case GB_DEBUG_ENABLE_LOG_BRIEF:
     gb->cpu.log_level = CPU_LOG_BREIF;
@@ -33,10 +33,7 @@ bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
 
 void gameboy_enable_breakpoints(struct gameboy *gb) {}
 
-void gameboy_destroy(struct gameboy *gb) {
-  cartridge_destroy(&gb->cart);
-  cpu_debugger_destroy(&gb->dbg);
-}
+void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
 
 void gameboy_step(struct gameboy *gb) {
   if (gb->debug_enabled)

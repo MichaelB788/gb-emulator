@@ -49,34 +49,25 @@ static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
     break;
   case CPU_LOG_BREIF:
     printf(
-        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
-        "\n",
-        cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+        "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
+        instr->opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
         bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
         bus_read_byte(cpu->bus, cpu->PC + 2),
         bus_read_byte(cpu->bus, cpu->PC + 3));
-    fflush(stdout);
     break;
   case CPU_LOG_VERBOSE:
     printf(
+        "%02X: %s\n" /* Instruction mnemonic */
         "\n"
-        "%s" /* Instruction mnemonic */
-        "\n"
-        "\n"
-        "[BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X"
-        "\n"
-        "\n"
-        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X"
-        "\n"
+        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
         "\n",
-        instr->mnemonic, bus_read_byte(cpu->bus, cpu->BC),
+        instr->opcode, instr->mnemonic, cpu->AF, cpu->BC, cpu->DE, cpu->HL,
+        cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->BC),
         bus_read_byte(cpu->bus, cpu->DE), bus_read_byte(cpu->bus, cpu->HL),
-        bus_read_byte(cpu->bus, cpu->SP), cpu->AF, cpu->BC, cpu->DE, cpu->HL,
-        cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->PC),
+        bus_read_byte(cpu->bus, cpu->SP), bus_read_byte(cpu->bus, cpu->PC),
         bus_read_byte(cpu->bus, cpu->PC + 1),
         bus_read_byte(cpu->bus, cpu->PC + 2),
         bus_read_byte(cpu->bus, cpu->PC + 3));
-    fflush(stdout);
     break;
   }
 }

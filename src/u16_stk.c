@@ -2,17 +2,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-void u16_stk_create(struct u16_stk *stk, size_t initial_cap) {
-  stk->size = 0;
-  stk->data = malloc(stk->capacity = initial_cap);
-}
-
-void u16_stk_destroy(struct u16_stk *stk) {
-  stk->size = stk->capacity = 0;
-  if (stk->data)
-    free(stk->data);
-}
-
 bool u16_stk_contains(const struct u16_stk *stk, uint16_t u16) {
   for (size_t i = 0; i < stk->size; ++i) {
     if (stk->data[i] == u16)
@@ -21,16 +10,19 @@ bool u16_stk_contains(const struct u16_stk *stk, uint16_t u16) {
   return false;
 }
 
-void u16_stk_push(struct u16_stk *stk, uint16_t u16) {
-  if (stk->size == stk->capacity) {
-    stk->capacity *= 2;
-    stk->data = realloc(stk->data, stk->capacity * 2);
-  }
+bool u16_stk_push(struct u16_stk *stk, uint16_t u16) {
+  if (stk->size == U16_STK_CAPACITY)
+    return false;
 
   stk->data[stk->size++] = u16;
+  return true;
 }
 
-void u16_stk_pop(struct u16_stk *stk) {
-  if (stk->size > 0)
+bool u16_stk_pop(struct u16_stk *stk) {
+  if (stk->size > 0) {
     --stk->size;
+    return true;
+  } else {
+    return false;
+  }
 }

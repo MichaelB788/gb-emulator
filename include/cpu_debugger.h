@@ -13,9 +13,9 @@ struct cpu_debugger {
   } state;
 
   struct u16_stk breakpoints;
+  struct u16_stk watch_addresses;
 };
 
-void cpu_debugger_create(struct cpu_debugger *dbg);
-void cpu_debugger_destroy(struct cpu_debugger *dbg);
+void cpu_debugger_init(struct cpu_debugger *dbg);
 
 void cpu_debugger_step(struct cpu_debugger *dbg, struct cpu *cpu);
