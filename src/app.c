@@ -2,18 +2,17 @@
 #include "gameboy.h"
 #include <SDL3/SDL_events.h>
 #include <stddef.h>
-#include <stdlib.h>
 
-struct app *app_malloc(const char *rom, enum gb_debug_option opts) {
-  struct app *app = malloc(sizeof(struct app));
+bool app_create(struct app *app, const char *rom, enum gb_debug_option opts) {
+  // TODO: SDL subsystem init
 
   // Gameboy initialization
   if (!gameboy_create(&app->gameboy, rom, opts)) {
-    free(app);
-    return nullptr;
+    app_destroy(app);
+    return false;
   }
 
-  return app;
+  return true;
 }
 
 void app_loop(struct app *app) {
@@ -29,10 +28,4 @@ void app_loop(struct app *app) {
   }
 }
 
-void app_free(struct app *app) {
-  if (app) {
-    gameboy_destroy(&app->gameboy);
-    free(app);
-    app = nullptr;
-  }
-}
+void app_destroy(struct app *app) { gameboy_destroy(&app->gameboy); }

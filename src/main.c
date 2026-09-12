@@ -15,7 +15,6 @@ int main(int argc, const char *argv[]) {
   // SDL subsystems initialization
   if (!SDL_Init(SDL_INIT_EVENTS)) {
     fprintf(stderr, "main: %s\n", SDL_GetError());
-    SDL_Quit();
     return EXIT_FAILURE;
   }
 
@@ -25,20 +24,22 @@ int main(int argc, const char *argv[]) {
 
   // Parse program arguments
   enum gb_debug_option opt = GB_DEBUG_ENABLE_NONE;
-  if (argc > 2) {
-    if (strncmp(argv[2], "--breakpoint", 7) == 0)
+  for (int i = 2; i < argc; ++i) {
+    if (strncmp(argv[i], "--breakpoint", 7) == 0)
       opt = GB_DEBUG_ENABLE_BREAKPOINTS;
-    else if (strncmp(argv[2], "--logv", 6) == 0)
+    else if (strncmp(argv[i], "--logv", 6) == 0)
       opt = GB_DEBUG_ENABLE_LOG_VERBOSE;
-    else if (strncmp(argv[2], "--logb", 6) == 0)
+    else if (strncmp(argv[i], "--logb", 6) == 0)
       opt = GB_DEBUG_ENABLE_LOG_BRIEF;
+    else
+      fprintf(stderr, "Unknown flag %s\n", argv[i]);
   }
 
   // Create and run the app
-  struct app *app = app_malloc(rom_path, opt);
-  if (app)
-    app_loop(app);
-  app_free(app);
+  struct app app = {};
+  if (app_create(&app, rom_path, opt))
+    app_loop(&app);
+  app_destroy(&app);
   SDL_Quit();
 
   return EXIT_SUCCESS;

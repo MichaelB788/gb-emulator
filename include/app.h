@@ -7,8 +7,8 @@ struct app {
   SDL_Event event;
 };
 
-[[nodiscard]] struct app *app_malloc(const char *rom,
-                                     enum gb_debug_option opts);
-void app_free(struct app *state);
+[[nodiscard]] bool app_create(struct app *app, const char *rom,
+                              enum gb_debug_option opts);
+void app_destroy(struct app *state);
 
 void app_loop(struct app *app);
