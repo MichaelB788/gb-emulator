@@ -4,21 +4,8 @@
 
 // Memory sizes
 
-static constexpr size_t KiB = 1024;
-static constexpr size_t MiB = 1024 * 1024;
-
-static constexpr size_t KiB_8 = 8 * KiB;
-static constexpr size_t KiB_16 = 16 * KiB;
-static constexpr size_t KiB_32 = 32 * KiB;
-static constexpr size_t KiB_64 = 64 * KiB;
-static constexpr size_t KiB_128 = 128 * KiB;
-static constexpr size_t KiB_256 = 256 * KiB;
-static constexpr size_t KiB_512 = 512 * KiB;
-
-static constexpr size_t MiB_2 = 2 * MiB;
-static constexpr size_t MiB_3 = 3 * MiB;
-static constexpr size_t MiB_4 = 4 * MiB;
-static constexpr size_t MiB_8 = 8 * MiB;
+#define KiB(n) ((n) * 1024ul)
+#define MiB(n) ((n) * 1024ul * 1024ul)
 
 // Memory map
 

@@ -35,10 +35,10 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
     return false;
   }
 
-  static constexpr size_t RAM_CAPS[] = {0ul,    0ul,     KiB_8,
-                                        KiB_32, KiB_128, KiB_64};
+  static constexpr size_t RAM_CAPS[] = {0,       0,        KiB(8),
+                                        KiB(32), KiB(128), KiB(64)};
   cart->type = header[0x147];
-  u8_buf_create(&cart->rom, KiB_32 * (1 << header[0x148]));
+  u8_buf_create(&cart->rom, KiB(32) * (1 << header[0x148]));
   u8_buf_create(&cart->ram, RAM_CAPS[header[0x149]]);
 
   rewind(rom_f);

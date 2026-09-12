@@ -13,8 +13,8 @@ struct bus {
   struct serial serial;
   struct timer timer;
 
-  uint8_t vram[KiB_8];
-  uint8_t wram[KiB_8];
+  uint8_t vram[KiB(8)];
+  uint8_t wram[KiB(8)];
   uint8_t hram[127];
 };
 
