@@ -57,8 +57,7 @@ static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
     break;
   case CPU_LOG_VERBOSE:
     printf(
-        "%02X: %s\n" /* Instruction mnemonic */
-        "\n"
+        "%02X: %s\n"
         "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
         "\n",
         instr->opcode, instr->mnemonic, cpu->AF, cpu->BC, cpu->DE, cpu->HL,
