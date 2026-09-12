@@ -7,9 +7,9 @@
 struct gameboy {
   enum gb_debug_option {
     GB_DEBUG_ENABLE_NONE = 0,
-    GB_DEBUG_ENABLE_BREAKPOINTS = 1 << 0,
-    GB_DEBUG_ENABLE_LOG_BRIEF = 1 << 1,
-    GB_DEBUG_ENABLE_LOG_VERBOSE = 1 << 2
+    GB_DEBUG_ENABLE_BREAKPOINTS,
+    GB_DEBUG_ENABLE_LOG_BRIEF,
+    GB_DEBUG_ENABLE_LOG_VERBOSE
   } debug_option;
 
   bool debug_enabled;
