@@ -43,51 +43,53 @@ uint8_t cpu_fetch_next_opcode(struct cpu *cpu) {
   }
 }
 
-static void cpu_log_step(struct cpu *cpu, const struct instruction *instr) {
-  switch (cpu->log_level) {
-  case CPU_LOG_NONE:
-    break;
-  case CPU_LOG_BREIF:
-    printf(
-        "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
-        instr->opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-        bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
-        bus_read_byte(cpu->bus, cpu->PC + 2),
-        bus_read_byte(cpu->bus, cpu->PC + 3));
-    break;
-  case CPU_LOG_VERBOSE:
-    printf(
-        "%02X: %s\n"
-        "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
-        "\n",
-        instr->opcode, instr->mnemonic, cpu->AF, cpu->BC, cpu->DE, cpu->HL,
-        cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->BC),
-        bus_read_byte(cpu->bus, cpu->DE), bus_read_byte(cpu->bus, cpu->HL),
-        bus_read_byte(cpu->bus, cpu->SP), bus_read_byte(cpu->bus, cpu->PC),
-        bus_read_byte(cpu->bus, cpu->PC + 1),
-        bus_read_byte(cpu->bus, cpu->PC + 2),
-        bus_read_byte(cpu->bus, cpu->PC + 3));
-    break;
-  }
+static void cpu_log_step_brief(const struct cpu *cpu) {
+  printf(
+      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
+      cpu->IR, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
+}
+
+static void cpu_log_step_verbose(const struct cpu *cpu,
+                                 const struct instruction *instr) {
+  printf(
+      "%02X: %s\n"
+      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
+      "\n",
+      instr->opcode, instr->mnemonic, cpu->AF, cpu->BC, cpu->DE, cpu->HL,
+      cpu->SP, cpu->PC, bus_read_byte(cpu->bus, cpu->BC),
+      bus_read_byte(cpu->bus, cpu->DE), bus_read_byte(cpu->bus, cpu->HL),
+      bus_read_byte(cpu->bus, cpu->SP), bus_read_byte(cpu->bus, cpu->PC),
+      bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
 }
 
 void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr) {
-  // Update IME after delay
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
   }
 
-  // Execute instruction
   cpu->IR = instr->opcode;
   instr->handler(cpu);
 
-  // Log the instruction, if permitted
-  cpu_log_step(cpu, instr);
+  switch (cpu->log_level) {
+  case CPU_LOG_NONE:
+    break;
+  case CPU_LOG_BRIEF:
+    cpu_log_step_brief(cpu);
+    break;
+  case CPU_LOG_VERBOSE:
+    cpu_log_step_verbose(cpu, instr);
+    break;
+  }
 }
 
-void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val) {
-  cpu->F = val ? cpu->F | mask : cpu->F & ~mask;
+void cpu_set_flag_as(struct cpu *cpu, enum cpu_flags flag, bool val) {
+  cpu->F = val ? cpu->F | flag : cpu->F & ~flag;
 }
 
 // Memory operations

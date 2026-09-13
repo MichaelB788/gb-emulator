@@ -4,14 +4,16 @@
 struct bus;
 struct instruction;
 
-static constexpr uint8_t FLAG_Z = 1 << 7;
-static constexpr uint8_t FLAG_N = 1 << 6;
-static constexpr uint8_t FLAG_H = 1 << 5;
-static constexpr uint8_t FLAG_C = 1 << 4;
+enum cpu_flags {
+  FLAG_C = 1 << 4,
+  FLAG_H = 1 << 5,
+  FLAG_N = 1 << 6,
+  FLAG_Z = 1 << 7
+};
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BREIF, CPU_LOG_VERBOSE } log_level;
+  enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE } log_level;
 
   bool IME;
   bool halt_bug;
@@ -50,7 +52,7 @@ void cpu_step(struct cpu *cpu);
 void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr);
 
 /// Sets the flag(s) to the given boolean value
-void cpu_write_flags(struct cpu *cpu, uint8_t mask, bool val);
+void cpu_set_flag_as(struct cpu *cpu, enum cpu_flags flag, bool val);
 
 // Memory operations
 

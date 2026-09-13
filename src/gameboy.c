@@ -21,7 +21,7 @@ bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
     cpu_debugger_init(&gb->dbg);
     break;
   case GB_DEBUG_ENABLE_LOG_BRIEF:
-    gb->cpu.log_level = CPU_LOG_BREIF;
+    gb->cpu.log_level = CPU_LOG_BRIEF;
     break;
   case GB_DEBUG_ENABLE_LOG_VERBOSE:
     gb->cpu.log_level = CPU_LOG_VERBOSE;

@@ -25,7 +25,7 @@ int main(int argc, const char *argv[]) {
   // Parse program arguments
   enum gb_debug_option opt = GB_DEBUG_ENABLE_NONE;
   for (int i = 2; i < argc; ++i) {
-    if (strncmp(argv[i], "--breakpoint", 7) == 0)
+    if (strncmp(argv[i], "--brk", 5) == 0)
       opt = GB_DEBUG_ENABLE_BREAKPOINTS;
     else if (strncmp(argv[i], "--logv", 6) == 0)
       opt = GB_DEBUG_ENABLE_LOG_VERBOSE;

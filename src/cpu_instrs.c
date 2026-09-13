@@ -325,7 +325,7 @@ void daa(struct cpu *cpu) {
     result = A + adjustment;
   }
 
-  cpu_write_flags(cpu, FLAG_Z, result == 0);
+  cpu_set_flag_as(cpu, FLAG_Z, result == 0);
   cpu->F &= ~FLAG_H;
 
   cpu->A = result;
