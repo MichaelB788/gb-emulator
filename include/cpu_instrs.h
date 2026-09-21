@@ -121,4 +121,4 @@ void daa(struct cpu *cpu);
 void nop(struct cpu *cpu);
 void stop(struct cpu *cpu);
 void prefix(struct cpu *cpu);
-void illegal(struct cpu *cpu);
+void cpu_illegal(struct cpu *cpu, uint8_t opcode);

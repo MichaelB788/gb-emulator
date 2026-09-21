@@ -339,9 +339,9 @@ void stop(struct cpu *cpu) {
 }
 
 void prefix(struct cpu *cpu) {
-  cpu_execute_instruction(cpu, &optable_cb[cpu_fetch_next_opcode(cpu)]);
+  cpu_execute(cpu, &optable_cb[cpu_fetch_next_opcode(cpu)]);
 }
 
-void illegal(struct cpu *cpu) {
-  fprintf(stderr, "Illegal instruction: 0x%02X\n", cpu->IR);
+void cpu_illegal(struct cpu *cpu, uint8_t opcode) {
+  fprintf(stderr, "Illegal instruction: 0x%02X\n", opcode);
 }

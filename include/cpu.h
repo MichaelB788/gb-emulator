@@ -4,33 +4,18 @@
 struct bus;
 struct instruction;
 
-enum cpu_flags {
-  FLAG_C = 1 << 4,
-  FLAG_H = 1 << 5,
-  FLAG_N = 1 << 6,
-  FLAG_Z = 1 << 7
-};
+enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE };
+enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_HALT_BUG };
+enum cpu_flags { FLAG_C = 0x10, FLAG_H = 0x20, FLAG_N = 0x40, FLAG_Z = 0x80 };
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE } log_level;
+  enum cpu_log_level log_level;
+  enum cpu_state state;
 
   bool IME;
-  bool halt_bug;
-  bool ime_pending; // Setting IME has a delay
-  bool is_halted;
+  bool ime_pending;
 
-  uint8_t IR; // Instruction register, holds the current opcode
-
-  // 16-bit registers
-  uint16_t PC;
-  uint16_t SP;
-
-  /**
-   * 8-bit registers, of which can be combined to be interpreted as a 16-bit
-   * register
-   * NOTE: Ordering of 8-bit registers assumes the system is little endian
-   */
   // clang-format off
   union { struct { uint8_t F, A; }; uint16_t AF; };
   union { struct { uint8_t C, B; }; uint16_t BC; };
@@ -38,20 +23,19 @@ struct cpu {
   union { struct { uint8_t L, H; }; uint16_t HL; };
   // clang-format on
 
-  struct bus *bus; // Must not be nullptr
+  uint16_t PC;
+  uint16_t SP;
+
+  struct bus *bus;
 };
 
 void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_step(struct cpu *cpu);
 
-// Fetches the opcode in memory at PC and updates PC depending on the halt bug
-[[nodiscard]] uint8_t cpu_fetch_next_opcode(struct cpu *cpu);
+void cpu_execute(struct cpu *cpu, uint8_t opcode);
+void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);
 
-// Executes the given instruction
-void cpu_execute_instruction(struct cpu *cpu, const struct instruction *instr);
-
-/// Sets the flag(s) to the given boolean value
 void cpu_set_flag_as(struct cpu *cpu, enum cpu_flags flag, bool val);
 
 // Memory operations
@@ -61,9 +45,19 @@ void cpu_set_flag_as(struct cpu *cpu, enum cpu_flags flag, bool val);
 // M-cycles: 2
 [[nodiscard]] uint16_t cpu_read_u16(const struct cpu *cpu, uint16_t addr);
 // M-cycles: 1
+[[nodiscard]] uint8_t cpu_read_imm8(struct cpu *cpu);
+// M-cycles: 2
+[[nodiscard]] uint16_t cpu_read_imm16(struct cpu *cpu);
+
+// M-cycles: 1
 void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val);
 // M-cycles: 2
 void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val);
+
+// M-cycles: 2
+void cpu_push_u16(struct cpu *cpu, uint16_t u16);
+// M-cycles: 2
+uint16_t cpu_pop_u16(struct cpu *cpu);
 
 // M-cycles: 0 untaken / 1 taken
 void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond);
@@ -73,36 +67,3 @@ void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond);
 void cpu_call(struct cpu *cpu, uint16_t addr, bool cond);
 // M-cycles: 0 untaken / 3 taken
 void cpu_return(struct cpu *cpu, bool cond);
-
-// Opcode dispatching
-
-/**
- * The GameBoy makes frequent use of the following bit pattern to decode
- * operands from instructions:
- *
- * [xx yyy zzz]
- *
- * In general:
- * - x: Used to determine the block the instruction lives in
- * - y: May determine an r8, r16, b3, tgt, or cond operand
- * - z: Used to determine an r8 operand
- *
- * More information can be found here:
- * https://gbdev.io/pandocs/CPU_Instruction_Set.html
- */
-
-[[nodiscard]] uint8_t cpu_get_r8_y(const struct cpu *cpu);
-[[nodiscard]] uint8_t cpu_get_r8_z(const struct cpu *cpu);
-
-void cpu_set_r8_y(struct cpu *cpu, uint8_t val);
-void cpu_set_r8_z(struct cpu *cpu, uint8_t val);
-
-[[nodiscard]] uint16_t cpu_get_r16(const struct cpu *cpu);
-[[nodiscard]] uint16_t cpu_get_r16stk(const struct cpu *cpu);
-[[nodiscard]] uint16_t cpu_get_r16mem(struct cpu *cpu);
-
-void cpu_set_r16(struct cpu *cpu, uint16_t val);
-void cpu_set_r16stk(struct cpu *cpu, uint16_t val);
-
-// Returns the result of a condition code: NZ, Z, NC, C
-[[nodiscard]] bool cpu_cc(const struct cpu *cpu);
