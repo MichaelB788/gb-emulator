@@ -10,9 +10,9 @@
 
 // Pushes a u16 address to `out` via terminal input
 static void push_unique_address_from_input(struct u16_stk *out) {
-  unsigned address;
+  uint16_t address;
   printf("Address: ");
-  scanf("%x", &address);
+  scanf("%hu", &address);
   if (!u16_stk_contains(out, address)) {
     if (!u16_stk_push(out, address))
       fprintf(stderr, "Stack at max capacity. Value discarded.\n");
