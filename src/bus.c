@@ -57,16 +57,15 @@ static void timer_tick(struct bus *bus) {
       CPU_CLOCK_HZ / 16384};
 
   bus->system_counter += 4;
-  if ((bus->TAC & 0x4) != 0) {
+  if (bus->TAC & 0x4) {
     bus->elapsed_t_cycles += 4;
-    const size_t selected = bus->TAC & 0x3;
-    if (bus->elapsed_t_cycles >= FREQS[selected]) {
+    const uint8_t clk_sel = bus->TAC & 0x3;
+    if (bus->elapsed_t_cycles >= FREQS[clk_sel]) {
       if (++bus->TIMA == 0) {
         bus->TIMA = bus->TMA;
         bus->IF |= INTERRUPT_TIMER;
       }
-
-      bus->elapsed_t_cycles -= FREQS[selected];
+      bus->elapsed_t_cycles -= FREQS[clk_sel];
     }
   }
 }
