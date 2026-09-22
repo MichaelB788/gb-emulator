@@ -36,7 +36,7 @@ void cpu_step(struct cpu *cpu);
 void cpu_execute(struct cpu *cpu, uint8_t opcode);
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);
 
-void cpu_set_flag_as(struct cpu *cpu, enum cpu_flags flag, bool val);
+void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val);
 
 // Memory operations
 
