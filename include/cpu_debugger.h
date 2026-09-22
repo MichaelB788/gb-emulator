@@ -5,15 +5,17 @@
 
 struct cpu;
 
+enum cpu_debugger_state {
+  CPU_DEBUGGER_INIT,
+  CPU_DEBUGGER_INTERACTIVE,
+  CPU_DEBUGGER_IDLE
+};
+
 struct cpu_debugger {
-  enum cpu_debugger_state {
-    CPU_DEBUGGER_INIT,
-    CPU_DEBUGGER_WATCH_FOR_BREAKPOINTS,
-    CPU_DEBUGGER_BREAKPOINT_HIT
-  } state;
+  enum cpu_debugger_state state;
 
   struct u16_stk breakpoints;
-  struct u16_stk watch_addresses;
+  struct u16_stk watchpoints;
 };
 
 void cpu_debugger_init(struct cpu_debugger *dbg);
