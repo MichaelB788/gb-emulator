@@ -6,7 +6,13 @@ struct instruction;
 
 enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE };
 enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_HALT_BUG };
-enum cpu_flags { FLAG_C = 0x10, FLAG_H = 0x20, FLAG_N = 0x40, FLAG_Z = 0x80 };
+
+enum cpu_flags {
+  FLAG_C = 1 << 4,
+  FLAG_H = 1 << 5,
+  FLAG_N = 1 << 6,
+  FLAG_Z = 1 << 7
+};
 
 // The GameBoy's CPU
 struct cpu {

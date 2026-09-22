@@ -29,7 +29,7 @@ static void cpu_debugger_print_watch_addresses(const struct cpu_debugger *dbg,
       const uint16_t addr = dbg->watch_addresses.data[i];
       char entry[WATCH_ENTRY_SIZE];
       snprintf(entry, WATCH_ENTRY_SIZE, "[%04X]:%02X ", addr,
-               bus_read_byte(bus, addr));
+               bus_read(bus, addr));
       strcat(buffer, entry);
     }
     printf("%s\n", buffer);

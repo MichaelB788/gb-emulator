@@ -15,21 +15,24 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
 }
 
 void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
-  cpu->F = val ? cpu->F | flag : cpu->F & ~flag;
+  if (val)
+    cpu->F |= flag;
+  else
+    cpu->F &= ~flag;
 }
 
 // M-cycles: 1
-[[nodiscard]] static uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr) {
-  const uint8_t ret = bus_read_byte(cpu->bus, addr);
+[[nodiscard]] static uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t a16) {
+  const uint8_t ret = bus_read(cpu->bus, a16);
   bus_tick(cpu->bus);
   return ret;
 }
 
 // M-cycles: 2
 [[nodiscard]] static uint16_t cpu_read_u16(const struct cpu *cpu,
-                                           uint16_t addr) {
-  const uint8_t lo = cpu_read_u8(cpu, addr);
-  const uint8_t hi = cpu_read_u8(cpu, addr + 1);
+                                           uint16_t a16) {
+  const uint8_t lo = cpu_read_u8(cpu, a16);
+  const uint8_t hi = cpu_read_u8(cpu, a16 + 1);
   return (uint16_t)hi << 8 | lo;
 }
 
@@ -46,15 +49,15 @@ void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
 }
 
 // M-cycles: 1
-static void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val) {
-  bus_write_byte(cpu->bus, addr, val);
+static void cpu_write_u8(const struct cpu *cpu, uint16_t a16, uint8_t u8) {
+  bus_write(cpu->bus, a16, u8);
   bus_tick(cpu->bus);
 }
 
 // M-cycles: 2
-static void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val) {
-  cpu_write_u8(cpu, addr, val & 0xFF);
-  cpu_write_u8(cpu, addr + 1, val >> 8);
+static void cpu_write_u16(const struct cpu *cpu, uint16_t a16, uint16_t u8) {
+  cpu_write_u8(cpu, a16, u8 & 0xFF);
+  cpu_write_u8(cpu, a16 + 1, u8 >> 8);
 }
 
 // M-cycles: 2
@@ -71,26 +74,26 @@ static void cpu_push_u16(struct cpu *cpu, uint16_t u16) {
 }
 
 // M-cycles: 0 untaken / 1 taken
-static void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond) {
+static void cpu_jump(struct cpu *cpu, uint16_t a16, bool cond) {
   if (cond) {
-    cpu->PC = addr;
+    cpu->PC = a16;
     bus_tick(cpu->bus);
   }
 }
 
 // M-cycles: 0 untaken / 1 taken
-static void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond) {
+static void cpu_jump_rotation(struct cpu *cpu, int8_t i8, bool cond) {
   if (cond) {
-    cpu->PC += offset;
+    cpu->PC += i8;
     bus_tick(cpu->bus);
   }
 }
 
 // M-cycles: 0 untaken / 3 taken
-static void cpu_call(struct cpu *cpu, uint16_t addr, bool cond) {
+static void cpu_call(struct cpu *cpu, uint16_t a16, bool cond) {
   if (cond) {
     cpu_push_u16(cpu, cpu->PC);
-    cpu->PC = addr;
+    cpu->PC = a16;
     bus_tick(cpu->bus);
   }
 }
@@ -107,20 +110,18 @@ static void cpu_log_step_brief(const struct cpu *cpu) {
   printf(
       "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
       cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
-      bus_read_byte(cpu->bus, cpu->PC + 2),
-      bus_read_byte(cpu->bus, cpu->PC + 3));
+      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
+      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
 }
 
 static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode) {
   printf(
       "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n",
       opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
-      bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP),
-      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
-      bus_read_byte(cpu->bus, cpu->PC + 2),
-      bus_read_byte(cpu->bus, cpu->PC + 3));
+      bus_read(cpu->bus, cpu->BC), bus_read(cpu->bus, cpu->DE),
+      bus_read(cpu->bus, cpu->HL), bus_read(cpu->bus, cpu->SP),
+      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
+      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
 }
 
 void cpu_step(struct cpu *cpu) {
@@ -148,14 +149,14 @@ void cpu_step(struct cpu *cpu) {
     if (cpu->IME) {
       cpu->IME = false;
       for (uint8_t i = 0; i < 5; ++i) {
-        if ((pending & 1 << i) != 0) {
+        if (pending >> i & 1) {
           // Two wait states are executed before calling the interrupt handler
           bus_tick(cpu->bus);
           bus_tick(cpu->bus);
-          cpu_call(cpu, (uint16_t)(0x40 | (i << 3)), true);
+          cpu_call(cpu, 0x40 | i << 3, true);
 
           cpu->bus->IF &= ~(1 << i); // Interrupt handled
-          return;
+          break;
         }
       }
     }
@@ -397,7 +398,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0xE5: bus_tick(cpu->bus); cpu_push_u16(cpu, cpu->HL); break;
   case 0xE6: cpu_and_u8(cpu, cpu_read_imm8(cpu)); break;
   case 0xE7: cpu_call(cpu, 0x20, true); break;
-  case 0xE8: cpu->SP = cpu_add_sp_e8(cpu, cpu_read_imm8(cpu)); bus_tick(cpu->bus); break;
+  case 0xE8: cpu->SP = cpu_add_sp_i8(cpu, cpu_read_imm8(cpu)); bus_tick(cpu->bus); break;
   case 0xE9: cpu->PC = cpu->HL; break;
   case 0xEA: cpu_write_u8(cpu, cpu_read_imm16(cpu), cpu->A); break;
   case 0xEB: cpu_illegal(cpu, opcode); break;
@@ -413,7 +414,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0xF5: bus_tick(cpu->bus); cpu_push_u16(cpu, cpu->AF); break;
   case 0xF6: cpu_or_u8(cpu, cpu_read_imm8(cpu)); break;
   case 0xF7: cpu_call(cpu, 0x30, true); break;
-  case 0xF8: cpu->HL = cpu_add_sp_e8(cpu, cpu_read_imm8(cpu)); break;
+  case 0xF8: cpu->HL = cpu_add_sp_i8(cpu, cpu_read_imm8(cpu)); break;
   case 0xF9: cpu->SP = cpu->HL; bus_tick(cpu->bus); break;
   case 0xFA: cpu->A = cpu_read_u8(cpu, cpu_read_imm16(cpu)); break;
   case 0xFB: cpu->ime_pending = true; break;

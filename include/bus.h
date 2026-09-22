@@ -15,15 +15,14 @@ enum interrupts {
 struct bus {
   uint8_t JOYP; // Joypad
 
-  // Serial
   uint8_t SB; // Serial transfer data
   uint8_t SC; // Serial transfer control
 
-  unsigned elapsed_t_cycles;
-  uint16_t system_counter; // Hidden internal system counter
-  uint8_t TIMA;            // Timer counter
-  uint8_t TMA;             // Timer modulo
-  uint8_t TAC;             // Timer control
+  unsigned timer_elapsed_cycles; // Tracks elapsed cycles for timer counting
+  uint16_t system_counter;       // Hidden internal system counter
+  uint8_t TIMA;                  // Timer counter
+  uint8_t TMA;                   // Timer modulo
+  uint8_t TAC;                   // Timer control
 
   uint8_t IE; // Interrupt enable
   uint8_t IF; // Interrupt flag
@@ -39,8 +38,6 @@ void bus_init(struct bus *bus, struct cartridge *cart);
 
 void bus_tick(struct bus *bus); // Advances by 1 M-cycle / 4 T-cycles
 
-// Read and writes
+[[nodiscard]] uint8_t bus_read(const struct bus *bus, uint16_t a16);
 
-[[nodiscard]] uint8_t bus_read_byte(const struct bus *bus, uint16_t addr);
-
-void bus_write_byte(struct bus *bus, uint16_t addr, uint8_t val);
+void bus_write(struct bus *bus, uint16_t a16, uint8_t u8);
