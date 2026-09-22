@@ -12,16 +12,10 @@ add_library(${LIBRARY_NAME}
   bus.c
   cartridge.c
   cpu.c
-  cpu_instrs.c
   cpu_debugger.c
   gameboy.c
   impl_cpu_instrs.c
-  interrupts.c
-  joypad.c
-  main.c
   mbc1.c
-  serial.c
-  timer.c
   u8_buf.c
   u16_stk.c
 )

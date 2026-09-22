@@ -1,12 +1,11 @@
 #include "mbc1.h"
-#include "constants.h"
 #include "u8_buf.h"
 #include <stddef.h>
 #include <stdint.h>
 
 static void mbc1_set_rom_bank(struct mbc1 *mbc1, uint8_t val, size_t rom_cap) {
   // Masks off any unused bits when setting the ROM bank
-  const uint8_t mask = (rom_cap / KiB(16)) - 1;
+  const uint8_t mask = (rom_cap / (16 * 1024)) - 1;
   if (mask > 0x1F) {
     mbc1->rom_bank = mbc1->mode == BANKING_ADVANCED
                          ? (mbc1->ram_bank << 5) | val & 0x1F
@@ -30,13 +29,13 @@ uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct u8_buf *rom,
                       const uint16_t addr) {
   return addr < 0x4000
              ? rom->data[addr]
-             : rom->data[(KiB(16) * mbc1->rom_bank) + (addr - 0x4000)];
+             : rom->data[((16 * 1024) * mbc1->rom_bank) + (addr - 0x4000)];
 }
 
 uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_buf *ram,
                       const uint16_t addr) {
   return mbc1->ram_enabled
-             ? ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB(8))]
+             ? ram->data[(addr - 0xA000) + (mbc1->ram_bank * (8 * 1024))]
              : 0xFF;
 }
 
@@ -56,5 +55,5 @@ void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_buf *rom, uint16_t addr,
 void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_buf *ram, uint16_t addr,
                     uint8_t val) {
   if (mbc1->ram_enabled)
-    ram->data[(addr - 0xA000) + (mbc1->ram_bank * KiB(8))] = val;
+    ram->data[(addr - 0xA000) + (mbc1->ram_bank * (8 * 1024))] = val;
 }
