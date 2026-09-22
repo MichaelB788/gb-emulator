@@ -1,6 +1,6 @@
 #include "cpu.h"
 #include "bus.h"
-#include "impl_cpu_instrs.h"
+#include "cpu_instructions.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -12,6 +12,115 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
   cpu->PC = 0x100;
   cpu->AF = cpu->BC = cpu->DE = cpu->HL = cpu->SP = 0;
   cpu->IME = cpu->ime_pending = false;
+}
+
+void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
+  cpu->F = val ? cpu->F | flag : cpu->F & ~flag;
+}
+
+// M-cycles: 1
+[[nodiscard]] static uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr) {
+  const uint8_t ret = bus_read_byte(cpu->bus, addr);
+  bus_tick(cpu->bus);
+  return ret;
+}
+
+// M-cycles: 2
+[[nodiscard]] static uint16_t cpu_read_u16(const struct cpu *cpu,
+                                           uint16_t addr) {
+  const uint8_t lo = cpu_read_u8(cpu, addr);
+  const uint8_t hi = cpu_read_u8(cpu, addr + 1);
+  return (uint16_t)hi << 8 | lo;
+}
+
+// M-cycles: 1
+[[nodiscard]] static uint8_t cpu_read_imm8(struct cpu *cpu) {
+  return cpu_read_u8(cpu, cpu->PC++);
+}
+
+// M-cycles: 2
+[[nodiscard]] static uint16_t cpu_read_imm16(struct cpu *cpu) {
+  const uint16_t u16 = cpu_read_u16(cpu, cpu->PC);
+  cpu->PC += 2;
+  return u16;
+}
+
+// M-cycles: 1
+static void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val) {
+  bus_write_byte(cpu->bus, addr, val);
+  bus_tick(cpu->bus);
+}
+
+// M-cycles: 2
+static void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val) {
+  cpu_write_u8(cpu, addr, val & 0xFF);
+  cpu_write_u8(cpu, addr + 1, val >> 8);
+}
+
+// M-cycles: 2
+static void cpu_push_u16(struct cpu *cpu, uint16_t u16) {
+  cpu->SP -= 2;
+  cpu_write_u16(cpu, cpu->SP, u16);
+}
+
+// M-cycles: 2
+[[nodiscard]] static uint16_t cpu_pop_u16(struct cpu *cpu) {
+  const uint16_t u16 = cpu_read_u16(cpu, cpu->SP);
+  cpu->SP += 2;
+  return u16;
+}
+
+// M-cycles: 0 untaken / 1 taken
+static void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond) {
+  if (cond) {
+    cpu->PC = addr;
+    bus_tick(cpu->bus);
+  }
+}
+
+// M-cycles: 0 untaken / 1 taken
+static void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond) {
+  if (cond) {
+    cpu->PC += offset;
+    bus_tick(cpu->bus);
+  }
+}
+
+// M-cycles: 0 untaken / 3 taken
+static void cpu_call(struct cpu *cpu, uint16_t addr, bool cond) {
+  if (cond) {
+    cpu_push_u16(cpu, cpu->PC);
+    cpu->PC = addr;
+    bus_tick(cpu->bus);
+  }
+}
+
+// M-cycles: 0 untaken / 3 taken
+static void cpu_return(struct cpu *cpu, bool cond) {
+  if (cond) {
+    cpu->PC = cpu_pop_u16(cpu);
+    bus_tick(cpu->bus);
+  }
+}
+
+static void cpu_log_step_brief(const struct cpu *cpu) {
+  printf(
+      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
+      cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
+}
+
+static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode) {
+  printf(
+      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n",
+      opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
+      bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP),
+      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
+      bus_read_byte(cpu->bus, cpu->PC + 2),
+      bus_read_byte(cpu->bus, cpu->PC + 3));
 }
 
 void cpu_step(struct cpu *cpu) {
@@ -51,26 +160,6 @@ void cpu_step(struct cpu *cpu) {
       }
     }
   }
-}
-
-static void cpu_log_step_brief(const struct cpu *cpu) {
-  printf(
-      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
-      cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
-      bus_read_byte(cpu->bus, cpu->PC + 2),
-      bus_read_byte(cpu->bus, cpu->PC + 3));
-}
-
-static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode) {
-  printf(
-      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n",
-      opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read_byte(cpu->bus, cpu->BC), bus_read_byte(cpu->bus, cpu->DE),
-      bus_read_byte(cpu->bus, cpu->HL), bus_read_byte(cpu->bus, cpu->SP),
-      bus_read_byte(cpu->bus, cpu->PC), bus_read_byte(cpu->bus, cpu->PC + 1),
-      bus_read_byte(cpu->bus, cpu->PC + 2),
-      bus_read_byte(cpu->bus, cpu->PC + 3));
 }
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode) {
@@ -596,79 +685,5 @@ void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
   case 0xFE: cpu_write_u8(cpu, cpu->HL, cpu_read_u8(cpu, cpu->HL) | 1 << 7); break;
   case 0xFF: cpu->A |= 1 << 7; break;
     // clang-format on
-  }
-}
-
-void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
-  cpu->F = val ? cpu->F | flag : cpu->F & ~flag;
-}
-
-uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr) {
-  const uint8_t ret = bus_read_byte(cpu->bus, addr);
-  bus_tick(cpu->bus);
-  return ret;
-}
-
-uint16_t cpu_read_u16(const struct cpu *cpu, uint16_t addr) {
-  const uint8_t lo = cpu_read_u8(cpu, addr);
-  const uint8_t hi = cpu_read_u8(cpu, addr + 1);
-  return (uint16_t)hi << 8 | lo;
-}
-
-uint8_t cpu_read_imm8(struct cpu *cpu) { return cpu_read_u8(cpu, cpu->PC++); }
-
-uint16_t cpu_read_imm16(struct cpu *cpu) {
-  const uint16_t u16 = cpu_read_u16(cpu, cpu->PC);
-  cpu->PC += 2;
-  return u16;
-}
-
-void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val) {
-  bus_write_byte(cpu->bus, addr, val);
-  bus_tick(cpu->bus);
-}
-
-void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val) {
-  cpu_write_u8(cpu, addr, val & 0xFF);
-  cpu_write_u8(cpu, addr + 1, val >> 8);
-}
-
-void cpu_push_u16(struct cpu *cpu, uint16_t u16) {
-  cpu->SP -= 2;
-  cpu_write_u16(cpu, cpu->SP, u16);
-}
-
-uint16_t cpu_pop_u16(struct cpu *cpu) {
-  const uint16_t u16 = cpu_read_u16(cpu, cpu->SP);
-  cpu->SP += 2;
-  return u16;
-}
-
-void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond) {
-  if (cond) {
-    cpu->PC = addr;
-    bus_tick(cpu->bus);
-  }
-}
-
-void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond) {
-  if (cond) {
-    cpu->PC += offset;
-    bus_tick(cpu->bus);
-  }
-}
-
-void cpu_call(struct cpu *cpu, uint16_t addr, bool cond) {
-  if (cond) {
-    cpu_push_u16(cpu, cpu->PC);
-    cpu->PC = addr;
-    bus_tick(cpu->bus);
-  }
-}
-
-void cpu_return(struct cpu *cpu, bool cond) {
-  if (cond) {
-    cpu->PC = cpu_pop_u16(cpu);
-    bus_tick(cpu->bus);
   }
 }

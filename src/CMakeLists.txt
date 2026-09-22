@@ -13,8 +13,8 @@ add_library(${LIBRARY_NAME}
   cartridge.c
   cpu.c
   cpu_debugger.c
+  cpu_instructions.c
   gameboy.c
-  impl_cpu_instrs.c
   mbc1.c
   u8_buf.c
   u16_stk.c

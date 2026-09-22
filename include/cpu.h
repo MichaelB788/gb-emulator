@@ -31,39 +31,9 @@ struct cpu {
 
 void cpu_init(struct cpu *cpu, struct bus *bus);
 
+void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val);
+
 void cpu_step(struct cpu *cpu);
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode);
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);
-
-void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val);
-
-// Memory operations
-
-// M-cycles: 1
-[[nodiscard]] uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t addr);
-// M-cycles: 2
-[[nodiscard]] uint16_t cpu_read_u16(const struct cpu *cpu, uint16_t addr);
-// M-cycles: 1
-[[nodiscard]] uint8_t cpu_read_imm8(struct cpu *cpu);
-// M-cycles: 2
-[[nodiscard]] uint16_t cpu_read_imm16(struct cpu *cpu);
-
-// M-cycles: 1
-void cpu_write_u8(const struct cpu *cpu, uint16_t addr, uint8_t val);
-// M-cycles: 2
-void cpu_write_u16(const struct cpu *cpu, uint16_t addr, uint16_t val);
-
-// M-cycles: 2
-void cpu_push_u16(struct cpu *cpu, uint16_t u16);
-// M-cycles: 2
-uint16_t cpu_pop_u16(struct cpu *cpu);
-
-// M-cycles: 0 untaken / 1 taken
-void cpu_jump(struct cpu *cpu, uint16_t addr, bool cond);
-// M-cycles: 0 untaken / 1 taken
-void cpu_jump_rotation(struct cpu *cpu, int8_t offset, bool cond);
-// M-cycles: 0 untaken / 3 taken
-void cpu_call(struct cpu *cpu, uint16_t addr, bool cond);
-// M-cycles: 0 untaken / 3 taken
-void cpu_return(struct cpu *cpu, bool cond);
