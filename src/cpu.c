@@ -423,6 +423,17 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0xFF: cpu_call(cpu, 0x38, true); break;
     // clang-format on
   }
+
+  switch (cpu->log_level) {
+  case CPU_LOG_NONE:
+    break;
+  case CPU_LOG_BRIEF:
+    cpu_log_step_brief(cpu);
+    break;
+  case CPU_LOG_VERBOSE:
+    cpu_log_step_verbose(cpu, opcode);
+    break;
+  }
 }
 
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
@@ -685,5 +696,16 @@ void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
   case 0xFE: cpu_write_u8(cpu, cpu->HL, cpu_read_u8(cpu, cpu->HL) | 1 << 7); break;
   case 0xFF: cpu->A |= 1 << 7; break;
     // clang-format on
+  }
+
+  switch (cpu->log_level) {
+  case CPU_LOG_NONE:
+    break;
+  case CPU_LOG_BRIEF:
+    cpu_log_step_brief(cpu);
+    break;
+  case CPU_LOG_VERBOSE:
+    cpu_log_step_verbose(cpu, opcode);
+    break;
   }
 }
