@@ -12,7 +12,7 @@ add_library(${LIBRARY_NAME}
   bus.c
   cartridge.c
   cpu.c
-  cpu_debugger.c
+  cpu_dbg.c
   cpu_instructions.c
   gameboy.c
   mbc1.c

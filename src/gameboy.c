@@ -2,7 +2,7 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "cpu_debugger.h"
+#include "cpu_dbg.h"
 #include <assert.h>
 
 bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
@@ -18,7 +18,7 @@ bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
     break;
   case GB_DEBUG_ENABLE_BREAKPOINTS:
     gb->debug_enabled = true;
-    cpu_debugger_init(&gb->dbg);
+    cpu_dbg_init(&gb->dbg);
     break;
   case GB_DEBUG_ENABLE_LOG_BRIEF:
     gb->cpu.log_level = CPU_LOG_BRIEF;
@@ -37,7 +37,7 @@ void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
 
 void gameboy_step(struct gameboy *gb) {
   if (gb->debug_enabled)
-    cpu_debugger_step(&gb->dbg, &gb->cpu);
+    cpu_dbg_step(&gb->dbg, &gb->cpu);
   else
     cpu_step(&gb->cpu);
 }

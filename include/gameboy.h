@@ -2,7 +2,7 @@
 #include "bus.h"
 #include "cartridge.h"
 #include "cpu.h"
-#include "cpu_debugger.h"
+#include "cpu_dbg.h"
 
 struct gameboy {
   enum gb_debug_option {
@@ -17,7 +17,7 @@ struct gameboy {
   struct cartridge cart;
   struct bus bus;
   struct cpu cpu;
-  struct cpu_debugger dbg;
+  struct cpu_dbg dbg;
 };
 
 [[nodiscard]] bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
