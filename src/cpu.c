@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include "bus.h"
 #include "cpu_instructions.h"
+#include "mnemonics.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -114,10 +115,12 @@ static void cpu_log_step_brief(const struct cpu *cpu) {
       bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
 }
 
-static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode) {
+static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
+                                 const char *mnemonic) {
   printf(
+      "%s\n"
       "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n",
-      opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      mnemonic, opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
       bus_read(cpu->bus, cpu->BC), bus_read(cpu->bus, cpu->DE),
       bus_read(cpu->bus, cpu->HL), bus_read(cpu->bus, cpu->SP),
       bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
@@ -432,7 +435,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
     cpu_log_step_brief(cpu);
     break;
   case CPU_LOG_VERBOSE:
-    cpu_log_step_verbose(cpu, opcode);
+    cpu_log_step_verbose(cpu, opcode, mnemonics[opcode]);
     break;
   }
 }
@@ -706,7 +709,7 @@ void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
     cpu_log_step_brief(cpu);
     break;
   case CPU_LOG_VERBOSE:
-    cpu_log_step_verbose(cpu, opcode);
+    cpu_log_step_verbose(cpu, opcode, mnemonics_cb[opcode]);
     break;
   }
 }
