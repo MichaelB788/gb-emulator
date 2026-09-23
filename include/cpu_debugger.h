@@ -15,7 +15,9 @@ struct cpu_debugger {
   enum cpu_debugger_state state;
 
   struct u16_stk breakpoints;
+
   struct u16_stk watchpoints;
+  uint16_t watched_memory[U16_STK_CAPACITY];
 };
 
 void cpu_debugger_init(struct cpu_debugger *dbg);
