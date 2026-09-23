@@ -1,4 +1,4 @@
 build/
 .cache/
 .idea/
-log.txt
+scripts/mnemonics.h
