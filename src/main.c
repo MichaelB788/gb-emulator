@@ -6,10 +6,36 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool str_matches_opt(const char *str, const char *opt) {
+  char shorthand[] = {opt[1], opt[2]};
+  return strncmp(str, opt, strlen(opt)) == 0 || strncmp(str, shorthand, 2) == 0;
+}
+
+static enum gb_dbg_opt parse_gb_opt_from_str(const char *str) {
+  if (str) {
+    if (str_matches_opt(str, "--interactive")) {
+      return GB_OPT_INTERACTIVE_DEBUGGING;
+    } else if (str_matches_opt(str, "--verbose")) {
+      return GB_OPT_VERBOSE_LOGGING;
+    } else if (str_matches_opt(str, "--brief")) {
+      return GB_OPT_BRIEF_LOGGING;
+    } else {
+      puts("Unknown option given. Ignoring.");
+      return GB_OPT_NONE;
+    }
+  }
+  return GB_OPT_NONE;
+}
+
 int main(int argc, const char *argv[]) {
-  if (argc < 2) {
-    fprintf(stderr, "main: No ROM provided!\n");
-    return EXIT_FAILURE;
+  if (argc < 2 || str_matches_opt(argv[1], "--help")) {
+    printf("Usage: ./GameBoy [ROM_FILE] [OPTION]\n"
+           "\n"
+           "-v, --verbose       verbose logging\n"
+           "-b, --brief         brief logging\n"
+           "-i, --interactive   interactive debugging\n"
+           "-h, --help          help\n");
+    return EXIT_SUCCESS;
   }
 
   // SDL subsystems initialization
@@ -22,22 +48,9 @@ int main(int argc, const char *argv[]) {
   char rom_path[FILENAME_MAX];
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
-  // Parse program arguments
-  enum gb_debug_option opt = GB_DEBUG_ENABLE_NONE;
-  for (int i = 2; i < argc; ++i) {
-    if (strncmp(argv[i], "--brk", 5) == 0)
-      opt = GB_DEBUG_ENABLE_BREAKPOINTS;
-    else if (strncmp(argv[i], "--logv", 6) == 0)
-      opt = GB_DEBUG_ENABLE_LOG_VERBOSE;
-    else if (strncmp(argv[i], "--logb", 6) == 0)
-      opt = GB_DEBUG_ENABLE_LOG_BRIEF;
-    else
-      fprintf(stderr, "Unknown flag %s\n", argv[i]);
-  }
-
   // Create and run the app
   struct app app = {};
-  if (app_create(&app, rom_path, opt))
+  if (app_create(&app, rom_path, parse_gb_opt_from_str(argv[2])))
     app_loop(&app);
   app_destroy(&app);
   SDL_Quit();

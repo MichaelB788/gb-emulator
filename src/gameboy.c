@@ -6,24 +6,23 @@
 #include <assert.h>
 
 bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
-                    enum gb_debug_option dbg_opt) {
+                    enum gb_dbg_opt dbg_opt) {
   if (!cartridge_create(&gb->cart, path_to_rom))
     return false;
 
   bus_init(&gb->bus, &gb->cart);
   cpu_init(&gb->cpu, &gb->bus);
 
-  switch (dbg_opt) {
-  case GB_DEBUG_ENABLE_NONE:
+  switch (gb->opt = dbg_opt) {
+  case GB_OPT_NONE:
     break;
-  case GB_DEBUG_ENABLE_BREAKPOINTS:
-    gb->debug_enabled = true;
+  case GB_OPT_INTERACTIVE_DEBUGGING:
     cpu_dbg_init(&gb->dbg);
     break;
-  case GB_DEBUG_ENABLE_LOG_BRIEF:
+  case GB_OPT_BRIEF_LOGGING:
     gb->cpu.log_level = CPU_LOG_BRIEF;
     break;
-  case GB_DEBUG_ENABLE_LOG_VERBOSE:
+  case GB_OPT_VERBOSE_LOGGING:
     gb->cpu.log_level = CPU_LOG_VERBOSE;
     break;
   }
@@ -36,7 +35,7 @@ void gameboy_enable_breakpoints(struct gameboy *gb) {}
 void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
 
 void gameboy_step(struct gameboy *gb) {
-  if (gb->debug_enabled)
+  if (gb->opt == GB_OPT_INTERACTIVE_DEBUGGING)
     cpu_dbg_step(&gb->dbg, &gb->cpu);
   else
     cpu_step(&gb->cpu);

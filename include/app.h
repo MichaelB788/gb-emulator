@@ -8,7 +8,7 @@ struct app {
 };
 
 [[nodiscard]] bool app_create(struct app *app, const char *rom,
-                              enum gb_debug_option opts);
+                              enum gb_dbg_opt opts);
 void app_destroy(struct app *state);
 
 void app_loop(struct app *app);

@@ -79,6 +79,8 @@ static void cpu_dbg_interactive_menu(struct cpu_dbg *dbg, struct cpu *cpu,
     dbg->state = CPU_DBG_IDLE;
     cpu->log_level = CPU_LOG_NONE;
     break;
+  default:
+    break;
   }
 }
 

@@ -4,15 +4,15 @@
 #include "cpu.h"
 #include "cpu_dbg.h"
 
-struct gameboy {
-  enum gb_debug_option {
-    GB_DEBUG_ENABLE_NONE = 0,
-    GB_DEBUG_ENABLE_BREAKPOINTS,
-    GB_DEBUG_ENABLE_LOG_BRIEF,
-    GB_DEBUG_ENABLE_LOG_VERBOSE
-  } debug_option;
+enum gb_dbg_opt {
+  GB_OPT_NONE,
+  GB_OPT_INTERACTIVE_DEBUGGING,
+  GB_OPT_BRIEF_LOGGING,
+  GB_OPT_VERBOSE_LOGGING
+};
 
-  bool debug_enabled;
+struct gameboy {
+  enum gb_dbg_opt opt;
 
   struct cartridge cart;
   struct bus bus;
@@ -21,7 +21,7 @@ struct gameboy {
 };
 
 [[nodiscard]] bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
-                                  enum gb_debug_option dbg_opt);
+                                  enum gb_dbg_opt dbg_opt);
 void gameboy_destroy(struct gameboy *gb);
 
 void gameboy_enable_breakpoints(struct gameboy *gb);

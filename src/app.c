@@ -3,7 +3,7 @@
 #include <SDL3/SDL_events.h>
 #include <stddef.h>
 
-bool app_create(struct app *app, const char *rom, enum gb_debug_option opts) {
+bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   // TODO: SDL subsystem init
 
   // Gameboy initialization
