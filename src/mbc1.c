@@ -1,59 +1,53 @@
 #include "mbc1.h"
-#include "u8_buf.h"
+#include "cartridge.h"
 #include <stddef.h>
 #include <stdint.h>
-
-static void mbc1_set_rom_bank(struct mbc1 *mbc1, uint8_t val, size_t rom_cap) {
-  // Masks off any unused bits when setting the ROM bank
-  const uint8_t mask = (rom_cap / (16 * 1024)) - 1;
-  if (mask > 0x1F) {
-    mbc1->rom_bank = mbc1->mode == BANKING_ADVANCED
-                         ? (mbc1->ram_bank << 5) | val & 0x1F
-                         : val & 0x1F;
-  } else {
-    mbc1->rom_bank = val & mask;
-  }
-
-  if ((mbc1->rom_bank & 0x1F) == 0)
-    ++mbc1->rom_bank;
-}
 
 void mbc1_init(struct mbc1 *mbc) {
   mbc->rom_bank = 1;
   mbc->ram_bank = 0;
-  mbc->mode = BANKING_SIMPLE;
-  mbc->ram_enabled = false;
+  mbc->advanced_banking_enabled = mbc->ram_enabled = false;
 }
 
-uint8_t mbc1_read_rom(const struct mbc1 *mbc1, const struct u8_buf *rom,
-                      const uint16_t addr) {
-  return addr < 0x4000
-             ? rom->data[addr]
-             : rom->data[((16 * 1024) * mbc1->rom_bank) + (addr - 0x4000)];
+uint8_t cartridge_mbc1_read_rom(const struct cartridge *cart,
+                                const uint16_t a16) {
+  return a16 < 0x4000 ? cart->rom[a16]
+                      : cart->rom[a16 - 0x4000 + cart->mbc1.rom_bank * 0x4000];
 }
 
-uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_buf *ram,
-                      const uint16_t addr) {
-  return mbc1->ram_enabled
-             ? ram->data[(addr - 0xA000) + (mbc1->ram_bank * (8 * 1024))]
+uint8_t cartridge_mbc1_read_ram(const struct cartridge *cart,
+                                const uint16_t a16) {
+  return cart->mbc1.ram_enabled
+             ? cart->ram[a16 - 0xA000 + cart->mbc1.ram_bank * 0x2000]
              : 0xFF;
 }
 
 // See: https://gbdev.io/pandocs/MBC1.html#registers
-void mbc1_write_rom(struct mbc1 *mbc1, const struct u8_buf *rom, uint16_t addr,
-                    uint8_t val) {
-  if (addr <= 0x1FFF)
-    mbc1->ram_enabled = (val & 0xF) == 0xA;
-  else if (0x2000 <= addr && addr <= 0x3FFF)
-    mbc1_set_rom_bank(mbc1, val, rom->cap);
-  else if (0x4000 <= addr && addr <= 0x5FFF)
-    mbc1->ram_bank = val & 0x3;
-  else if (0x6000 <= addr && addr <= 0x7FFF)
-    mbc1->mode = (enum banking_mode)(val & 1);
+void cartridge_mbc1_write_rom(struct cartridge *cart, uint16_t a16,
+                              uint8_t u8) {
+  if (a16 <= 0x1FFF) {
+    cart->mbc1.ram_enabled = (u8 & 0xF) == 0xA;
+  } else if (0x2000 <= a16 && a16 <= 0x3FFF) {
+    const uint8_t mask = (cart->rom_size / 0x4000) - 1;
+    if (mask > 0x1F) {
+      cart->mbc1.rom_bank = cart->mbc1.advanced_banking_enabled
+                                ? cart->mbc1.ram_bank << 5 | u8 & 0x1F
+                                : u8 & 0x1F;
+    } else {
+      cart->mbc1.rom_bank = u8 & mask;
+    }
+
+    if ((cart->mbc1.rom_bank & 0x1F) == 0)
+      ++cart->mbc1.rom_bank;
+  } else if (0x4000 <= a16 && a16 <= 0x5FFF) {
+    cart->mbc1.ram_bank = u8 & 0x3;
+  } else if (0x6000 <= a16 && a16 <= 0x7FFF) {
+    cart->mbc1.advanced_banking_enabled = u8;
+  }
 }
 
-void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_buf *ram, uint16_t addr,
-                    uint8_t val) {
-  if (mbc1->ram_enabled)
-    ram->data[(addr - 0xA000) + (mbc1->ram_bank * (8 * 1024))] = val;
+void cartridge_mbc1_write_ram(struct cartridge *cart, uint16_t a16,
+                              uint8_t u8) {
+  if (cart->mbc1.ram_enabled)
+    cart->ram[a16 - 0xA000 + cart->mbc1.ram_bank * 0x2000] = u8;
 }

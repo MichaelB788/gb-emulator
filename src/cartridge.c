@@ -1,9 +1,9 @@
 #include "cartridge.h"
 #include "mbc1.h"
-#include "u8_buf.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 bool cartridge_create(struct cartridge *cart, const char *rom_path) {
   FILE *rom_f = fopen(rom_path, "rb");
@@ -20,7 +20,8 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
     return false;
   }
 
-  switch (header[0x147]) {
+  uint8_t cart_type = header[0x147];
+  switch (cart_type) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
@@ -36,12 +37,12 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
 
   static constexpr size_t RAM_CAPS[] = {0,         0,          8 * 1024,
                                         32 * 1024, 128 * 1024, 64 * 1024};
-  cart->type = header[0x147];
-  u8_buf_create(&cart->rom, (32 * 1024) * (1 << header[0x148]));
-  u8_buf_create(&cart->ram, RAM_CAPS[header[0x149]]);
+  cart->type = (enum cartridge_type)cart_type;
+  cart->rom = malloc(cart->rom_size = 32 * 1024 * (1 << header[0x148]));
+  cart->ram = malloc(cart->ram_size = RAM_CAPS[header[0x149]]);
 
   rewind(rom_f);
-  fread(cart->rom.data, 1, cart->rom.cap, rom_f);
+  fread(cart->rom, 1, cart->rom_size, rom_f);
   if (ferror(rom_f)) {
     perror("cartridge_create");
     fclose(rom_f);
@@ -53,48 +54,55 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
 }
 
 void cartridge_destroy(struct cartridge *cart) {
-  u8_buf_destroy(&cart->rom);
-  u8_buf_destroy(&cart->ram);
-}
-
-uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr) {
-  switch (cart->type) {
-  case ROM_ONLY_CART:
-    return cart->rom.data[addr];
-  case MBC1_CART:
-  case MBC1_RAM_CART:
-  case MBC1_RAM_BATTERY_CART:
-    return mbc1_read_rom(&cart->mbc1, &cart->rom, addr);
+  cart->rom_size = cart->ram_size = 0;
+  if (cart->rom) {
+    free(cart->rom);
+    cart->rom = nullptr;
+  }
+  if (cart->ram) {
+    free(cart->ram);
+    cart->ram = nullptr;
   }
 }
 
-uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr) {
+uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t a16) {
+  switch (cart->type) {
+  case ROM_ONLY_CART:
+    return cart->rom[a16];
+  case MBC1_CART:
+  case MBC1_RAM_CART:
+  case MBC1_RAM_BATTERY_CART:
+    return cartridge_mbc1_read_rom(cart, a16);
+  }
+}
+
+uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t a16) {
   switch (cart->type) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    return mbc1_read_ram(&cart->mbc1, &cart->ram, addr);
+    return cartridge_mbc1_read_ram(cart, a16);
   default:
     return 0xFF;
   }
 }
 
-void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val) {
+void cartridge_write_rom(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   switch (cart->type) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_write_rom(&cart->mbc1, &cart->rom, addr, val);
+    cartridge_mbc1_write_rom(cart, a16, u8);
     break;
   }
 }
 
-void cartridge_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val) {
+void cartridge_write_ram(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   switch (cart->type) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_write_ram(&cart->mbc1, &cart->ram, addr, val);
+    cartridge_mbc1_write_ram(cart, a16, u8);
     break;
   default:
     break;

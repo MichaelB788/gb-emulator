@@ -16,7 +16,6 @@ add_library(${LIBRARY_NAME}
   cpu_instructions.c
   gameboy.c
   mbc1.c
-  u8_buf.c
   u16_stk.c
 )
 
