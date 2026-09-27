@@ -32,9 +32,7 @@ void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
 // M-cycles: 2
 [[nodiscard]] static uint16_t cpu_read_u16(const struct cpu *cpu,
                                            uint16_t a16) {
-  const uint8_t lo = cpu_read_u8(cpu, a16);
-  const uint8_t hi = cpu_read_u8(cpu, a16 + 1);
-  return (uint16_t)hi << 8 | lo;
+  return cpu_read_u8(cpu, a16) | cpu_read_u8(cpu, a16 + 1) << 8;
 }
 
 // M-cycles: 1
@@ -56,9 +54,9 @@ static void cpu_write_u8(const struct cpu *cpu, uint16_t a16, uint8_t u8) {
 }
 
 // M-cycles: 2
-static void cpu_write_u16(const struct cpu *cpu, uint16_t a16, uint16_t u8) {
-  cpu_write_u8(cpu, a16, u8 & 0xFF);
-  cpu_write_u8(cpu, a16 + 1, u8 >> 8);
+static void cpu_write_u16(const struct cpu *cpu, uint16_t a16, uint16_t u16) {
+  cpu_write_u8(cpu, a16, u16 & 0xFF);
+  cpu_write_u8(cpu, a16 + 1, u16 >> 8);
 }
 
 // M-cycles: 2
