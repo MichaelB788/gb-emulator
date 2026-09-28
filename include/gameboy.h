@@ -1,4 +1,5 @@
 #pragma once
+#include "app_result.h"
 #include "bus.h"
 #include "cartridge.h"
 #include "cpu.h"
@@ -24,8 +25,4 @@ struct gameboy {
                                   enum gb_dbg_opt dbg_opt);
 void gameboy_destroy(struct gameboy *gb);
 
-void gameboy_enable_breakpoints(struct gameboy *gb);
-void gameboy_enable_logging_breif(struct gameboy *gb);
-void gameboy_enable_logging_verbose(struct gameboy *gb);
-
-void gameboy_step(struct gameboy *gb);
+[[nodiscard]] enum app_result gameboy_step(struct gameboy *gb);

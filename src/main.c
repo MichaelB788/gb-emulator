@@ -55,5 +55,6 @@ int main(int argc, const char *argv[]) {
   app_destroy(&app);
   SDL_Quit();
 
+  puts("Done");
   return EXIT_SUCCESS;
 }

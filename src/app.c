@@ -1,7 +1,9 @@
 #include "app.h"
+#include "app_result.h"
 #include "gameboy.h"
 #include <SDL3/SDL_events.h>
 #include <stddef.h>
+#include <stdio.h>
 
 bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   // TODO: SDL subsystem init
@@ -24,7 +26,16 @@ void app_loop(struct app *app) {
     }
 
     // Update the GameBoy
-    gameboy_step(&app->gameboy);
+    switch (gameboy_step(&app->gameboy)) {
+    case APP_CONTINUE:
+      break;
+    case APP_SUCCESS:
+      puts("Program exiting");
+      return;
+    case APP_FAILURE:
+      fprintf(stderr, "An error occurred");
+      break;
+    }
   }
 }
 

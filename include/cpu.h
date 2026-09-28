@@ -5,7 +5,7 @@ struct bus;
 struct instruction;
 
 enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE };
-enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_HALT_BUG };
+enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_HALT_BUG, CPU_STOPPED };
 
 enum cpu_flags {
   FLAG_C = 1 << 4,
@@ -39,7 +39,11 @@ void cpu_init(struct cpu *cpu, struct bus *bus);
 
 void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val);
 
-void cpu_step(struct cpu *cpu);
+void cpu_log_step_brief(const struct cpu *cpu);
+void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
+                          const char *mnemonic);
+
+[[nodiscard]] enum app_result cpu_step(struct cpu *cpu);
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode);
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);

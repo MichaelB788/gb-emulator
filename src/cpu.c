@@ -1,4 +1,5 @@
 #include "cpu.h"
+#include "app_result.h"
 #include "bus.h"
 #include "cpu_instructions.h"
 #include "mnemonics.h"
@@ -20,6 +21,28 @@ void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
     cpu->F |= flag;
   else
     cpu->F &= ~flag;
+}
+
+void cpu_log_step_brief(const struct cpu *cpu) {
+  printf(
+      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
+      cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
+      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
+}
+
+void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
+                          const char *mnemonic) {
+  printf(
+      "\n"
+      "%s\n"
+      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
+      "\n",
+      mnemonic, opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      bus_read(cpu->bus, cpu->BC), bus_read(cpu->bus, cpu->DE),
+      bus_read(cpu->bus, cpu->HL), bus_read(cpu->bus, cpu->SP),
+      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
+      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
 }
 
 // M-cycles: 1
@@ -105,29 +128,7 @@ static void cpu_return(struct cpu *cpu, bool cond) {
   }
 }
 
-static void cpu_log_step_brief(const struct cpu *cpu) {
-  printf(
-      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
-      cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
-      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
-}
-
-static void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
-                                 const char *mnemonic) {
-  printf(
-      "\n"
-      "%s\n"
-      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
-      "\n",
-      mnemonic, opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
-      bus_read(cpu->bus, cpu->BC), bus_read(cpu->bus, cpu->DE),
-      bus_read(cpu->bus, cpu->HL), bus_read(cpu->bus, cpu->SP),
-      bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
-      bus_read(cpu->bus, cpu->PC + 2), bus_read(cpu->bus, cpu->PC + 3));
-}
-
-void cpu_step(struct cpu *cpu) {
+enum app_result cpu_step(struct cpu *cpu) {
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
@@ -144,6 +145,9 @@ void cpu_step(struct cpu *cpu) {
     cpu->state = CPU_RUNNING;
     cpu_execute(cpu, cpu_read_u8(cpu, cpu->PC));
     break;
+  case CPU_STOPPED:
+    fprintf(stderr, "STOP instr");
+    return APP_FAILURE;
   }
 
   const uint8_t pending = cpu->bus->IE & cpu->bus->IF;
@@ -164,6 +168,8 @@ void cpu_step(struct cpu *cpu) {
       }
     }
   }
+
+  return APP_CONTINUE;
 }
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode) {
@@ -185,7 +191,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x0D: cpu->C = cpu_dec_u8(cpu, cpu->C); break;
   case 0x0E: cpu->C = cpu_read_imm8(cpu); break;
   case 0x0F: cpu->A = cpu_rrc_u8(cpu, cpu->A); cpu->F &= ~FLAG_Z; break;
-  case 0x10: assert(false && opcode); break; // WARN: unimplemented
+  case 0x10: cpu->state = CPU_STOPPED; break; // WARN: unimplemented
   case 0x11: cpu->DE = cpu_read_imm16(cpu); break;
   case 0x12: cpu_write_u8(cpu, cpu->DE, cpu->A); break;
   case 0x13: cpu->DE++; bus_tick(cpu->bus); break;

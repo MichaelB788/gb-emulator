@@ -1,4 +1,5 @@
 #include "gameboy.h"
+#include "app_result.h"
 #include "bus.h"
 #include "cartridge.h"
 #include "cpu.h"
@@ -30,13 +31,11 @@ bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
   return true;
 }
 
-void gameboy_enable_breakpoints(struct gameboy *gb) {}
-
 void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
 
-void gameboy_step(struct gameboy *gb) {
+enum app_result gameboy_step(struct gameboy *gb) {
   if (gb->opt == GB_OPT_INTERACTIVE_DEBUGGING)
-    cpu_dbg_step(&gb->dbg, &gb->cpu);
+    return cpu_dbg_step(&gb->dbg, &gb->cpu);
   else
-    cpu_step(&gb->cpu);
+    return cpu_step(&gb->cpu);
 }

@@ -1,4 +1,5 @@
 #include "cpu_dbg.h"
+#include "app_result.h"
 #include "bus.h"
 #include "cpu.h"
 #include "instruction.h"
@@ -17,6 +18,7 @@ static void cpu_dbg_push_a16_input(struct u16_stk *out) {
   uint16_t address;
   printf("Address: ");
   scanf("%hx", &address);
+  getchar();
   if (!u16_stk_contains(out, address)) {
     if (!u16_stk_push(out, address))
       fprintf(stderr, "Stack at max capacity. Value discarded.\n");
@@ -46,87 +48,91 @@ enum dbg_flags {
   DBG_STEP       = 1 << 2
   // clang-format on
 };
-static void cpu_dbg_interactive_menu(struct cpu_dbg *dbg, struct cpu *cpu,
-                                     enum dbg_flags flags) {
-  char input;
-  printf("[%s%s%s(c)ontinue]: ", flags & DBG_STEP ? "(s)tep | " : "",
+
+static enum app_result cpu_dbg_interactive_menu(struct cpu_dbg *dbg,
+                                                struct cpu *cpu,
+                                                enum dbg_flags flags) {
+  printf("[%s%s%s(c)ontinue | (q)uit]: ", flags & DBG_STEP ? "(s)tep | " : "",
          flags & DBG_BREAKPOINT ? "(b)reakpoint | " : "",
          flags & DBG_WATCHPOINT ? "(w)atchpoint | " : "");
-  scanf(" %c", &input);
-  switch (input) {
+  switch (getchar()) {
   case 's':
-    if (flags & DBG_STEP)
-      cpu_step(cpu);
-    else
-      puts("Invalid option");
-    break;
+    if (flags & DBG_STEP) {
+      getchar();
+      return cpu_step(cpu);
+    }
+    return APP_CONTINUE;
   case 'b':
-    if (flags & DBG_BREAKPOINT)
+    if (flags & DBG_BREAKPOINT) {
+      getchar();
       cpu_dbg_push_a16_input(&dbg->breakpoints);
-    else
-      puts("Invalid option");
-    break;
+    }
+    return APP_CONTINUE;
   case 'w':
     if (flags & DBG_WATCHPOINT) {
+      getchar();
       cpu_dbg_push_a16_input(&dbg->watchpoints);
       const size_t i = dbg->watchpoints.size - 1;
       dbg->watchpoint_memory[i] = bus_read(cpu->bus, dbg->watchpoints.data[i]);
-    } else {
-      puts("Invalid option");
     }
-    break;
+    return APP_CONTINUE;
   case 'c':
+    getchar();
     dbg->state = CPU_DBG_IDLE;
     cpu->log_level = CPU_LOG_NONE;
-    break;
+    return APP_CONTINUE;
+  case 'q':
+  case EOF:
+    return APP_SUCCESS;
   default:
-    break;
+    return APP_CONTINUE;
   }
 }
 
-static void cpu_dbg_observe_breakpoints(struct cpu_dbg *dbg, struct cpu *cpu) {
-  if (u16_stk_contains(&dbg->breakpoints, cpu->PC)) {
-    printf("\n"
-           "Breakpoint hit: 0x%04X\n",
-           cpu->PC);
-    dbg->state = CPU_DBG_INTERACTIVE;
-    cpu->log_level = CPU_LOG_VERBOSE;
-  }
-}
-
-static void cpu_dbg_observe_watchpoints(struct cpu_dbg *dbg, struct cpu *cpu) {
-  for (size_t i = 0; i < dbg->watchpoints.size; ++i) {
-    const uint16_t u16 = bus_read(cpu->bus, dbg->watchpoints.data[i]);
-    if (dbg->watchpoint_memory[i] != u16) {
-      printf("\n"
-             "Watchpoint 0x%04X changed: (0x%02X -> 0x%02X)\n",
-             dbg->watchpoints.data[i], dbg->watchpoint_memory[i], u16);
-      dbg->watchpoint_memory[i] = u16;
-      dbg->state = CPU_DBG_INTERACTIVE;
-      cpu->log_level = CPU_LOG_VERBOSE;
-    }
-  }
-}
-
-void cpu_dbg_step(struct cpu_dbg *dbg, struct cpu *cpu) {
+enum app_result cpu_dbg_step(struct cpu_dbg *dbg, struct cpu *cpu) {
+  enum app_result res;
   switch (dbg->state) {
   case CPU_DBG_INIT:
-    cpu_dbg_interactive_menu(dbg, cpu, DBG_BREAKPOINT | DBG_WATCHPOINT);
-    break;
+    return cpu_dbg_interactive_menu(dbg, cpu, DBG_BREAKPOINT | DBG_WATCHPOINT);
   case CPU_DBG_INTERACTIVE:
-    cpu_dbg_interactive_menu(dbg, cpu,
-                             DBG_STEP | DBG_BREAKPOINT | DBG_WATCHPOINT);
-    cpu_dbg_print_watchpoint_memory(dbg);
-    break;
-  case CPU_DBG_IDLE:
-    cpu_dbg_observe_breakpoints(dbg, cpu);
-    cpu_dbg_observe_watchpoints(dbg, cpu);
-
-    cpu_step(cpu);
-
-    // Breakpoint was hit or watchpoint was changed
-    if (dbg->state == CPU_DBG_INTERACTIVE)
+    res = cpu_dbg_interactive_menu(dbg, cpu,
+                                   DBG_STEP | DBG_BREAKPOINT | DBG_WATCHPOINT);
+    if (res == APP_CONTINUE)
       cpu_dbg_print_watchpoint_memory(dbg);
-    break;
+
+    return res;
+  case CPU_DBG_IDLE: {
+    bool should_break = false;
+
+    // Check breakpoints
+    if (u16_stk_contains(&dbg->breakpoints, cpu->PC)) {
+      printf("\n"
+             "Breakpoint hit: 0x%04X\n",
+             cpu->PC);
+      should_break = true;
+    }
+
+    // Check watchpoints
+    for (size_t i = 0; i < dbg->watchpoints.size; ++i) {
+      const uint16_t u16 = bus_read(cpu->bus, dbg->watchpoints.data[i]);
+      if (dbg->watchpoint_memory[i] != u16) {
+        printf("\n"
+               "Watchpoint 0x%04X changed: (0x%02X -> 0x%02X)\n",
+               dbg->watchpoints.data[i], dbg->watchpoint_memory[i], u16);
+        dbg->watchpoint_memory[i] = u16;
+        should_break = true;
+      }
+    }
+
+    if (should_break) {
+      dbg->state = CPU_DBG_INTERACTIVE;
+      cpu->log_level = CPU_LOG_VERBOSE;
+      if ((res = cpu_step(cpu)) == APP_CONTINUE)
+        cpu_dbg_print_watchpoint_memory(dbg);
+      return res;
+    }
+
+    return cpu_step(cpu);
+  }
   }
 }
