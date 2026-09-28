@@ -35,10 +35,10 @@ void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
                           const char *mnemonic) {
   printf(
       "\n"
-      "%s\n"
-      "%02X: AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
+      "%02X: %s\n"
+      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [BC]:%02X [DE]:%02X [HL]:%02X [SP]:%02X [PC]:%02X,%02X,%02X,%02X\n"
       "\n",
-      mnemonic, opcode, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
+      opcode, mnemonic, cpu->AF, cpu->BC, cpu->DE, cpu->HL, cpu->SP, cpu->PC,
       bus_read(cpu->bus, cpu->BC), bus_read(cpu->bus, cpu->DE),
       bus_read(cpu->bus, cpu->HL), bus_read(cpu->bus, cpu->SP),
       bus_read(cpu->bus, cpu->PC), bus_read(cpu->bus, cpu->PC + 1),
