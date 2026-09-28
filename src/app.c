@@ -33,7 +33,7 @@ void app_loop(struct app *app) {
       puts("Program exiting");
       return;
     case APP_FAILURE:
-      fprintf(stderr, "An error occurred");
+      fprintf(stderr, "An error occurred\n");
       break;
     }
   }

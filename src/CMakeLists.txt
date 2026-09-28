@@ -16,7 +16,6 @@ add_library(${LIBRARY_NAME}
   cpu_instructions.c
   gameboy.c
   mbc1.c
-  u16_stk.c
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE
