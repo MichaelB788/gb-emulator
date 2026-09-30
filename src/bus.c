@@ -7,6 +7,18 @@
 #include <stddef.h>
 #include <stdint.h>
 
+void bus_init(struct bus *bus, struct cartridge *cart) {
+  assert(cart != nullptr);
+  bus->cartridge = cart;
+  bus->joypad = 0x3F;
+  bus->serial_transfer.control = bus->serial_transfer.data = 0;
+  bus->interrupt.flag = bus->interrupt.enable = 0;
+  ppu_init(&bus->ppu);
+  timer_init(&bus->timer);
+}
+
+void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
+
 [[nodiscard]] static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   switch (a16) {
     // clang-format off
@@ -18,7 +30,10 @@
   case 0xFF06: return bus->timer.modulo;
   case 0xFF07: return bus->timer.control;
   case 0xFF0F: return bus->interrupt.flag;
-  case 0xFF44: return 0x90;
+  case 0xFF40: return bus->ppu.lcd.control;
+  case 0xFF41: return bus->ppu.lcd.status;
+  case 0xFF44: return bus->ppu.lcd.y_coordinate;
+  case 0xFF45: return bus->ppu.lcd.compare;
   default: return 0xFF;
     // clang-format on
   }
@@ -27,7 +42,7 @@
 static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: bus->joypad = (bus->joypad & ~0x30) | u8 & 0x30; break;
+  case 0xFF00: bus->joypad = (bus->joypad & ~0x30) | u8 & 0x30; break; // Lower nibble read only
   case 0xFF01: bus->serial_transfer.data = u8; break;
   case 0xFF02: serial_transfer_write_control(&bus->serial_transfer, u8); break;
   case 0xFF04: bus->timer.system_counter = 0; break;
@@ -35,21 +50,14 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF06: bus->timer.modulo = u8; break;
   case 0xFF07: bus->timer.control = u8 & 0x7; break;
   case 0xFF0F: bus->interrupt.flag = u8 & 0x1F; break;
+  case 0xFF40: bus->ppu.lcd.control = u8;
+  case 0xFF41: bus->ppu.lcd.status = u8 & 0x7F;
+  case 0xFF44: bus->ppu.lcd.y_coordinate = u8;
+  case 0xFF45: bus->ppu.lcd.compare = (bus->ppu.lcd.compare & 0x7) | (u8 & 0x78); // Lower 3-bits read only
   default: break;
     // clang-format on
   }
 }
-
-void bus_init(struct bus *bus, struct cartridge *cart) {
-  assert(cart != nullptr);
-  bus->cartridge = cart;
-  bus->joypad = 0x3F;
-  bus->serial_transfer.control = bus->serial_transfer.data = 0;
-  bus->interrupt.flag = bus->interrupt.enable = 0;
-  timer_init(&bus->timer);
-}
-
-void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
 
 uint8_t bus_read(const struct bus *bus, uint16_t a16) {
   // clang-format off
