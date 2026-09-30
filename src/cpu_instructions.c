@@ -249,8 +249,10 @@ void cpu_daa(struct cpu *cpu) {
 }
 
 void cpu_halt(struct cpu *cpu) {
-  cpu->state = !cpu->IME && (cpu->bus->IF & cpu->bus->IE) != 0 ? CPU_HALT_BUG
-                                                               : CPU_HALTED;
+  cpu->state =
+      !cpu->IME && cpu->bus->interrupt.flag & cpu->bus->interrupt.enable
+          ? CPU_HALT_BUG
+          : CPU_HALTED;
 }
 
 void cpu_illegal(struct cpu *cpu, uint8_t opcode) {

@@ -1,37 +1,22 @@
 #pragma once
 #include "cartridge.h"
+#include "interrupt.h"
+#include "ppu.h"
+#include "serial_transfer.h"
+#include "timer.h"
 #include <stdint.h>
 
-enum interrupts {
-  // clang-format off
-  INTERRUPT_VBLANK = 1 << 0,
-  INTERRUPT_LCD    = 1 << 1,
-  INTERRUPT_TIMER  = 1 << 2,
-  INTERRUPT_SERIAL = 1 << 3,
-  INTERRUPT_JOYPAD = 1 << 4
-  // clang-format on
-};
-
 struct bus {
-  uint8_t JOYP; // Joypad
+  uint8_t joypad; // JOYP / P1
+  struct serial_transfer serial_transfer;
+  struct interrupt interrupt;
+  struct timer timer;
+  struct ppu ppu;
 
-  uint8_t SB; // Serial transfer data
-  uint8_t SC; // Serial transfer control
-
-  unsigned timer_elapsed_cycles; // Tracks elapsed cycles for timer counting
-  uint16_t system_counter;       // Hidden internal system counter
-  uint8_t TIMA;                  // Timer counter
-  uint8_t TMA;                   // Timer modulo
-  uint8_t TAC;                   // Timer control
-
-  uint8_t IE; // Interrupt enable
-  uint8_t IF; // Interrupt flag
-
-  struct cartridge *cart;
-
-  uint8_t vram[8 * 1024];
   uint8_t wram[8 * 1024];
   uint8_t hram[127];
+
+  struct cartridge *cartridge;
 };
 
 void bus_init(struct bus *bus, struct cartridge *cart);

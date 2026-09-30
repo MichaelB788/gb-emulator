@@ -15,7 +15,11 @@ add_library(${LIBRARY_NAME}
   cpu_dbg.c
   cpu_instructions.c
   gameboy.c
+  interrupt.c
   mbc1.c
+  ppu.c
+  serial_transfer.c
+  timer.c
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE
