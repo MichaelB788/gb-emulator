@@ -16,13 +16,6 @@ void cpu_init(struct cpu *cpu, struct bus *bus) {
   cpu->IME = cpu->ime_pending = false;
 }
 
-void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val) {
-  if (val)
-    cpu->F |= flag;
-  else
-    cpu->F &= ~flag;
-}
-
 void cpu_log_step_brief(const struct cpu *cpu) {
   printf(
       "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",

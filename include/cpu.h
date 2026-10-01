@@ -37,8 +37,6 @@ struct cpu {
 
 void cpu_init(struct cpu *cpu, struct bus *bus);
 
-void cpu_write_flag(struct cpu *cpu, enum cpu_flags flag, bool val);
-
 void cpu_log_step_brief(const struct cpu *cpu);
 void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
                           const char *mnemonic);
