@@ -42,7 +42,7 @@ void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
 static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: bus->joypad = (bus->joypad & ~0x30) | u8 & 0x30; break; // Lower nibble read only
+  case 0xFF00: bus->joypad = bus->joypad & 0xCF | u8 & 0x30; break; // Lower nibble read only
   case 0xFF01: bus->serial_transfer.data = u8; break;
   case 0xFF02: serial_transfer_write_control(&bus->serial_transfer, u8); break;
   case 0xFF04: bus->timer.system_counter = 0; break;
@@ -53,7 +53,7 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF40: bus->ppu.lcd.control = u8;
   case 0xFF41: bus->ppu.lcd.status = u8 & 0x7F;
   case 0xFF44: bus->ppu.lcd.y_coordinate = u8;
-  case 0xFF45: bus->ppu.lcd.compare = (bus->ppu.lcd.compare & 0x7) | (u8 & 0x78); // Lower 3-bits read only
+  case 0xFF45: bus->ppu.lcd.compare = bus->ppu.lcd.compare & 0x7 | u8 & 0x78; // Lower 3-bits read only
   default: break;
     // clang-format on
   }
