@@ -22,12 +22,14 @@ struct cpu {
   bool IME;
   bool ime_pending;
 
-  // clang-format off
-  union { struct { uint8_t F, A; }; uint16_t AF; };
-  union { struct { uint8_t C, B; }; uint16_t BC; };
-  union { struct { uint8_t E, D; }; uint16_t DE; };
-  union { struct { uint8_t L, H; }; uint16_t HL; };
-  // clang-format on
+  uint8_t A;
+  uint8_t B;
+  uint8_t C;
+  uint8_t D;
+  uint8_t E;
+  uint8_t F;
+  uint8_t H;
+  uint8_t L;
 
   uint16_t PC;
   uint16_t SP;
@@ -36,6 +38,16 @@ struct cpu {
 };
 
 void cpu_init(struct cpu *cpu, struct bus *bus);
+
+[[nodiscard]] uint16_t cpu_get_af(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_bc(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_de(const struct cpu *cpu);
+[[nodiscard]] uint16_t cpu_get_hl(const struct cpu *cpu);
+
+void cpu_set_af(struct cpu *cpu, uint16_t u16);
+void cpu_set_bc(struct cpu *cpu, uint16_t u16);
+void cpu_set_de(struct cpu *cpu, uint16_t u16);
+void cpu_set_hl(struct cpu *cpu, uint16_t u16);
 
 void cpu_log_step_brief(const struct cpu *cpu);
 void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,

@@ -6,7 +6,7 @@ struct ppu {
   struct lcd lcd;
 
   uint8_t vram[8 * 1024]; // 8 KiB video ram, [0x8000, 0x9FFF]
-  uint8_t oam[0x100];     // object attribute memory, [0xFE00, 0xFE9F]
+  uint8_t oam[160];
 };
 
 void ppu_init(struct ppu *ppu);

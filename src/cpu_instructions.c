@@ -91,14 +91,14 @@ uint8_t cpu_dec_u8(struct cpu *cpu, uint8_t u8) {
 }
 
 void cpu_add_r16(struct cpu *cpu, uint16_t u16) {
-  const uint16_t HL = cpu->HL;
+  const uint16_t HL = cpu_get_hl(cpu);
   const uint32_t sum = HL + u16;
 
   cpu->F &= ~FLAG_N;
   u8_write_mask(&cpu->F, FLAG_H, (HL & 0xFFF) + (u16 & 0xFFF) > 0xFFF);
   u8_write_mask(&cpu->F, FLAG_C, sum > 0xFFFF);
 
-  cpu->HL = sum;
+  cpu_set_hl(cpu, sum);
 }
 
 uint16_t cpu_add_sp_i8(struct cpu *cpu, int8_t e8) {
