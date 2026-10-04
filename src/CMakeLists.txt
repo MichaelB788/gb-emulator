@@ -16,6 +16,7 @@ add_library(${LIBRARY_NAME}
   cpu_dbg.c
   cpu_instructions.c
   gameboy.c
+  graphics.c
   interrupt.c
   lcd.c
   mbc1.c

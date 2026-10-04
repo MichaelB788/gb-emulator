@@ -3,7 +3,6 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_init.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 static bool str_matches_opt(const char *str, const char *opt) {
@@ -35,13 +34,7 @@ int main(int argc, const char *argv[]) {
            "-b, --brief         brief logging\n"
            "-i, --interactive   interactive debugging\n"
            "-h, --help          help\n");
-    return EXIT_SUCCESS;
-  }
-
-  // SDL subsystems initialization
-  if (!SDL_Init(SDL_INIT_EVENTS)) {
-    fprintf(stderr, "main: %s\n", SDL_GetError());
-    return EXIT_FAILURE;
+    return 0;
   }
 
   // Parse the ROM path
@@ -53,8 +46,6 @@ int main(int argc, const char *argv[]) {
   if (app_create(&app, rom_path, parse_gb_opt_from_str(argv[2])))
     app_loop(&app);
   app_destroy(&app);
-  SDL_Quit();
 
   puts("Done");
-  return EXIT_SUCCESS;
 }
