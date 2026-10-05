@@ -52,8 +52,13 @@ void graphics_destroy(struct graphics *graphics) {
 void graphics_render_frame(struct graphics *graphics,
                            const struct gameboy *gb) {
   // Shades of green, from lightest to darkest
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+  static constexpr uint32_t GB_PALETTE[4] = {0xb9e08dff, 0x8ba86aff, 0x697f50ff,
+                                             0x3d492eff};
+#else
   static constexpr uint32_t GB_PALETTE[4] = {0xff8de0b9, 0xff6aa88b, 0xff507f69,
                                              0xff2e493d};
+#endif
   SDL_RenderClear(graphics->renderer);
 
   void *pixels;
