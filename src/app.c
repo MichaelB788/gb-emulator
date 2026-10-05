@@ -31,8 +31,6 @@ void app_loop(struct app *app) {
         return;
     }
 
-    graphics_clear(&app->graphics);
-
     switch (gameboy_step(&app->gameboy)) {
     case APP_CONTINUE:
       break;
