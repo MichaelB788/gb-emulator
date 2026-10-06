@@ -11,7 +11,7 @@ struct graphics {
   SDL_Texture *screen;
 };
 
-[[nodiscard]] bool graphics_create(struct graphics *graphics);
+int graphics_create(struct graphics *graphics);
 void graphics_destroy(struct graphics *graphics);
 
 void graphics_render_frame(struct graphics *graphics, const struct gameboy *gb);

@@ -5,63 +5,63 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool cartridge_create(struct cartridge *cart, const char *rom_path) {
+int cartridge_create(struct cartridge *cart, const char *rom_path) {
   FILE *rom_f = fopen(rom_path, "rb");
-  if (rom_f == nullptr) {
-    perror("cartridge_create");
-    return false;
+  if (rom_f == NULL) {
+    perror("cartridge_create fopen");
+    goto cart_fail;
   }
 
   uint8_t header[0x150] = {0};
   fread(header, 1, 0x150, rom_f);
   if (ferror(rom_f)) {
-    perror("cartridge_create");
-    fclose(rom_f);
-    return false;
+    perror("cartridge_create fread header");
+    goto cart_fail;
   }
 
-  uint8_t cart_type = header[0x147];
-  switch (cart_type) {
+  switch (cart->type = header[0x147]) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_init(&cart->mbc1);
+    cart->mapper.mbc1 = (struct mbc1){.rom_bank = 1};
     break;
   default:
-    fprintf(stderr, "cartridge_create: Unknown mapper 0x%02X", header[0x147]);
-    fclose(rom_f);
-    return false;
+    fprintf(stderr, "cartridge_create unimplemented mapper: 0x%02X\n",
+            cart->type);
+    goto cart_fail;
   }
 
-  static constexpr size_t RAM_CAPS[] = {0,         0,          8 * 1024,
-                                        32 * 1024, 128 * 1024, 64 * 1024};
-  cart->type = (enum cartridge_type)cart_type;
+  static const size_t RAM_CAPS[] = {0,         0,          8 * 1024,
+                                    32 * 1024, 128 * 1024, 64 * 1024};
   cart->rom = malloc(cart->rom_size = 32 * 1024 * (1 << header[0x148]));
   cart->ram = malloc(cart->ram_size = RAM_CAPS[header[0x149]]);
 
   rewind(rom_f);
   fread(cart->rom, 1, cart->rom_size, rom_f);
   if (ferror(rom_f)) {
-    perror("cartridge_create");
-    fclose(rom_f);
-    return false;
+    perror("cartridge_create fread rom");
+    goto cart_fail;
   }
 
+  return 0;
+
+cart_fail:
   fclose(rom_f);
-  return true;
+  cartridge_destroy(cart);
+  return -1;
 }
 
 void cartridge_destroy(struct cartridge *cart) {
   cart->rom_size = cart->ram_size = 0;
   if (cart->rom) {
     free(cart->rom);
-    cart->rom = nullptr;
+    cart->rom = NULL;
   }
   if (cart->ram) {
     free(cart->ram);
-    cart->ram = nullptr;
+    cart->ram = NULL;
   }
 }
 

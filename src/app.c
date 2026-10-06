@@ -9,23 +9,26 @@
 #include <stddef.h>
 #include <stdio.h>
 
-bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
+int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "app sdl_init: %s\n", SDL_GetError());
-    return false;
+    goto app_fail;
   }
 
-  if (!graphics_create(&app->graphics) ||
-      !gameboy_create(&app->gameboy, rom, opts)) {
-    app_destroy(app);
-    return false;
+  if (graphics_create(&app->graphics) == -1 ||
+      gameboy_create(&app->gameboy, rom, opts) == -1) {
+    goto app_fail;
   }
 
-  return true;
+  return 0;
+
+app_fail:
+  app_destroy(app);
+  return -1;
 }
 
 void app_loop(struct app *app) {
-  while (true) {
+  while (1) {
     while (SDL_PollEvent(&app->event)) {
       if (app->event.type == SDL_EVENT_QUIT)
         return;

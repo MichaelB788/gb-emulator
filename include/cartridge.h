@@ -14,7 +14,7 @@ struct cartridge {
   enum cartridge_type type;
   union {
     struct mbc1 mbc1;
-  };
+  } mapper;
 
   size_t rom_size;
   size_t ram_size;
@@ -23,16 +23,13 @@ struct cartridge {
   uint8_t *ram;
 };
 
-[[nodiscard]] bool cartridge_create(struct cartridge *cart,
-                                    const char *rom_path);
+int cartridge_create(struct cartridge *cart, const char *rom_path);
 
 void cartridge_destroy(struct cartridge *cart);
 
-[[nodiscard]] uint8_t cartridge_read_rom(const struct cartridge *cart,
-                                         uint16_t addr);
+uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr);
 
-[[nodiscard]] uint8_t cartridge_read_ram(const struct cartridge *cart,
-                                         uint16_t addr);
+uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr);
 
 void cartridge_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val);
 

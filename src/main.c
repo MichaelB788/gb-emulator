@@ -42,8 +42,8 @@ int main(int argc, const char *argv[]) {
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
   // Create and run the app
-  struct app app = {};
-  if (app_create(&app, rom_path, parse_gb_opt_from_str(argv[2])))
+  struct app app = {0};
+  if (app_create(&app, rom_path, parse_gb_opt_from_str(argv[2])) == 0)
     app_loop(&app);
   app_destroy(&app);
 

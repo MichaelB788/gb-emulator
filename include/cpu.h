@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 struct bus;
@@ -37,12 +38,10 @@ struct cpu {
   struct bus *bus;
 };
 
-void cpu_init(struct cpu *cpu, struct bus *bus);
-
-[[nodiscard]] uint16_t cpu_get_af(const struct cpu *cpu);
-[[nodiscard]] uint16_t cpu_get_bc(const struct cpu *cpu);
-[[nodiscard]] uint16_t cpu_get_de(const struct cpu *cpu);
-[[nodiscard]] uint16_t cpu_get_hl(const struct cpu *cpu);
+uint16_t cpu_get_af(const struct cpu *cpu);
+uint16_t cpu_get_bc(const struct cpu *cpu);
+uint16_t cpu_get_de(const struct cpu *cpu);
+uint16_t cpu_get_hl(const struct cpu *cpu);
 
 void cpu_set_af(struct cpu *cpu, uint16_t u16);
 void cpu_set_bc(struct cpu *cpu, uint16_t u16);
@@ -53,7 +52,7 @@ void cpu_log_step_brief(const struct cpu *cpu);
 void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
                           const char *mnemonic);
 
-[[nodiscard]] enum app_result cpu_step(struct cpu *cpu);
+enum app_result cpu_step(struct cpu *cpu);
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode);
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);

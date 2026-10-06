@@ -6,32 +6,27 @@
 #include "cpu_dbg.h"
 #include <assert.h>
 
-bool gameboy_create(struct gameboy *gb, const char *path_to_rom,
-                    enum gb_dbg_opt dbg_opt) {
-  if (!cartridge_create(&gb->cart, path_to_rom))
-    return false;
-
-  bus_init(&gb->bus, &gb->cart);
-  cpu_init(&gb->cpu, &gb->bus);
+int gameboy_create(struct gameboy *gb, const char *path_to_rom,
+                   enum gb_dbg_opt dbg_opt) {
+  gb->bus = (struct bus){.cartridge = &gb->cartridge, .joypad = 0x3F};
+  gb->cpu = (struct cpu){.bus = &gb->bus, .PC = 0x100};
+  gb->dbg = (struct cpu_dbg){};
 
   switch (gb->opt = dbg_opt) {
-  case GB_OPT_NONE:
-    break;
-  case GB_OPT_INTERACTIVE_DEBUGGING:
-    cpu_dbg_init(&gb->dbg);
-    break;
   case GB_OPT_BRIEF_LOGGING:
     gb->cpu.log_level = CPU_LOG_BRIEF;
     break;
   case GB_OPT_VERBOSE_LOGGING:
     gb->cpu.log_level = CPU_LOG_VERBOSE;
     break;
+  default:
+    break;
   }
 
-  return true;
+  return cartridge_create(&gb->cartridge, path_to_rom);
 }
 
-void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cart); }
+void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
 
 enum app_result gameboy_step(struct gameboy *gb) {
   if (gb->opt == GB_OPT_INTERACTIVE_DEBUGGING)

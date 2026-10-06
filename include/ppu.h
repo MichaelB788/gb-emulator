@@ -11,8 +11,8 @@ struct ppu {
 
 void ppu_init(struct ppu *ppu);
 
-[[nodiscard]] uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
-[[nodiscard]] uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
+uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
+uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
 
 void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8);
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8);

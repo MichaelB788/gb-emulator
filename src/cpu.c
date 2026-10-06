@@ -4,18 +4,9 @@
 #include "cpu_instructions.h"
 #include "mnemonics.h"
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-
-void cpu_init(struct cpu *cpu, struct bus *bus) {
-  assert(bus != nullptr);
-  cpu->bus = bus;
-  cpu->state = CPU_RUNNING;
-  cpu->PC = 0x100; // skip the bootrom
-  cpu->A = cpu->B = cpu->C = cpu->D = cpu->E = cpu->F = cpu->H = cpu->L = 0;
-  cpu->SP = 0;
-  cpu->IME = cpu->ime_pending = false;
-}
 
 // clang-format off
 uint16_t cpu_get_af(const struct cpu *cpu) { return cpu->A << 8 | cpu->F; }
@@ -65,30 +56,29 @@ void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
 }
 
 // M-cycles: 1
-[[nodiscard]] static uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t a16) {
+static uint8_t cpu_read_u8(const struct cpu *cpu, uint16_t a16) {
   const uint8_t ret = bus_read(cpu->bus, a16);
   bus_tick(cpu->bus);
   return ret;
 }
 
 // M-cycles: 2
-[[nodiscard]] static uint16_t cpu_read_u16(const struct cpu *cpu,
-                                           uint16_t a16) {
+static uint16_t cpu_read_u16(const struct cpu *cpu, uint16_t a16) {
   return cpu_read_u8(cpu, a16) | cpu_read_u8(cpu, a16 + 1) << 8;
 }
 
 // M-cycles: 1
-[[nodiscard]] static uint8_t cpu_read_imm8(struct cpu *cpu) {
+static uint8_t cpu_read_imm8(struct cpu *cpu) {
   return cpu_read_u8(cpu, cpu->PC++);
 }
 
 // M-cycles: 1
-[[nodiscard]] static uint8_t cpu_read_hl_u8(struct cpu *cpu) {
+static uint8_t cpu_read_hl_u8(struct cpu *cpu) {
   return cpu_read_u8(cpu, cpu_get_hl(cpu));
 }
 
 // M-cycles: 2
-[[nodiscard]] static uint16_t cpu_read_imm16(struct cpu *cpu) {
+static uint16_t cpu_read_imm16(struct cpu *cpu) {
   const uint16_t u16 = cpu_read_u16(cpu, cpu->PC);
   cpu->PC += 2;
   return u16;
@@ -119,7 +109,7 @@ static void cpu_push_u16(struct cpu *cpu, uint16_t u16) {
 }
 
 // M-cycles: 2
-[[nodiscard]] static uint16_t cpu_pop_u16(struct cpu *cpu) {
+static uint16_t cpu_pop_u16(struct cpu *cpu) {
   const uint16_t u16 = cpu_read_u16(cpu, cpu->SP);
   cpu->SP += 2;
   return u16;

@@ -7,19 +7,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void bus_init(struct bus *bus, struct cartridge *cart) {
-  assert(cart != nullptr);
-  bus->cartridge = cart;
-  bus->joypad = 0x3F;
-  bus->serial_transfer.control = bus->serial_transfer.data = 0;
-  bus->interrupt.flag = bus->interrupt.enable = 0;
-  ppu_init(&bus->ppu);
-  timer_init(&bus->timer);
-}
-
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
 
-[[nodiscard]] static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
+static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   switch (a16) {
     // clang-format off
   case 0xFF00: return bus->joypad & 0x30 ? bus->joypad : 0x3F;

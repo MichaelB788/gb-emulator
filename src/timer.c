@@ -9,7 +9,7 @@ void timer_init(struct timer *timer) {
 
 void timer_tick(struct timer *timer, struct interrupt *interrupt) {
   // NOTE: M-cycle to T-cycle translation is just T = M * 4
-  static constexpr unsigned FREQS[] = {256 * 4, 4 * 4, 16 * 4, 64 * 4};
+  static const unsigned FREQS[] = {256 * 4, 4 * 4, 16 * 4, 64 * 4};
 
   timer->system_counter += 4;
   if (timer->control & 0x4) {

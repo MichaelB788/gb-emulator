@@ -9,8 +9,7 @@ struct app {
   SDL_Event event;
 };
 
-[[nodiscard]] bool app_create(struct app *app, const char *rom,
-                              enum gb_dbg_opt opts);
+int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts);
 void app_destroy(struct app *state);
 
 void app_loop(struct app *app);

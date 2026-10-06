@@ -3,24 +3,20 @@
 #include "bus.h"
 #include "cpu.h"
 #include "instruction.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
-void cpu_dbg_init(struct cpu_dbg *dbg) {
-  dbg->state = CPU_DBG_INIT;
-  dbg->breakpoints_size = dbg->watchpoints_size = 0;
-}
-
 static void cpu_dbg_print_watchpoint_memory(const struct cpu_dbg *dbg) {
-  if (dbg->watchpoints_size > 0) {
-    static constexpr size_t LEN = sizeof "[0000]:00 ";
-    char wp_mem_str[dbg->watchpoints_size * LEN] = {};
-    for (size_t i = 0; i < dbg->watchpoints_size; ++i) {
+  if (dbg->watchpoints.size > 0) {
+    static const size_t LEN = sizeof "[0000]:00 ";
+    char wp_mem_str[dbg->watchpoints.size * LEN] = {};
+    for (size_t i = 0; i < dbg->watchpoints.size; ++i) {
       char entry[LEN];
-      snprintf(entry, LEN, "[%04X]:%02X ", dbg->watchpoints[i],
-               dbg->watchpoint_memory[i]);
+      snprintf(entry, LEN, "[%04X]:%02X ", dbg->watchpoints.data[i],
+               dbg->u8_watched_buf[i]);
       strcat(wp_mem_str, entry);
     }
     printf("%s\n"
@@ -29,18 +25,19 @@ static void cpu_dbg_print_watchpoint_memory(const struct cpu_dbg *dbg) {
   }
 }
 
-static bool u16_array_contains(uint16_t *arr, size_t size, uint16_t u16) {
-  for (size_t i = 0; i < size; ++i) {
-    if (arr[i] == u16)
+static bool cpu_dbg_stk_contains(const struct cpu_dbg_u16_stk *stk,
+                                 uint16_t u16) {
+  for (size_t i = 0; i < stk->size; ++i) {
+    if (stk->data[i] == u16)
       return true;
   }
   return false;
 }
 
-static bool u16_array_insert_a16_stdin(uint16_t *out, size_t size) {
-  if (size == DBG_ENTRIES_MAX) {
+static void cpu_dbg_stk_insert_a16_stdin(struct cpu_dbg_u16_stk *stk) {
+  if (stk->size == DBG_ENTRIES_MAX) {
     puts("Cannot insert any more addresses.");
-    return false;
+    return;
   }
 
   uint16_t a16;
@@ -48,13 +45,12 @@ static bool u16_array_insert_a16_stdin(uint16_t *out, size_t size) {
   scanf("%hx", &a16);
   getchar();
 
-  if (u16_array_contains(out, size, a16)) {
+  if (cpu_dbg_stk_contains(stk, a16)) {
     puts("Address already exists.");
-    return false;
+    return;
   }
 
-  out[size] = a16;
-  return true;
+  stk->data[stk->size++] = a16;
 }
 
 enum dbg_flags {
@@ -81,18 +77,15 @@ static enum app_result cpu_dbg_interactive_menu(struct cpu_dbg *dbg,
   case 'b':
     if (flags & DBG_BREAKPOINT) {
       getchar();
-      if (u16_array_insert_a16_stdin(dbg->breakpoints, dbg->breakpoints_size))
-        ++dbg->breakpoints_size;
+      cpu_dbg_stk_insert_a16_stdin(&dbg->breakpoints);
     }
     return APP_CONTINUE;
   case 'w':
     if (flags & DBG_WATCHPOINT) {
       getchar();
-      const size_t i = dbg->watchpoints_size;
-      if (u16_array_insert_a16_stdin(dbg->watchpoints, dbg->watchpoints_size))
-        ++dbg->watchpoints_size;
-
-      dbg->watchpoint_memory[i] = bus_read(cpu->bus, dbg->watchpoints[i]);
+      cpu_dbg_stk_insert_a16_stdin(&dbg->watchpoints);
+      const size_t i = dbg->watchpoints.size;
+      dbg->u8_watched_buf[i] = bus_read(cpu->bus, dbg->watchpoints.data[i]);
     }
     return APP_CONTINUE;
   case 'c':
@@ -122,23 +115,19 @@ enum app_result cpu_dbg_step(struct cpu_dbg *dbg, struct cpu *cpu) {
     return res;
   case CPU_DBG_IDLE: {
     bool should_break = false;
-
-    // Check breakpoints
-    if (u16_array_contains(dbg->breakpoints, dbg->breakpoints_size, cpu->PC)) {
+    if (cpu_dbg_stk_contains(&dbg->breakpoints, cpu->PC)) {
       printf("\n"
              "Breakpoint hit: 0x%04X\n",
              cpu->PC);
       should_break = true;
     }
-
-    // Check watchpoints
-    for (size_t i = 0; i < dbg->watchpoints_size; ++i) {
-      const uint16_t u16 = bus_read(cpu->bus, dbg->watchpoints[i]);
-      if (dbg->watchpoint_memory[i] != u16) {
+    for (size_t i = 0; i < dbg->watchpoints.size; ++i) {
+      const uint8_t u8 = bus_read(cpu->bus, dbg->watchpoints.data[i]);
+      if (dbg->u8_watched_buf[i] != u8) {
         printf("\n"
                "Watchpoint 0x%04X changed: (0x%02X -> 0x%02X)\n",
-               dbg->watchpoints[i], dbg->watchpoint_memory[i], u16);
-        dbg->watchpoint_memory[i] = u16;
+               dbg->watchpoints.data[i], dbg->u8_watched_buf[i], u8);
+        dbg->u8_watched_buf[i] = u8;
         should_break = true;
       }
     }
