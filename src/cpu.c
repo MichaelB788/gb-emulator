@@ -3,7 +3,6 @@
 #include "bus.h"
 #include "cpu_instructions.h"
 #include "mnemonics.h"
-#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -19,12 +18,10 @@ void cpu_set_bc(struct cpu *cpu, uint16_t u16) { cpu->B = u16 >> 8; cpu->C = u16
 void cpu_set_de(struct cpu *cpu, uint16_t u16) { cpu->D = u16 >> 8; cpu->E = u16 & 0xFF; }
 void cpu_set_hl(struct cpu *cpu, uint16_t u16) { cpu->H = u16 >> 8; cpu->L = u16 & 0xFF; }
 
-static uint16_t cpu_inc_af(struct cpu *cpu) { const uint16_t r16 = cpu_get_af(cpu); cpu_set_af(cpu, r16 + 1); return r16; }
 static uint16_t cpu_inc_bc(struct cpu *cpu) { const uint16_t r16 = cpu_get_bc(cpu); cpu_set_bc(cpu, r16 + 1); return r16; }
 static uint16_t cpu_inc_de(struct cpu *cpu) { const uint16_t r16 = cpu_get_de(cpu); cpu_set_de(cpu, r16 + 1); return r16; }
 static uint16_t cpu_inc_hl(struct cpu *cpu) { const uint16_t r16 = cpu_get_hl(cpu); cpu_set_hl(cpu, r16 + 1); return r16; }
 
-static uint16_t cpu_dec_af(struct cpu *cpu) { const uint16_t r16 = cpu_get_af(cpu); cpu_set_af(cpu, r16 - 1); return r16; }
 static uint16_t cpu_dec_bc(struct cpu *cpu) { const uint16_t r16 = cpu_get_bc(cpu); cpu_set_bc(cpu, r16 - 1); return r16; }
 static uint16_t cpu_dec_de(struct cpu *cpu) { const uint16_t r16 = cpu_get_de(cpu); cpu_set_de(cpu, r16 - 1); return r16; }
 static uint16_t cpu_dec_hl(struct cpu *cpu) { const uint16_t r16 = cpu_get_hl(cpu); cpu_set_hl(cpu, r16 - 1); return r16; }
@@ -73,7 +70,7 @@ static uint8_t cpu_read_imm8(struct cpu *cpu) {
 }
 
 // M-cycles: 1
-static uint8_t cpu_read_hl_u8(struct cpu *cpu) {
+static uint8_t cpu_read_hl_u8(const struct cpu *cpu) {
   return cpu_read_u8(cpu, cpu_get_hl(cpu));
 }
 
@@ -219,7 +216,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x15: cpu->D = cpu_dec_u8(cpu, cpu->D); break;
   case 0x16: cpu->D = cpu_read_imm8(cpu); break;
   case 0x17: cpu->A = cpu_rl_u8(cpu, cpu->A); cpu->F &= ~FLAG_Z; break;
-  case 0x18: cpu_jump_rotation(cpu, cpu_read_imm8(cpu), true); break;
+  case 0x18: cpu_jump_rotation(cpu, (int8_t)cpu_read_imm8(cpu), true); break;
   case 0x19: cpu_add_r16(cpu, cpu_get_de(cpu)); break;
   case 0x1A: cpu->A = cpu_read_u8(cpu, cpu_get_de(cpu)); break;
   case 0x1B: cpu_dec_de(cpu); bus_tick(cpu->bus); break;
@@ -227,7 +224,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x1D: cpu->E = cpu_dec_u8(cpu, cpu->E); break;
   case 0x1E: cpu->E = cpu_read_imm8(cpu); break;
   case 0x1F: cpu->A = cpu_rr_u8(cpu, cpu->A); cpu->F &= ~FLAG_Z; break;
-  case 0x20: cpu_jump_rotation(cpu, cpu_read_imm8(cpu), (cpu->F & FLAG_Z) == 0);  break;
+  case 0x20: cpu_jump_rotation(cpu, (int8_t)cpu_read_imm8(cpu), (cpu->F & FLAG_Z) == 0);  break;
   case 0x21: cpu_set_hl(cpu, cpu_read_imm16(cpu)); break;
   case 0x22: cpu_write_u8(cpu, cpu_inc_hl(cpu), cpu->A); break;
   case 0x23: cpu_inc_hl(cpu); bus_tick(cpu->bus); break;
@@ -235,7 +232,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x25: cpu->H = cpu_dec_u8(cpu, cpu->H); break;
   case 0x26: cpu->H = cpu_read_imm8(cpu); break;
   case 0x27: cpu_daa(cpu); break;
-  case 0x28: cpu_jump_rotation(cpu, cpu_read_imm8(cpu), (cpu->F & FLAG_Z) != 0); break;
+  case 0x28: cpu_jump_rotation(cpu, (int8_t)cpu_read_imm8(cpu), (cpu->F & FLAG_Z) != 0); break;
   case 0x29: cpu_add_r16(cpu, cpu_get_hl(cpu)); break;
   case 0x2A: cpu->A = cpu_read_u8(cpu, cpu_inc_hl(cpu)); break;
   case 0x2B: cpu_dec_hl(cpu); bus_tick(cpu->bus); break;
@@ -243,7 +240,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x2D: cpu->L = cpu_dec_u8(cpu, cpu->L); break;
   case 0x2E: cpu->L = cpu_read_imm8(cpu); break;
   case 0x2F: cpu->A = ~cpu->A; cpu->F |= FLAG_N | FLAG_H; break;
-  case 0x30: cpu_jump_rotation(cpu, cpu_read_imm8(cpu), (cpu->F & FLAG_C) == 0); break;
+  case 0x30: cpu_jump_rotation(cpu, (int8_t)cpu_read_imm8(cpu), (cpu->F & FLAG_C) == 0); break;
   case 0x31: cpu->SP = cpu_read_imm16(cpu); break;
   case 0x32: cpu_write_u8(cpu, cpu_dec_hl(cpu), cpu->A); break;
   case 0x33: cpu->SP++; bus_tick(cpu->bus); break;
@@ -251,7 +248,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0x35: cpu_write_hl_u8(cpu, cpu_dec_u8(cpu, cpu_read_hl_u8(cpu))); break;
   case 0x36: cpu_write_hl_u8(cpu, cpu_read_imm8(cpu)); break;
   case 0x37: cpu->F &= ~(FLAG_N | FLAG_H); cpu->F |= FLAG_C; break;
-  case 0x38: cpu_jump_rotation(cpu, cpu_read_imm8(cpu), (cpu->F & FLAG_C) != 0); break;
+  case 0x38: cpu_jump_rotation(cpu, (int8_t)cpu_read_imm8(cpu), (cpu->F & FLAG_C) != 0); break;
   case 0x39: cpu_add_r16(cpu, cpu->SP); break;
   case 0x3A: cpu->A = cpu_read_u8(cpu, cpu_dec_hl(cpu)); break;
   case 0x3B: cpu->SP--; bus_tick(cpu->bus); break;
@@ -427,7 +424,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0xE5: bus_tick(cpu->bus); cpu_push_u16(cpu, cpu_get_hl(cpu)); break;
   case 0xE6: cpu_and_u8(cpu, cpu_read_imm8(cpu)); break;
   case 0xE7: cpu_call(cpu, 0x20, true); break;
-  case 0xE8: cpu->SP = cpu_add_sp_i8(cpu, cpu_read_imm8(cpu)); bus_tick(cpu->bus); break;
+  case 0xE8: cpu->SP = cpu_add_sp_i8(cpu, (int8_t)cpu_read_imm8(cpu)); bus_tick(cpu->bus); break;
   case 0xE9: cpu->PC = cpu_get_hl(cpu); break;
   case 0xEA: cpu_write_u8(cpu, cpu_read_imm16(cpu), cpu->A); break;
   case 0xEB: cpu_illegal(cpu, opcode); break;
@@ -443,7 +440,7 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
   case 0xF5: bus_tick(cpu->bus); cpu_push_u16(cpu, cpu_get_af(cpu)); break;
   case 0xF6: cpu_or_u8(cpu, cpu_read_imm8(cpu)); break;
   case 0xF7: cpu_call(cpu, 0x30, true); break;
-  case 0xF8: cpu_set_hl(cpu, cpu_add_sp_i8(cpu, cpu_read_imm8(cpu))); break;
+  case 0xF8: cpu_set_hl(cpu, cpu_add_sp_i8(cpu, (int8_t)cpu_read_imm8(cpu))); break;
   case 0xF9: cpu->SP = cpu_get_hl(cpu); bus_tick(cpu->bus); break;
   case 0xFA: cpu->A = cpu_read_u8(cpu, cpu_read_imm16(cpu)); break;
   case 0xFB: cpu->ime_pending = true; break;

@@ -31,5 +31,3 @@ struct lcd {
   uint8_t y_coordinate; // 0xFF44: LY
   uint8_t compare;      // 0xFF45: LYC
 };
-
-void lcd_init(struct lcd *lcd);

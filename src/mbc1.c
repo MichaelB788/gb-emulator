@@ -1,6 +1,5 @@
 #include "mbc1.h"
 #include "cartridge.h"
-#include <stddef.h>
 #include <stdint.h>
 
 uint8_t cartridge_mbc1_read_rom(const struct cartridge *cart,

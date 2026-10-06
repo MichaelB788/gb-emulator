@@ -1,7 +1,4 @@
 #include "ppu.h"
-#include "lcd.h"
-
-void ppu_init(struct ppu *ppu) { lcd_init(&ppu->lcd); }
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
   return ppu->vram[a16 - 0x8000];

@@ -1,12 +1,9 @@
 #include "app.h"
-#include "gameboy.h"
-#include <SDL3/SDL_error.h>
-#include <SDL3/SDL_init.h>
 #include <stdio.h>
 #include <string.h>
 
 static bool str_matches_opt(const char *str, const char *opt) {
-  char shorthand[] = {opt[1], opt[2]};
+  const char shorthand[] = {opt[1], opt[2]};
   return strncmp(str, opt, strlen(opt)) == 0 || strncmp(str, shorthand, 2) == 0;
 }
 
@@ -14,14 +11,14 @@ static enum gb_dbg_opt parse_gb_opt_from_str(const char *str) {
   if (str) {
     if (str_matches_opt(str, "--interactive")) {
       return GB_OPT_INTERACTIVE_DEBUGGING;
-    } else if (str_matches_opt(str, "--verbose")) {
-      return GB_OPT_VERBOSE_LOGGING;
-    } else if (str_matches_opt(str, "--brief")) {
-      return GB_OPT_BRIEF_LOGGING;
-    } else {
-      puts("Unknown option given. Ignoring.");
-      return GB_OPT_NONE;
     }
+    if (str_matches_opt(str, "--verbose")) {
+      return GB_OPT_VERBOSE_LOGGING;
+    }
+    if (str_matches_opt(str, "--brief")) {
+      return GB_OPT_BRIEF_LOGGING;
+    }
+    puts("Unknown option given. Ignoring.");
   }
   return GB_OPT_NONE;
 }

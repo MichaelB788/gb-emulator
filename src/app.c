@@ -6,7 +6,6 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_timer.h>
-#include <stddef.h>
 #include <stdio.h>
 
 int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
@@ -45,7 +44,7 @@ void app_loop(struct app *app) {
       break;
     }
 
-    graphics_render_frame(&app->graphics, &app->gameboy);
+    graphics_render_frame(&app->graphics);
 
     SDL_Delay(10);
   }

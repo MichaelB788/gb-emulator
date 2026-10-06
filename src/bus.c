@@ -3,8 +3,6 @@
 #include "ppu.h"
 #include "serial_transfer.h"
 #include "timer.h"
-#include <assert.h>
-#include <stddef.h>
 #include <stdint.h>
 
 void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }

@@ -1,11 +1,8 @@
 #include "graphics.h"
 #include "SDL3/SDL_render.h"
-#include "gameboy.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_pixels.h>
-#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_video.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -31,7 +28,7 @@ int graphics_create(struct graphics *graphics) {
   }
 
   if (!SDL_SetTextureScaleMode(graphics->screen, SDL_SCALEMODE_PIXELART)) {
-    fprintf(stderr, "graphics screen scalemode: %s", SDL_GetError());
+    fprintf(stderr, "graphics screen scale mode: %s", SDL_GetError());
     goto graphics_fail;
   }
 
@@ -53,8 +50,7 @@ void graphics_destroy(struct graphics *graphics) {
   }
 }
 
-void graphics_render_frame(struct graphics *graphics,
-                           const struct gameboy *gb) {
+void graphics_render_frame(const struct graphics *graphics) {
   // Shades of green, from lightest to darkest
 #if SDL_BYTEORDER == SDL_BIG_ENDIAN
   static const uint32_t GB_PALETTE[4] = {0xb9e08dff, 0x8ba86aff, 0x697f50ff,

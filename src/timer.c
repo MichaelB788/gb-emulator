@@ -2,11 +2,6 @@
 #include "interrupt.h"
 #include <stdint.h>
 
-void timer_init(struct timer *timer) {
-  timer->elapsed_cycles = timer->system_counter = 0;
-  timer->counter = timer->modulo = timer->control = 0;
-}
-
 void timer_tick(struct timer *timer, struct interrupt *interrupt) {
   // NOTE: M-cycle to T-cycle translation is just T = M * 4
   static const unsigned FREQS[] = {256 * 4, 4 * 4, 16 * 4, 64 * 4};

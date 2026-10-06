@@ -15,7 +15,7 @@ uint8_t cpu_dec_u8(struct cpu *cpu, uint8_t u8);
 void cpu_add_r16(struct cpu *cpu, uint16_t u16); // M-cycles: 1
 
 // M-cycles: 1 if setting HL, 2 if setting SP
-uint16_t cpu_add_sp_i8(struct cpu *cpu, int8_t e8);
+uint16_t cpu_add_sp_i8(struct cpu *cpu, int8_t i8);
 
 void cpu_and_u8(struct cpu *cpu, uint8_t u8);
 void cpu_xor_u8(struct cpu *cpu, uint8_t u8);

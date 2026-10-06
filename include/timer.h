@@ -11,6 +11,4 @@ struct timer {
   uint8_t control;         // 0xFF07: TAC
 };
 
-void timer_init(struct timer *timer);
-
 void timer_tick(struct timer *timer, struct interrupt *interrupt);

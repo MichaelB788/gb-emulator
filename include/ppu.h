@@ -9,8 +9,6 @@ struct ppu {
   uint8_t oam[160];
 };
 
-void ppu_init(struct ppu *ppu);
-
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
 uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
 

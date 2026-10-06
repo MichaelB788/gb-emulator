@@ -101,13 +101,13 @@ void cpu_add_r16(struct cpu *cpu, uint16_t u16) {
   cpu_set_hl(cpu, sum);
 }
 
-uint16_t cpu_add_sp_i8(struct cpu *cpu, int8_t e8) {
+uint16_t cpu_add_sp_i8(struct cpu *cpu, int8_t i8) {
   const uint16_t SP = cpu->SP;
-  const uint16_t sum = SP + e8;
+  const uint16_t sum = SP + i8;
 
   cpu->F &= ~(FLAG_Z | FLAG_N);
-  u8_write_mask(&cpu->F, FLAG_H, (SP & 0xF) + (e8 & 0xF) > 0xF);
-  u8_write_mask(&cpu->F, FLAG_C, (SP & 0xFF) + (e8 & 0xFF) > 0xFF);
+  u8_write_mask(&cpu->F, FLAG_H, (SP & 0xF) + (i8 & 0xF) > 0xF);
+  u8_write_mask(&cpu->F, FLAG_C, (SP & 0xFF) + (i8 & 0xFF) > 0xFF);
 
   return sum;
 }

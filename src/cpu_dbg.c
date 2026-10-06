@@ -2,7 +2,6 @@
 #include "app_result.h"
 #include "bus.h"
 #include "cpu.h"
-#include "instruction.h"
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

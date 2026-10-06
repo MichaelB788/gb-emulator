@@ -14,4 +14,4 @@ struct graphics {
 int graphics_create(struct graphics *graphics);
 void graphics_destroy(struct graphics *graphics);
 
-void graphics_render_frame(struct graphics *graphics, const struct gameboy *gb);
+void graphics_render_frame(const struct graphics *graphics);
