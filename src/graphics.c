@@ -51,21 +51,20 @@ void graphics_destroy(struct graphics *graphics) {
 }
 
 void graphics_render_frame(const struct graphics *graphics) {
-  // Shades of green, from lightest to darkest
-#if SDL_BYTEORDER == SDL_BIG_ENDIAN
-  static const uint32_t GB_PALETTE[4] = {0xb9e08dff, 0x8ba86aff, 0x697f50ff,
-                                         0x3d492eff};
-#else
-  static const uint32_t GB_PALETTE[4] = {0xff8de0b9, 0xff6aa88b, 0xff507f69,
-                                         0xff2e493d};
-#endif
+  static const SDL_Color GB_PALETTE[4] = {
+      [0] = {.r = 0xb9, .g = 0xe0, .b = 0x8d, .a = 0xff}, // Light green
+      [1] = {.r = 0x8b, .g = 0xa8, .b = 0x6a, .a = 0xff}, // Green
+      [2] = {.r = 0x69, .g = 0x7f, .b = 0x50, .a = 0xff}, // Dark green
+      [3] = {.r = 0x3d, .g = 0x49, .b = 0x2e, .a = 0xff}  // Darker green
+  };
+
   SDL_RenderClear(graphics->renderer);
 
   void *pixels;
   int pitch;
   if (SDL_LockTexture(graphics->screen, NULL, &pixels, &pitch)) {
     for (size_t y = 0; y < SCREEN_PIXL_H; ++y) {
-      uint32_t *row = pixels + y * pitch;
+      SDL_Color *row = pixels + y * pitch;
       for (size_t x = 0; x < SCREEN_PIXL_W; ++x) {
         // Test screen, renders a cool design
         row[x] = GB_PALETTE[x + y & 3];
