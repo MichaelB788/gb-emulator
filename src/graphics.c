@@ -3,6 +3,7 @@
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_video.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -47,6 +48,10 @@ void graphics_destroy(struct graphics *graphics) {
   if (graphics->renderer) {
     SDL_DestroyRenderer(graphics->renderer);
     graphics->renderer = NULL;
+  }
+  if (graphics->screen) {
+    SDL_DestroyTexture(graphics->screen);
+    graphics->screen = NULL;
   }
 }
 
