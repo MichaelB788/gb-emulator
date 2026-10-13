@@ -39,9 +39,9 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF07: bus->timer.control = u8 & 0x7; break;
   case 0xFF0F: bus->interrupt.flag = u8 & 0x1F; break;
   case 0xFF40: bus->ppu.lcd.control = u8;
-  case 0xFF41: bus->ppu.lcd.status = u8 & 0x7F;
+  case 0xFF41: bus->ppu.lcd.status = bus->ppu.lcd.status & 0x7 | u8 & 0x78; // Lower 3-bits read only
   case 0xFF44: bus->ppu.lcd.y_coordinate = u8;
-  case 0xFF45: bus->ppu.lcd.compare = bus->ppu.lcd.compare & 0x7 | u8 & 0x78; // Lower 3-bits read only
+  case 0xFF45: bus->ppu.lcd.compare = u8;
   default: break;
     // clang-format on
   }
