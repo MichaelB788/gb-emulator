@@ -1,5 +1,4 @@
 #include "cpu.h"
-#include "app_result.h"
 #include "bus.h"
 #include "cpu_instructions.h"
 #include "mnemonics.h"
@@ -145,7 +144,7 @@ static void cpu_return(struct cpu *cpu, bool cond) {
   }
 }
 
-enum app_result cpu_step(struct cpu *cpu) {
+void cpu_step(struct cpu *cpu) {
   if (cpu->ime_pending) {
     cpu->ime_pending = false;
     cpu->IME = true;
@@ -163,8 +162,8 @@ enum app_result cpu_step(struct cpu *cpu) {
     cpu_execute(cpu, cpu_read_u8(cpu, cpu->PC));
     break;
   case CPU_STOPPED:
-    fprintf(stderr, "STOP instr");
-    return APP_FAILURE;
+    fprintf(stderr, "STOP instr\n");
+    break;
   }
 
   const uint8_t pending = cpu->bus->interrupt.enable & cpu->bus->interrupt.flag;
@@ -185,8 +184,6 @@ enum app_result cpu_step(struct cpu *cpu) {
       }
     }
   }
-
-  return APP_CONTINUE;
 }
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode) {

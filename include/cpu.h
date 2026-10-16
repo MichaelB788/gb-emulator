@@ -52,7 +52,7 @@ void cpu_log_step_brief(const struct cpu *cpu);
 void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
                           const char *mnemonic);
 
-enum app_result cpu_step(struct cpu *cpu);
+void cpu_step(struct cpu *cpu);
 
 void cpu_execute(struct cpu *cpu, uint8_t opcode);
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode);

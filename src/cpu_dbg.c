@@ -70,7 +70,7 @@ static enum app_result cpu_dbg_interactive_menu(struct cpu_dbg *dbg,
   case 's':
     if (flags & DBG_STEP) {
       getchar();
-      return cpu_step(cpu);
+      cpu_step(cpu);
     }
     return APP_CONTINUE;
   case 'b':
@@ -134,12 +134,13 @@ enum app_result cpu_dbg_step(struct cpu_dbg *dbg, struct cpu *cpu) {
     if (should_break) {
       dbg->state = CPU_DBG_INTERACTIVE;
       cpu->log_level = CPU_LOG_VERBOSE;
-      if ((res = cpu_step(cpu)) == APP_CONTINUE)
-        cpu_dbg_print_watchpoint_memory(dbg);
-      return res;
+      cpu_step(cpu);
+      cpu_dbg_print_watchpoint_memory(dbg);
+    } else {
+      cpu_step(cpu);
     }
 
-    return cpu_step(cpu);
+    return APP_CONTINUE;
   }
   }
 }
