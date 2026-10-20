@@ -9,7 +9,6 @@ target_compile_options(${EXECUTABLE_NAME} PRIVATE
 
 add_library(${LIBRARY_NAME}
   app.c
-  bitwise.c
   bus.c
   cartridge.c
   cpu.c
@@ -17,7 +16,7 @@ add_library(${LIBRARY_NAME}
   cpu_instructions.c
   gameboy.c
   graphics.c
-        mbc1.c
+  mbc1.c
   ppu.c
   serial_transfer.c
   timer.c

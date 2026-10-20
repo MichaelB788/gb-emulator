@@ -177,8 +177,7 @@ void cpu_step(struct cpu *cpu) {
           bus_tick(cpu->bus);
           bus_tick(cpu->bus);
           cpu_call(cpu, 0x40 | i << 3, true);
-
-          cpu->bus->interrupt.flag &= ~(1 << i); // Interrupt handled
+          cpu->bus->interrupt.flag ^= 1 << i; // Interrupt handled
           break;
         }
       }

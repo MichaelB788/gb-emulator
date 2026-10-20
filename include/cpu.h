@@ -9,10 +9,10 @@ enum cpu_log_level { CPU_LOG_NONE, CPU_LOG_BRIEF, CPU_LOG_VERBOSE };
 enum cpu_state { CPU_RUNNING, CPU_HALTED, CPU_HALT_BUG, CPU_STOPPED };
 
 enum cpu_flags {
-  FLAG_C = 1 << 4,
-  FLAG_H = 1 << 5,
+  FLAG_Z = 1 << 7,
   FLAG_N = 1 << 6,
-  FLAG_Z = 1 << 7
+  FLAG_H = 1 << 5,
+  FLAG_C = 1 << 4
 };
 
 // The GameBoy's CPU
