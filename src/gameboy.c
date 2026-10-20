@@ -31,5 +31,6 @@ enum app_result gameboy_step(struct gameboy *gb) {
   if (gb->opt == GB_OPT_INTERACTIVE_DEBUGGING)
     return cpu_dbg_step(&gb->dbg, &gb->cpu);
   else
-    return cpu_step(&gb->cpu);
+    cpu_step(&gb->cpu);
+  return APP_CONTINUE;
 }
