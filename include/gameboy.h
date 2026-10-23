@@ -1,7 +1,6 @@
 #pragma once
 #include "app_result.h"
 #include "bus.h"
-#include "cartridge.h"
 #include "cpu.h"
 #include "cpu_dbg.h"
 
@@ -15,13 +14,12 @@ enum gb_dbg_opt {
 struct gameboy {
   enum gb_dbg_opt opt;
 
-  struct cartridge cartridge;
-  struct bus bus;
   struct cpu cpu;
   struct cpu_dbg dbg;
+  struct bus bus;
 };
 
-int gameboy_create(struct gameboy *gb, const char *path_to_rom,
+int gameboy_create(struct gameboy *gb, const char *rom_path,
                    enum gb_dbg_opt dbg_opt);
 void gameboy_destroy(struct gameboy *gb);
 

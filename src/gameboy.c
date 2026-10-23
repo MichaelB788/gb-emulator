@@ -1,13 +1,11 @@
 #include "gameboy.h"
 #include "app_result.h"
 #include "bus.h"
-#include "cartridge.h"
 #include "cpu.h"
 #include "cpu_dbg.h"
 
-int gameboy_create(struct gameboy *gb, const char *path_to_rom,
+int gameboy_create(struct gameboy *gb, const char *rom_path,
                    enum gb_dbg_opt dbg_opt) {
-  gb->bus = (struct bus){.cartridge = &gb->cartridge, .joypad = 0x3F};
   gb->cpu = (struct cpu){.bus = &gb->bus, .PC = 0x100};
   gb->dbg = (struct cpu_dbg){0};
 
@@ -22,10 +20,10 @@ int gameboy_create(struct gameboy *gb, const char *path_to_rom,
     break;
   }
 
-  return cartridge_create(&gb->cartridge, path_to_rom);
+  return bus_create(&gb->bus, rom_path);
 }
 
-void gameboy_destroy(struct gameboy *gb) { cartridge_destroy(&gb->cartridge); }
+void gameboy_destroy(struct gameboy *gb) { bus_destroy(&gb->bus); }
 
 enum app_result gameboy_step(struct gameboy *gb) {
   if (gb->opt == GB_OPT_INTERACTIVE_DEBUGGING)

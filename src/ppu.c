@@ -1,4 +1,10 @@
 #include "ppu.h"
+#include "interrupt.h"
+#include <stdint.h>
+
+void ppu_tick(struct ppu *ppu, struct interrupt *interrupt) {
+  ppu->accumulated_dots += 4;
+}
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
   return ppu->vram[a16 - 0x8000];

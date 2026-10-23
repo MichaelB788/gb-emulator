@@ -5,12 +5,23 @@
 #include "timer.h"
 #include <stdint.h>
 
-void bus_tick(struct bus *bus) { timer_tick(&bus->timer, &bus->interrupt); }
+int bus_create(struct bus *bus, const char *rom_path) {
+  bus->joypad.inputs = 0xFF;
+
+  return cartridge_create(&bus->cartridge, rom_path);
+}
+
+void bus_destroy(struct bus *bus) { cartridge_destroy(&bus->cartridge); }
+
+void bus_tick(struct bus *bus) {
+  ppu_tick(&bus->ppu, &bus->interrupt);
+  timer_tick(&bus->timer, &bus->interrupt);
+}
 
 static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: return bus->joypad & 0x30 ? bus->joypad : 0x3F;
+  case 0xFF00: return bus->joypad.inputs & 0x30 ? bus->joypad.inputs : 0xFF;
   case 0xFF01: return bus->serial_transfer.data;
   case 0xFF02: return bus->serial_transfer.control;
   case 0xFF04: return bus->timer.system_counter >> 8 & 0xFF;
@@ -30,7 +41,7 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
 static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: bus->joypad = bus->joypad & 0xCF | u8 & 0x30; break; // Lower nibble read only
+  case 0xFF00: bus->joypad.inputs = bus->joypad.inputs & 0xCF | u8 & 0x30; break; // Lower nibble read only
   case 0xFF01: bus->serial_transfer.data = u8; break;
   case 0xFF02: serial_transfer_write_control(&bus->serial_transfer, u8); break;
   case 0xFF04: bus->timer.system_counter = 0; break;
@@ -49,9 +60,9 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
 
 uint8_t bus_read(const struct bus *bus, uint16_t a16) {
   // clang-format off
-  if (0x0000 <= a16 && a16 <= 0x7FFF) return cartridge_read_rom(bus->cartridge, a16);
+  if (0x0000 <= a16 && a16 <= 0x7FFF) return cartridge_read_rom(&bus->cartridge, a16);
   if (0x8000 <= a16 && a16 <= 0x9FFF) return ppu_read_vram(&bus->ppu, a16);
-  if (0xA000 <= a16 && a16 <= 0xBFFF) return cartridge_read_ram(bus->cartridge, a16);
+  if (0xA000 <= a16 && a16 <= 0xBFFF) return cartridge_read_ram(&bus->cartridge, a16);
   if (0xC000 <= a16 && a16 <= 0xDFFF) return bus->wram[a16 - 0xC000];
   if (0xE000 <= a16 && a16 <= 0xFDFF) return bus->wram[a16 - 0xE000];
   if (0xFE00 <= a16 && a16 <= 0xFE9F) return ppu_read_oam(&bus->ppu, a16);
@@ -64,9 +75,9 @@ uint8_t bus_read(const struct bus *bus, uint16_t a16) {
 
 void bus_write(struct bus *bus, uint16_t a16, uint8_t u8) {
   // clang-format off
-  if (0x0000 <= a16 && a16 <= 0x7FFF) cartridge_write_rom(bus->cartridge, a16, u8);
+  if (0x0000 <= a16 && a16 <= 0x7FFF) cartridge_write_rom(&bus->cartridge, a16, u8);
   else if (0x8000 <= a16 && a16 <= 0x9FFF) ppu_write_vram(&bus->ppu, a16, u8);
-  else if (0xA000 <= a16 && a16 <= 0xBFFF) cartridge_write_ram(bus->cartridge, a16, u8);
+  else if (0xA000 <= a16 && a16 <= 0xBFFF) cartridge_write_ram(&bus->cartridge, a16, u8);
   else if (0xC000 <= a16 && a16 <= 0xDFFF) bus->wram[a16 - 0xC000] = u8;
   else if (0xE000 <= a16 && a16 <= 0xFDFF) bus->wram[a16 - 0xE000] = u8;
   else if (0xFE00 <= a16 && a16 <= 0xFE9F) ppu_write_oam(&bus->ppu, a16, u8);

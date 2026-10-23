@@ -1,6 +1,8 @@
 #pragma once
 #include <stdint.h>
 
+struct interrupt;
+
 enum lcdc_flags {
   // clang-format off
   LCDC_BG_AND_WINDOW_ENABLE = 1 << 0,
@@ -25,7 +27,17 @@ enum stat_flags {
   // clang-format on
 };
 
+enum ppu_mode {
+  PPU_HORIZONTAL_BLANK = 0,
+  PPU_VERTICAL_BLANK = 1,
+  PPU_OAM_SCAN = 2,
+  PPU_DRAWING_PIXELS = 3
+};
+
 struct ppu {
+  enum ppu_mode mode;
+  unsigned accumulated_dots;
+
   struct {
     uint8_t viewport_y_pos; // 0xFF42: SCY
     uint8_t viewport_x_pos; // 0xFF43: SCX
@@ -40,7 +52,11 @@ struct ppu {
 
   uint8_t vram[8 * 1024]; // 8 KiB video ram, [0x8000, 0x9FFF]
   uint8_t oam[160];       // Object Attribute Memory, [0xFE00, 0xFE9F]
+
+  uint32_t framebuffer[160 * 144];
 };
+
+void ppu_tick(struct ppu *ppu, struct interrupt *interrupt);
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
 uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
