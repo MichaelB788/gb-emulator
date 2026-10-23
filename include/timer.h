@@ -3,8 +3,11 @@
 
 struct interrupt;
 
+enum tac_flags { TAC_CLOCK_SELECT = 0x3, TAC_TIMER_ENABLE = 1 << 2 };
+
 struct timer {
-  unsigned elapsed_cycles; // Tracks elapsed cycles for timer counting
+  unsigned accumulated_cycles; // Tracks elapsed T-cycles for timer counting
+
   uint16_t system_counter; // SYS, full register of 0xFF04: DIV
   uint8_t counter;         // 0xFF05: TIMA
   uint8_t modulo;          // 0xFF06: TMA
