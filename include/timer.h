@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stdint.h>
 
 struct interrupt;
@@ -6,7 +7,7 @@ struct interrupt;
 enum tac_flags { TAC_CLOCK_SELECT = 0x3, TAC_ENABLE = 1 << 2 };
 
 struct timer {
-  unsigned accumulated_cycles; // Tracks elapsed T-cycles when TAC[2] is enabled
+  bool interrupt_pending; // timer interrupt is delayed by one m-cycle
 
   uint16_t SYS; // internal system clock, full register of 0xFF04: divider (DIV)
 
