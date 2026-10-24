@@ -3,15 +3,16 @@
 
 struct interrupt;
 
-enum tac_flags { TAC_CLOCK_SELECT = 0x3, TAC_TIMER_ENABLE = 1 << 2 };
+enum tac_flags { TAC_CLOCK_SELECT = 0x3, TAC_ENABLE = 1 << 2 };
 
 struct timer {
-  unsigned accumulated_cycles; // Tracks elapsed T-cycles for timer counting
+  unsigned accumulated_cycles; // Tracks elapsed T-cycles when TAC[2] is enabled
 
-  uint16_t system_counter; // SYS, full register of 0xFF04: DIV
-  uint8_t counter;         // 0xFF05: TIMA
-  uint8_t modulo;          // 0xFF06: TMA
-  uint8_t control;         // 0xFF07: TAC
+  uint16_t SYS; // internal system clock, full register of 0xFF04: divider (DIV)
+
+  uint8_t TIMA; // 0xFF05: timer accumulator
+  uint8_t TMA;  // 0xFF06: timer modulo
+  uint8_t TAC;  // 0xFF07: timer control
 };
 
 void timer_tick(struct timer *timer, struct interrupt *interrupt);

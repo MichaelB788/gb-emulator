@@ -217,7 +217,7 @@ void cpu_daa(struct cpu *cpu) {
 
 void cpu_halt(struct cpu *cpu) {
   cpu->state =
-      !cpu->IME && (cpu->bus->interrupt.enable & cpu->bus->interrupt.flag) != 0
+      !cpu->IME && (cpu->bus->interrupt.IE & cpu->bus->interrupt.IF) != 0
           ? CPU_HALT_BUG
           : CPU_HALTED;
 }

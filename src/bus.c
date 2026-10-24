@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 int bus_create(struct bus *bus, const char *rom_path) {
-  bus->joypad.inputs = 0xFF;
+  bus->joypad.P1 = 0xFF;
 
   return cartridge_create(&bus->cartridge, rom_path);
 }
@@ -21,18 +21,19 @@ void bus_tick(struct bus *bus) {
 static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: return bus->joypad.inputs & 0x30 ? bus->joypad.inputs : 0xFF;
-  case 0xFF01: return bus->serial_transfer.data;
-  case 0xFF02: return bus->serial_transfer.control;
-  case 0xFF04: return bus->timer.system_counter >> 8 & 0xFF;
-  case 0xFF05: return bus->timer.counter;
-  case 0xFF06: return bus->timer.modulo;
-  case 0xFF07: return bus->timer.control;
-  case 0xFF0F: return bus->interrupt.flag;
-  case 0xFF40: return bus->ppu.lcd.control;
-  case 0xFF41: return bus->ppu.lcd.status;
-  case 0xFF44: return bus->ppu.lcd.y_coordinate;
-  case 0xFF45: return bus->ppu.lcd.compare;
+  case 0xFF00: return bus->joypad.P1 & 0x30 ? bus->joypad.P1 : 0xFF;
+  case 0xFF01: return bus->serial.SB;
+  case 0xFF02: return bus->serial.SC;
+  case 0xFF04: return bus->timer.SYS >> 8 & 0xFF;
+  case 0xFF05: return bus->timer.TIMA;
+  case 0xFF06: return bus->timer.TMA;
+  case 0xFF07: return bus->timer.TAC;
+  case 0xFF0F: return bus->interrupt.IF;
+  case 0xFF40: return bus->ppu.LCDC;
+  case 0xFF41: return bus->ppu.STAT;
+  case 0xFF44: return bus->ppu.LY;
+  case 0xFF45: return bus->ppu.LYC;
+  case 0xFF47: return bus->ppu.BGP;
   default: return 0xFF;
     // clang-format on
   }
@@ -41,18 +42,19 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
 static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: bus->joypad.inputs = bus->joypad.inputs & 0xCF | u8 & 0x30; break; // Lower nibble read only
-  case 0xFF01: bus->serial_transfer.data = u8; break;
-  case 0xFF02: serial_transfer_write_control(&bus->serial_transfer, u8); break;
-  case 0xFF04: bus->timer.system_counter = 0; break;
-  case 0xFF05: bus->timer.counter = u8; break;
-  case 0xFF06: bus->timer.modulo = u8; break;
-  case 0xFF07: bus->timer.control = u8 & 0x7; break;
-  case 0xFF0F: bus->interrupt.flag = u8 & 0x1F; break;
-  case 0xFF40: bus->ppu.lcd.control = u8;
-  case 0xFF41: bus->ppu.lcd.status = bus->ppu.lcd.status & 0x7 | u8 & 0x78; // Lower 3-bits read only
-  case 0xFF44: bus->ppu.lcd.y_coordinate = u8;
-  case 0xFF45: bus->ppu.lcd.compare = u8;
+  case 0xFF00: bus->joypad.P1 = bus->joypad.P1 & 0xCF | u8 & 0x30; break; // Lower nibble read only
+  case 0xFF01: bus->serial.SB = u8; break;
+  case 0xFF02: serial_transfer_write_control(&bus->serial, u8); break;
+  case 0xFF04: bus->timer.SYS = 0; break;
+  case 0xFF05: bus->timer.TIMA = u8; break;
+  case 0xFF06: bus->timer.TMA = u8; break;
+  case 0xFF07: bus->timer.TAC = u8 & 0x7; break;
+  case 0xFF0F: bus->interrupt.IF = u8 & 0x1F; break;
+  case 0xFF40: bus->ppu.LCDC = u8;
+  case 0xFF41: bus->ppu.STAT = bus->ppu.STAT & 0x7 | u8 & 0x78; // Lower 3-bits read only
+  case 0xFF44: bus->ppu.LY = u8;
+  case 0xFF45: bus->ppu.LYC = u8;
+  case 0xFF47: bus->ppu.BGP = u8;
   default: break;
     // clang-format on
   }
@@ -69,7 +71,7 @@ uint8_t bus_read(const struct bus *bus, uint16_t a16) {
   if (0xFEA0 <= a16 && a16 <= 0xFEFF) return 0xFF;
   if (0xFF00 <= a16 && a16 <= 0xFF7F) return bus_read_io(bus, a16);
   if (0xFF80 <= a16 && a16 <= 0xFFFE) return bus->hram[a16 - 0xFF80];
-  else return bus->interrupt.enable;
+  else return bus->interrupt.IE;
   // clang-format on
 }
 
@@ -84,6 +86,6 @@ void bus_write(struct bus *bus, uint16_t a16, uint8_t u8) {
   else if (0xFEA0 <= a16 && a16 <= 0xFEFF) return;
   else if (0xFF00 <= a16 && a16 <= 0xFF7F) bus_write_io(bus, a16, u8);
   else if (0xFF80 <= a16 && a16 <= 0xFFFE) bus->hram[a16 - 0xFF80] = u8;
-  else bus->interrupt.enable = u8 & 0x1F;
+  else bus->interrupt.IE = u8 & 0x1F;
   // clang-format on
 }

@@ -19,5 +19,5 @@ enum joypad_flags {
 };
 
 struct joypad {
-  uint8_t inputs;
+  uint8_t P1; // 0xFF00: joypad inputs
 };

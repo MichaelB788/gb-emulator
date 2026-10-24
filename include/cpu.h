@@ -20,20 +20,16 @@ struct cpu {
   enum cpu_log_level log_level;
   enum cpu_state state;
 
-  bool IME;
-  bool ime_pending;
+  bool IME;         // interrupt master enable
+  bool ime_pending; // setting ime has a delay of one instruction
 
-  uint8_t A;
-  uint8_t B;
-  uint8_t C;
-  uint8_t D;
-  uint8_t E;
-  uint8_t F;
-  uint8_t H;
-  uint8_t L;
+  uint8_t A, F; // 8-bit register pair: accumulator and flags
+  uint8_t B, C; // 8-bit register pair: BC
+  uint8_t D, E; // 8-bit register pair: DE
+  uint8_t H, L; // 8-bit register pair: HL
 
-  uint16_t PC;
-  uint16_t SP;
+  uint16_t PC; // 16-bit register address: progrm counter
+  uint16_t SP; // 16-bit register address: stack pointer
 
   struct bus *bus;
 };

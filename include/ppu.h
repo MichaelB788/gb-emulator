@@ -38,20 +38,17 @@ struct ppu {
   enum ppu_mode mode;
   unsigned accumulated_dots;
 
-  struct {
-    uint8_t viewport_y_pos; // 0xFF42: SCY
-    uint8_t viewport_x_pos; // 0xFF43: SCX
-  } background;
+  uint8_t LCDC; // 0xFF40: LCD control
+  uint8_t STAT; // 0xFF41: LCD status
+  uint8_t SCY;  // 0xFF42: scroll Y (viewport Y position)
+  uint8_t SCX;  // 0xFF43: scroll X (viewport X position)
+  uint8_t LY;   // 0xFF44: line Y (current scanline)
+  uint8_t LYC;  // 0xFF45: LY compare
+  uint8_t BGP;  // 0xFF47: background palette data
 
-  struct {
-    uint8_t control;      // 0xFF40: LCDC
-    uint8_t status;       // 0xFF41: STAT
-    uint8_t y_coordinate; // 0xFF44: LY
-    uint8_t compare;      // 0xFF45: LYC
-  } lcd;
-
-  uint8_t vram[8 * 1024]; // 8 KiB video ram, [0x8000, 0x9FFF]
-  uint8_t oam[160];       // Object Attribute Memory, [0xFE00, 0xFE9F]
+  // memory maps
+  uint8_t vram[8 * 1024]; // [0x8000, 0x9FFF]
+  uint8_t oam[160];       // [0xFE00, 0xFE9F]
 
   uint32_t framebuffer[160 * 144];
 };

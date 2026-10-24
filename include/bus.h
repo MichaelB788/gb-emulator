@@ -8,13 +8,13 @@
 #include <stdint.h>
 
 struct bus {
-  struct joypad joypad; // 0xFF00: JOYP / P1
-  struct serial_transfer serial_transfer;
+  struct joypad joypad;
+  struct serial_transfer serial;
   struct interrupt interrupt;
   struct timer timer;
 
-  uint8_t wram[8 * 1024]; // 8 KiB work ram, [0xC000, 0xDFFF]
-  uint8_t hram[127];      // high ram, [0xFF80, 0xFFFE]
+  uint8_t wram[8 * 1024]; // [0xC000, 0xDFFF]
+  uint8_t hram[127];      // [0xFF80, 0xFFFE]
 
   struct cartridge cartridge;
   struct ppu ppu;

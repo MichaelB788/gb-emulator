@@ -12,6 +12,6 @@ enum interrupt_flags {
 };
 
 struct interrupt {
-  uint8_t flag;   // 0xFF0F: IF
-  uint8_t enable; // 0xFFFF: IE
+  uint8_t IF; // 0xFF0F: interrupt flag
+  uint8_t IE; // 0xFFFF: interrupt enable
 };
