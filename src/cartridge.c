@@ -5,6 +5,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+enum header_fields {
+  HEADER_CARTRIDGE_TYPE = 0x147,
+  HEADER_ROM_SIZE = 0x148,
+  HEADER_RAM_SIZE = 0x149
+};
+
 int cartridge_create(struct cartridge *cart, const char *rom_path) {
   FILE *rom_f = fopen(rom_path, "rb");
   if (rom_f == NULL) {
@@ -12,14 +18,16 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
     goto cart_fail;
   }
 
-  uint8_t header[0x150] = {0};
-  fread(header, 1, 0x150, rom_f);
+  // read header into buffer
+  uint8_t header[0x150];
+  fread(header, sizeof(uint8_t), 0x150, rom_f);
   if (ferror(rom_f)) {
     perror("cartridge_create fread header");
     goto cart_fail;
   }
 
-  switch (cart->type = header[0x147]) {
+  // init cartridge type
+  switch (cart->type = header[HEADER_CARTRIDGE_TYPE]) {
   case ROM_ONLY_CART:
     break;
   case MBC1_CART:
@@ -33,13 +41,21 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
     goto cart_fail;
   }
 
-  static const size_t RAM_CAPS[] = {0,         0,          8 * 1024,
-                                    32 * 1024, 128 * 1024, 64 * 1024};
-  cart->rom = malloc(cart->rom_size = 32 * 1024 * (1 << header[0x148]));
-  cart->ram = malloc(cart->ram_size = RAM_CAPS[header[0x149]]);
+  // init RAM
+  static const size_t RAM_CAPS[] = {
+      [0x0] = 0,       // no ram
+      [0x1] = 0,       // unused, true value is unknown
+      [0x2] = 0x2000,  // 8 KiB
+      [0x3] = 0x8000,  // 32 KiB
+      [0x4] = 0x20000, // 128 KiB
+      [0x5] = 0x10000  // 64 KiB
+  };
+  cart->ram = malloc(cart->ram_size = RAM_CAPS[header[HEADER_RAM_SIZE]]);
 
+  // init ROM
   rewind(rom_f);
-  fread(cart->rom, 1, cart->rom_size, rom_f);
+  cart->rom = malloc(cart->rom_size = 0x8000 * (1 << header[HEADER_ROM_SIZE]));
+  fread(cart->rom, sizeof(uint8_t), cart->rom_size, rom_f);
   if (ferror(rom_f)) {
     perror("cartridge_create fread rom");
     goto cart_fail;

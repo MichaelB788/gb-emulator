@@ -19,5 +19,5 @@ enum joypad_fields {
 };
 
 struct joypad {
-  uint8_t p1;
+  uint8_t p1; // 0xFF00: JOYP / P1
 };

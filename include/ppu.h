@@ -54,8 +54,8 @@ struct ppu {
   uint8_t lyc;  // 0xFF45: LY compare
   uint8_t bgp;  // 0xFF47: Background (and window) palette
 
-  uint8_t vram[8 * 1024]; // 8 KiB video RAM, [0x8000, 0x9FFF]
-  uint8_t oam[160];       // Object Attribute Memory, [0xFE00, 0xFE9F]
+  uint8_t vram[0x2000]; // video RAM, [0x8000, 0x9FFF]
+  uint8_t oam[160];     // object attribute memory, [0xFE00, 0xFE9F]
 
   SDL_Color framebuffer[SCREEN_PIXL_W * SCREEN_PIXL_H];
 };
