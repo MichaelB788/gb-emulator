@@ -9,7 +9,7 @@
 
 struct bus {
   struct joypad joypad; // 0xFF00: JOYP / P1
-  struct serial_transfer serial_transfer;
+  struct serial_transfer serial;
   struct interrupt interrupt;
   struct timer timer;
 

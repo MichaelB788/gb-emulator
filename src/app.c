@@ -44,7 +44,7 @@ void app_loop(struct app *app) {
       break;
     }
 
-    graphics_render_frame(&app->graphics);
+    graphics_render_frame(&app->graphics, &app->gameboy.bus.ppu);
 
     SDL_Delay(10);
   }

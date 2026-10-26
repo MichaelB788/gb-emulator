@@ -4,15 +4,18 @@
 
 struct interrupt;
 
-enum tac_flags { TAC_CLOCK_SELECT = 0x3, TAC_TIMER_ENABLE = 1 << 2 };
+enum tac_fields { TAC_CLOCK_SELECT = 0x3, TAC_ENABLE = 1 << 2 };
 
 struct timer {
   bool interrupt_pending; // timer interrupt is delayed by one m-cycle
 
-  uint16_t system_counter; // SYS, full register of 0xFF04: DIV
-  uint8_t counter;         // 0xFF05: TIMA
-  uint8_t modulo;          // 0xFF06: TMA
-  uint8_t control;         // 0xFF07: TAC
+  // internal system counter, the upper byte is exposed to the bus at 0xFF04:
+  // timer divider (DIV)
+  uint16_t sys;
+
+  uint8_t tima; // 0xFF05: timer counter
+  uint8_t tma;  // 0xFF06: timer modulo
+  uint8_t tac;  // 0xFF07: timer control
 };
 
 void timer_tick(struct timer *timer, struct interrupt *interrupt);

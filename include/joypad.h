@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-enum joypad_flags {
+enum joypad_fields {
   // clang-format off
   JOYP_BUTTON_A      = 1 << 0,
   JOYP_BUTTON_B      = 1 << 1,
@@ -19,5 +19,5 @@ enum joypad_flags {
 };
 
 struct joypad {
-  uint8_t inputs;
+  uint8_t p1;
 };
