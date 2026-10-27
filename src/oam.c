@@ -25,10 +25,10 @@ void oam_write(struct oam *oam, uint16_t a16, uint8_t u8) {
   const size_t i = a16 >> 2 & 0x3F;
   // clang-format off
   switch (a16 & 0x3) {
-  case 0: oam->entries[i].y = u8;
-  case 1: oam->entries[i].x = u8;
-  case 2: oam->entries[i].tile_index = u8;
-  case 3: oam->entries[i].flags = u8;
+  case 0: oam->entries[i].y = u8; break;
+  case 1: oam->entries[i].x = u8; break;
+  case 2: oam->entries[i].tile_index = u8; break;
+  case 3: oam->entries[i].flags = u8; break;
   default: assert(false);
   }
   // clang-format on
