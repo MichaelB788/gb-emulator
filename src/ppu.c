@@ -1,6 +1,7 @@
 #include "ppu.h"
 #include "interrupt.h"
 #include "lcd.h"
+#include "oam.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -17,7 +18,7 @@ uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
 }
 
 uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
-  return ppu->oam[a16 - 0xFE00];
+  return oam_read(&ppu->oam, a16);
 }
 
 void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8) {
@@ -25,5 +26,5 @@ void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8) {
 }
 
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
-  ppu->oam[a16 - 0xFE00] = u8;
+  oam_write(&ppu->oam, a16, u8);
 }

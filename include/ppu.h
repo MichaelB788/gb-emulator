@@ -1,5 +1,6 @@
 #pragma once
 #include "lcd.h"
+#include "oam.h"
 #include <SDL3/SDL_pixels.h>
 #include <stdint.h>
 
@@ -8,11 +9,9 @@ struct interrupt;
 struct ppu {
   unsigned accumulated_dots;
 
-  uint8_t dma; // 0xFF46: OAM DMA source address & start
-
   uint8_t vram[0x2000]; // video RAM, [0x8000, 0x9FFF]
-  uint8_t oam[160];     // object attribute memory, [0xFE00, 0xFE9F]
 
+  struct oam oam;
   struct lcd lcd;
 };
 

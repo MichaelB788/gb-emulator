@@ -19,6 +19,7 @@ add_library(${LIBRARY_NAME}
   joypad.c
   lcd.c
   mbc1.c
+  oam.c
   ppu.c
   serial_transfer.c
   timer.c

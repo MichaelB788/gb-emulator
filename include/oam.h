@@ -23,3 +23,6 @@ struct oam {
 };
 
 void oam_tick(struct oam *oam);
+
+uint8_t oam_read(const struct oam *oam, uint16_t a16);
+void oam_write(struct oam *oam, uint16_t a16, uint8_t u8);
