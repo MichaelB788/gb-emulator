@@ -1,5 +1,7 @@
 #include "bus.h"
 #include "cartridge.h"
+#include "joypad.h"
+#include "lcd.h"
 #include "ppu.h"
 #include "serial_transfer.h"
 #include "timer.h"
@@ -22,7 +24,7 @@ void bus_tick(struct bus *bus) {
 static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: return bus->joypad.p1 & 0x30 ? bus->joypad.p1 : 0xFF;
+  case 0xFF00: return joypad_read(&bus->joypad);
   case 0xFF01: return bus->serial.sb;
   case 0xFF02: return bus->serial.sc;
   case 0xFF04: return bus->timer.sys >> 8 & 0xFF; // DIV is the upper byte of SYS
@@ -30,15 +32,15 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   case 0xFF06: return bus->timer.tma;
   case 0xFF07: return bus->timer.tac;
   case 0xFF0F: return bus->interrupt.flag;
-  case 0xFF40: return bus->ppu.lcdc;
-  case 0xFF41: return bus->ppu.stat;
-  case 0xFF42: return bus->ppu.scy;
-  case 0xFF43: return bus->ppu.scx;
-  case 0xFF44: return bus->ppu.ly;
-  case 0xFF45: return bus->ppu.lyc;
-  case 0xFF47: return bus->ppu.bgp;
-  case 0xFF48: return bus->ppu.obp0;
-  case 0xFF49: return bus->ppu.obp1;
+  case 0xFF40: return bus->ppu.lcd.lcdc;
+  case 0xFF41: return bus->ppu.lcd.stat;
+  case 0xFF42: return bus->ppu.lcd.scy;
+  case 0xFF43: return bus->ppu.lcd.scx;
+  case 0xFF44: return bus->ppu.lcd.ly;
+  case 0xFF45: return bus->ppu.lcd.lyc;
+  case 0xFF47: return bus->ppu.lcd.bgp;
+  case 0xFF48: return bus->ppu.lcd.obp0;
+  case 0xFF49: return bus->ppu.lcd.obp1;
   default: return 0xFF;
     // clang-format on
   }
@@ -47,7 +49,7 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
 static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   switch (a16) {
     // clang-format off
-  case 0xFF00: bus->joypad.p1 = bus->joypad.p1 & 0xCF | u8 & 0x30; break; // Lower nibble read only
+  case 0xFF00: joypad_write(&bus->joypad, u8); break;
   case 0xFF01: bus->serial.sb = u8; break;
   case 0xFF02: serial_transfer_write_control(&bus->serial, u8); break;
   case 0xFF04: bus->timer.sys = 0; break; // writing to DIV resets SYS to 0
@@ -55,15 +57,15 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF06: bus->timer.tma = u8; break;
   case 0xFF07: bus->timer.tac = u8 & 0x7; break;
   case 0xFF0F: bus->interrupt.flag = u8 & 0x1F; break;
-  case 0xFF40: bus->ppu.lcdc = u8; break;
-  case 0xFF41: bus->ppu.stat = bus->ppu.stat & 0x7 | u8 & 0x78; break; // Lower 3-bits read only
-  case 0xFF42: bus->ppu.scy = u8; break;
-  case 0xFF43: bus->ppu.scx = u8; break;
-  case 0xFF44: bus->ppu.ly = u8; break;
-  case 0xFF45: bus->ppu.lyc = u8; break;
-  case 0xFF47: bus->ppu.bgp = u8; break;
-  case 0xFF48: bus->ppu.obp0 = u8; break;
-  case 0xFF49: bus->ppu.obp1 = u8; break;
+  case 0xFF40: bus->ppu.lcd.lcdc = u8; break;
+  case 0xFF41: lcd_write_stat(&bus->ppu.lcd, u8); break;
+  case 0xFF42: bus->ppu.lcd.scy = u8; break;
+  case 0xFF43: bus->ppu.lcd.scx = u8; break;
+  case 0xFF44: bus->ppu.lcd.ly = u8; break;
+  case 0xFF45: bus->ppu.lcd.lyc = u8; break;
+  case 0xFF47: bus->ppu.lcd.bgp = u8; break;
+  case 0xFF48: bus->ppu.lcd.obp0 = u8; break;
+  case 0xFF49: bus->ppu.lcd.obp1 = u8; break;
   default: break;
     // clang-format on
   }

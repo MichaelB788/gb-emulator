@@ -1,5 +1,6 @@
 #include "graphics.h"
 #include "SDL3/SDL_render.h"
+#include "lcd.h"
 #include "ppu.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_pixels.h>
@@ -9,8 +10,8 @@
 #include <stdio.h>
 
 #define PIXL_SZ 5u
-#define SCREEN_RES_W (SCREEN_PIXL_W * PIXL_SZ)
-#define SCREEN_RES_H (SCREEN_PIXL_H * PIXL_SZ)
+#define SCREEN_RES_W (LCD_SCREEN_PIXL_W * PIXL_SZ)
+#define SCREEN_RES_H (LCD_SCREEN_PIXL_H * PIXL_SZ)
 
 int graphics_create(struct graphics *graphics) {
   if (!SDL_CreateWindowAndRenderer("GameBoy", SCREEN_RES_W, SCREEN_RES_H, 0,
@@ -21,8 +22,8 @@ int graphics_create(struct graphics *graphics) {
 
   if ((graphics->screen =
            SDL_CreateTexture(graphics->renderer, SDL_PIXELFORMAT_RGBA32,
-                             SDL_TEXTUREACCESS_STREAMING, SCREEN_PIXL_W,
-                             SCREEN_PIXL_H)) == NULL) {
+                             SDL_TEXTUREACCESS_STREAMING, LCD_SCREEN_PIXL_W,
+                             LCD_SCREEN_PIXL_H)) == NULL) {
     fprintf(stderr, "graphics screen texture: %s", SDL_GetError());
     goto graphics_fail;
   }
@@ -61,10 +62,10 @@ void graphics_render_frame(const struct graphics *graphics,
   void *pixels;
   int pitch;
   if (SDL_LockTexture(graphics->screen, NULL, &pixels, &pitch)) {
-    for (size_t y = 0; y < SCREEN_PIXL_H; ++y) {
+    for (size_t y = 0; y < LCD_SCREEN_PIXL_H; ++y) {
       SDL_Color *row = pixels + y * pitch;
-      for (size_t x = 0; x < SCREEN_PIXL_W; ++x) {
-        row[x] = ppu->framebuffer[x + y * SCREEN_PIXL_W];
+      for (size_t x = 0; x < LCD_SCREEN_PIXL_W; ++x) {
+        row[x] = ppu->lcd.framebuffer[x + y * LCD_SCREEN_PIXL_W];
       }
     }
     SDL_UnlockTexture(graphics->screen);
