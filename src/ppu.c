@@ -21,19 +21,43 @@ void ppu_tick(struct ppu *ppu, struct interrupt *interrupt) {
   ppu->accumulated_dots += 4;
 }
 
-SDL_Color ppu_get_bg_pixel_color(const struct ppu *ppu, uint8_t lo, uint8_t hi,
-                                 uint8_t col) {
-  assert(col < 8);
-
-  switch ((hi >> col & 1) << 1 | (lo >> col & 1)) {
+void ppu_draw_bg_pixel(struct ppu *ppu, uint8_t x, uint8_t y,
+                       uint8_t color_idx) {
+  // (hi >> col & 1) << 1 | (lo >> col & 1)
+  const size_t i = x + y * SCREEN_PIXL_W;
+  switch (color_idx) {
   case 0:
-    return PPU_COLOR_PALETTE[ppu->bgp & BGP_COLOR_IDX_0];
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[ppu->bgp & COLOR_IDX_0];
+    break;
   case 1:
-    return PPU_COLOR_PALETTE[(ppu->bgp & BGP_COLOR_IDX_1) >> 2];
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(ppu->bgp & COLOR_IDX_1) >> 2];
+    break;
   case 2:
-    return PPU_COLOR_PALETTE[(ppu->bgp & BGP_COLOR_IDX_2) >> 4];
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(ppu->bgp & COLOR_IDX_2) >> 4];
+    break;
   case 3:
-    return PPU_COLOR_PALETTE[(ppu->bgp & BGP_COLOR_IDX_3) >> 6];
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(ppu->bgp & COLOR_IDX_3) >> 6];
+    break;
+  default:
+    assert(false);
+  }
+}
+
+void ppu_draw_obj_pixel(struct ppu *ppu, uint8_t x, uint8_t y,
+                        uint8_t color_idx, uint8_t obp) {
+  const size_t i = x + y * SCREEN_PIXL_W;
+  switch (color_idx) {
+  case 0:
+    break; // color index 0 is transparent for objects
+  case 1:
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(obp & COLOR_IDX_1) >> 2];
+    break;
+  case 2:
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(obp & COLOR_IDX_2) >> 4];
+    break;
+  case 3:
+    ppu->framebuffer[i] = PPU_COLOR_PALETTE[(obp & COLOR_IDX_3) >> 6];
+    break;
   default:
     assert(false);
   }

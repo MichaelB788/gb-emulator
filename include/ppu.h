@@ -33,11 +33,12 @@ enum stat_fields {
 };
 
 // maps color indicies for a given 2-bit pixel
-enum bgp_fields {
-  BGP_COLOR_IDX_0 = 0x03, // color for 0b00
-  BGP_COLOR_IDX_1 = 0x0C, // color for 0b01
-  BGP_COLOR_IDX_2 = 0x30, // color for 0b10
-  BGP_COLOR_IDX_3 = 0xC0  // color for 0b11
+// to be used with: BGP, OBP0, and OBP1
+enum color_idx_masks {
+  COLOR_IDX_0 = 0x03, // color for 0b00
+  COLOR_IDX_1 = 0x0C, // color for 0b01
+  COLOR_IDX_2 = 0x30, // color for 0b10
+  COLOR_IDX_3 = 0xC0  // color for 0b11
 };
 
 // reported by STAT.ppu_mode (defaults to 0 if ppu disabled)
@@ -53,6 +54,8 @@ struct ppu {
   uint8_t ly;   // 0xFF44: current scanline
   uint8_t lyc;  // 0xFF45: LY compare
   uint8_t bgp;  // 0xFF47: Background (and window) palette
+  uint8_t obp0; // 0xFF48: OBJ palette data 0
+  uint8_t obp1; // 0xFF49: OBJ palette data 1
 
   uint8_t vram[0x2000]; // video RAM, [0x8000, 0x9FFF]
   uint8_t oam[160];     // object attribute memory, [0xFE00, 0xFE9F]
@@ -64,11 +67,10 @@ void ppu_init(struct ppu *ppu);
 
 void ppu_tick(struct ppu *ppu, struct interrupt *interrupt);
 
-SDL_Color ppu_get_bg_pixel_color(const struct ppu *ppu, uint8_t lo, uint8_t hi,
-                                 uint8_t col);
-
-SDL_Color ppu_get_obj_pixel_color(const struct ppu *ppu, uint8_t lo, uint8_t hi,
-                                  uint8_t col);
+void ppu_draw_bg_pixel(struct ppu *ppu, uint8_t x, uint8_t y,
+                       uint8_t color_idx);
+void ppu_draw_obj_pixel(struct ppu *ppu, uint8_t x, uint8_t y,
+                        uint8_t color_idx, uint8_t obp);
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
 uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);

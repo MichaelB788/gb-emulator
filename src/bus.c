@@ -37,6 +37,8 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   case 0xFF44: return bus->ppu.ly;
   case 0xFF45: return bus->ppu.lyc;
   case 0xFF47: return bus->ppu.bgp;
+  case 0xFF48: return bus->ppu.obp0;
+  case 0xFF49: return bus->ppu.obp1;
   default: return 0xFF;
     // clang-format on
   }
@@ -60,6 +62,8 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF44: bus->ppu.ly = u8; break;
   case 0xFF45: bus->ppu.lyc = u8; break;
   case 0xFF47: bus->ppu.bgp = u8; break;
+  case 0xFF48: bus->ppu.obp0 = u8; break;
+  case 0xFF49: bus->ppu.obp1 = u8; break;
   default: break;
     // clang-format on
   }
