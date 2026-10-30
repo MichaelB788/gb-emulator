@@ -11,6 +11,8 @@ struct ppu {
 
   struct oam oam;
   struct lcd lcd;
+
+  SDL_Color framebuffer[SCREEN_PIXL_W * SCREEN_PIXL_H];
 };
 
 void ppu_init(struct ppu *ppu);
