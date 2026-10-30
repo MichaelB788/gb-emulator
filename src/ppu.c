@@ -1,5 +1,4 @@
 #include "ppu.h"
-#include "interrupt.h"
 #include "lcd.h"
 #include "oam.h"
 #include <assert.h>
@@ -9,8 +8,9 @@
 
 void ppu_init(struct ppu *ppu) { lcd_init(&ppu->lcd); }
 
-void ppu_tick(struct ppu *ppu, struct interrupt *interrupt) {
-  ppu->accumulated_dots += 4;
+void ppu_tick(struct ppu *ppu, struct bus *bus) {
+  // TODO: lcd tick
+  oam_tick(&ppu->oam, bus);
 }
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
@@ -28,7 +28,7 @@ uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
   switch (lcd_get_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
-    return oam_read(&ppu->oam, a16);
+    return oam_read_u8(&ppu->oam, a16);
   case PPU_OAM_SCAN:
   case PPU_DRAWING:
     return 0xFF;
@@ -51,7 +51,7 @@ void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
   switch (lcd_get_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
-    oam_write(&ppu->oam, a16, u8);
+    oam_write_u8(&ppu->oam, a16, u8);
     break;
   case PPU_OAM_SCAN:
   case PPU_DRAWING:

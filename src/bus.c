@@ -2,6 +2,7 @@
 #include "cartridge.h"
 #include "joypad.h"
 #include "lcd.h"
+#include "oam.h"
 #include "ppu.h"
 #include "serial_transfer.h"
 #include "timer.h"
@@ -17,7 +18,7 @@ int bus_create(struct bus *bus, const char *rom_path) {
 void bus_destroy(struct bus *bus) { cartridge_destroy(&bus->cartridge); }
 
 void bus_tick(struct bus *bus) {
-  ppu_tick(&bus->ppu, &bus->interrupt);
+  ppu_tick(&bus->ppu, bus);
   timer_tick(&bus->timer, &bus->interrupt);
 }
 
@@ -38,6 +39,7 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   case 0xFF43: return bus->ppu.lcd.scx;
   case 0xFF44: return bus->ppu.lcd.ly;
   case 0xFF45: return bus->ppu.lcd.lyc;
+  case 0xFF46: return bus->ppu.oam.dma;
   case 0xFF47: return bus->ppu.lcd.bgp;
   case 0xFF48: return bus->ppu.lcd.obp0;
   case 0xFF49: return bus->ppu.lcd.obp1;
@@ -63,6 +65,7 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF43: bus->ppu.lcd.scx = u8; break;
   case 0xFF44: bus->ppu.lcd.ly = u8; break;
   case 0xFF45: bus->ppu.lcd.lyc = u8; break;
+  case 0xFF46: oam_write_dma_u8(&bus->ppu.oam, u8); break;
   case 0xFF47: bus->ppu.lcd.bgp = u8; break;
   case 0xFF48: bus->ppu.lcd.obp0 = u8; break;
   case 0xFF49: bus->ppu.lcd.obp1 = u8; break;
