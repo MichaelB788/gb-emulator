@@ -1,9 +1,10 @@
 #pragma once
 #include <SDL3/SDL_pixels.h>
+#include <stdbool.h>
 #include <stdint.h>
 
-#define LCD_SCREEN_PIXL_W 160ul
-#define LCD_SCREEN_PIXL_H 144ul
+#define SCREEN_PIXL_W 160ul
+#define SCREEN_PIXL_H 144ul
 
 static const SDL_Color LCD_COLOR_PALETTE[4] = {
     [0] = {.r = 0xb9, .g = 0xe0, .b = 0x8d, .a = 0xff}, // Light green
@@ -37,15 +38,6 @@ enum stat_fields {
   // clang-format on
 };
 
-// maps color indicies for a given 2-bit pixel
-// to be used with: BGP, OBP0, and OBP1
-enum color_idx_masks {
-  COLOR_IDX_0 = 0x03, // color for 0b00
-  COLOR_IDX_1 = 0x0C, // color for 0b01
-  COLOR_IDX_2 = 0x30, // color for 0b10
-  COLOR_IDX_3 = 0xC0  // color for 0b11
-};
-
 // reported by STAT.ppu_mode (defaults to 0 if ppu disabled)
 enum ppu_mode { PPU_HBLANK = 0, PPU_VBLANK, PPU_OAM_SCAN, PPU_DRAWING };
 
@@ -59,19 +51,12 @@ struct lcd {
   uint8_t bgp;  // 0xFF47: Background (and window) palette
   uint8_t obp0; // 0xFF48: OBJ palette data 0
   uint8_t obp1; // 0xFF49: OBJ palette data 1
-
-  SDL_Color framebuffer[LCD_SCREEN_PIXL_W * LCD_SCREEN_PIXL_H];
 };
-
-void lcd_init(struct lcd *lcd);
 
 void lcd_write_stat(struct lcd *lcd, uint8_t u8);
 
 enum ppu_mode lcd_get_ppu_mode(const struct lcd *lcd);
 
-void lcd_draw_pixel_bg(struct lcd *lcd, uint8_t x, uint8_t y,
-                       uint8_t color_idx);
-void lcd_draw_pixel_obj0(struct lcd *lcd, uint8_t x, uint8_t y,
-                         uint8_t color_idx);
-void lcd_draw_pixel_obj1(struct lcd *lcd, uint8_t x, uint8_t y,
-                         uint8_t color_idx);
+SDL_Color lcd_get_bg_pixel(const struct lcd *lcd, uint8_t color_idx);
+SDL_Color lcd_get_obj_pixel(const struct lcd *lcd, uint8_t color_idx,
+                            uint8_t obp);

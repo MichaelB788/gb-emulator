@@ -6,7 +6,11 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void ppu_init(struct ppu *ppu) { lcd_init(&ppu->lcd); }
+void ppu_init(struct ppu *ppu) {
+  for (size_t i = 0; i < SCREEN_PIXL_H * SCREEN_PIXL_W; ++i) {
+    ppu->framebuffer[i] = lcd_get_bg_pixel(&ppu->lcd, 0);
+  }
+}
 
 void ppu_tick(struct ppu *ppu, struct bus *bus) {
   // TODO: lcd tick

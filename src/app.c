@@ -43,6 +43,9 @@ void app_loop(struct app *app) {
       fprintf(stderr, "An error occurred\n");
       break;
     }
+
+    graphics_render_frame(&app->graphics, &app->gameboy.bus.ppu);
+    SDL_Delay(10);
   }
 }
 
