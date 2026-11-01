@@ -15,12 +15,12 @@ add_library(${LIBRARY_NAME}
   cpu_dbg.c
   cpu_instructions.c
   gameboy.c
-  graphics.c
   joypad.c
   lcd.c
   mbc1.c
   oam.c
   ppu.c
+  sdl_display.c
   serial_transfer.c
   timer.c
   u8_array.c

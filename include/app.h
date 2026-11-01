@@ -1,11 +1,11 @@
 #pragma once
 #include "gameboy.h"
-#include "graphics.h"
+#include "sdl_display.h"
 #include <SDL3/SDL_events.h>
 
 struct app {
   struct gameboy gameboy;
-  struct graphics graphics;
+  struct sdl_display main_display;
   SDL_Event event;
 };
 

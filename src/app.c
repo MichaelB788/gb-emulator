@@ -1,7 +1,8 @@
 #include "app.h"
 #include "app_result.h"
 #include "gameboy.h"
-#include "graphics.h"
+#include "ppu.h"
+#include "sdl_display.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
@@ -11,17 +12,18 @@
 int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "app sdl_init: %s\n", SDL_GetError());
-    goto app_fail;
+    goto app_cleanup;
   }
 
-  if (graphics_create(&app->graphics) == -1 ||
+  if (!sdl_display_create(&app->main_display, "GameBoy", SCREEN_PIXL_W,
+                          SCREEN_PIXL_H) ||
       gameboy_create(&app->gameboy, rom, opts) == -1) {
-    goto app_fail;
+    goto app_cleanup;
   }
 
   return 0;
 
-app_fail:
+app_cleanup:
   app_destroy(app);
   return -1;
 }
@@ -44,13 +46,15 @@ void app_loop(struct app *app) {
       break;
     }
 
-    graphics_render_frame(&app->graphics, &app->gameboy.bus.ppu);
+    sdl_display_render_frame(&app->main_display);
+
     SDL_Delay(10);
   }
 }
 
 void app_destroy(struct app *app) {
-  graphics_destroy(&app->graphics);
+  sdl_display_destroy(&app->main_display);
+
   gameboy_destroy(&app->gameboy);
   SDL_Quit();
 }

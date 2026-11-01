@@ -7,9 +7,7 @@
 #include <stdint.h>
 
 void ppu_init(struct ppu *ppu) {
-  for (size_t i = 0; i < SCREEN_PIXL_H * SCREEN_PIXL_W; ++i) {
-    ppu->framebuffer[i] = lcd_get_color_bg_win(&ppu->lcd, 0);
-  }
+  // todo: link to an external framebuffer?
 }
 
 void ppu_tick(struct ppu *ppu, struct bus *bus) {
