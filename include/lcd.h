@@ -94,10 +94,13 @@ struct lcd {
   uint8_t obp1; // 0xFF49: OBJ palette data 1
 };
 
-uint16_t lcd_lcdc_win_tilemap_area(const struct lcd *lcd);
+uint16_t lcd_lcdc_bg_tilemap_area(const struct lcd *lcd);
 uint16_t lcd_lcdc_bg_win_addressing_mode(const struct lcd *lcd);
+uint16_t lcd_lcdc_win_tilemap_area(const struct lcd *lcd);
 
-void lcd_write_stat(struct lcd *lcd, uint8_t u8);
+void lcd_stat_write_u8(struct lcd *lcd, uint8_t u8);
+void lcd_stat_update_ppu_mode(struct lcd *lcd, enum ppu_mode mode);
+void lcd_stat_update_lyc_equals_ly(struct lcd *lcd);
 enum ppu_mode lcd_stat_ppu_mode(const struct lcd *lcd);
 
 SDL_Color lcd_get_color_bg_win(const struct lcd *lcd, uint8_t color_idx);

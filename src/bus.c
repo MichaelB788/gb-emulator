@@ -60,7 +60,7 @@ static void bus_write_io(struct bus *bus, uint16_t a16, uint8_t u8) {
   case 0xFF07: bus->timer.tac = u8 & 0x7; break;
   case 0xFF0F: bus->interrupt.flag = u8 & 0x1F; break;
   case 0xFF40: bus->ppu.lcd.lcdc = u8; break;
-  case 0xFF41: lcd_write_stat(&bus->ppu.lcd, u8); break;
+  case 0xFF41: lcd_stat_write_u8(&bus->ppu.lcd, u8); break;
   case 0xFF42: bus->ppu.lcd.scy = u8; break;
   case 0xFF43: bus->ppu.lcd.scx = u8; break;
   case 0xFF44: bus->ppu.lcd.ly = u8; break;
