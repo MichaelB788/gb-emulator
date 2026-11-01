@@ -37,13 +37,13 @@ void mbc1_rom_write(struct mbc1 *mbc1, const struct u8_array *rom, uint16_t a16,
 
 uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_array *ram,
                       uint16_t a16) {
-  return mbc1->is_ram_enabled
+  return mbc1->is_ram_enabled && ram->size > 0
              ? ram->data[a16 - 0xA000 + mbc1->ram_bank * 0x2000]
              : 0xFF;
 }
 
 void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_array *ram, uint16_t a16,
                     uint8_t u8) {
-  if (mbc1->is_ram_enabled)
+  if (mbc1->is_ram_enabled && ram->size > 0)
     ram->data[a16 - 0xA000 + mbc1->ram_bank * 0x2000] = u8;
 }
