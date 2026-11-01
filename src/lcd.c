@@ -22,7 +22,7 @@ uint16_t lcd_lcdc_win_tilemap_area(const struct lcd *lcd) {
   return 0x9800 | lcdc_bit6 << 10;
 }
 
-void lcd_stat_write_u8(struct lcd *lcd, uint8_t u8) {
+void lcd_stat_write(struct lcd *lcd, uint8_t u8) {
   // Lower 3-bits read only, 7th bit is unused
   lcd->stat = lcd->stat & 0x7 | u8 & 0x78;
 }
