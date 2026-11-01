@@ -8,7 +8,7 @@
 
 void ppu_init(struct ppu *ppu) {
   for (size_t i = 0; i < SCREEN_PIXL_H * SCREEN_PIXL_W; ++i) {
-    ppu->framebuffer[i] = lcd_get_bg_pixel(&ppu->lcd, 0);
+    ppu->framebuffer[i] = lcd_get_color_bg_win(&ppu->lcd, 0);
   }
 }
 
@@ -17,48 +17,31 @@ void ppu_tick(struct ppu *ppu, struct bus *bus) {
   oam_tick(&ppu->oam, bus);
 }
 
-uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
-  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
-  case PPU_HBLANK:
-  case PPU_VBLANK:
-  case PPU_OAM_SCAN:
-    return ppu->vram[a16 - 0x8000];
-  case PPU_DRAWING:
-    return 0xFF;
-  }
+static bool ppu_is_vram_accessible(const struct ppu *ppu) {
+  return lcd_stat_ppu_mode(&ppu->lcd) != PPU_DRAWING ||
+         (ppu->lcd.lcdc & LCDC_LCD_ENABLED) == 0;
 }
 
-uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
-  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
-  case PPU_HBLANK:
-  case PPU_VBLANK:
-    return oam_read_u8(&ppu->oam, a16);
-  case PPU_OAM_SCAN:
-  case PPU_DRAWING:
-    return 0xFF;
-  }
+static bool ppu_is_oam_accessible(const struct ppu *ppu) {
+  const enum ppu_mode mode = lcd_stat_ppu_mode(&ppu->lcd);
+  return (mode != PPU_OAM_SCAN && mode != PPU_DRAWING) ||
+         (ppu->lcd.lcdc & LCDC_LCD_ENABLED) == 0;
+}
+
+uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
+  return ppu_is_vram_accessible(ppu) ? ppu->vram[a16 - 0x8000] : 0xFF;
 }
 
 void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8) {
-  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
-  case PPU_HBLANK:
-  case PPU_VBLANK:
-  case PPU_OAM_SCAN:
+  if (ppu_is_vram_accessible(ppu))
     ppu->vram[a16 - 0x8000] = u8;
-    break;
-  case PPU_DRAWING:
-    break;
-  }
+}
+
+uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
+  return ppu_is_oam_accessible(ppu) ? oam_read_u8(&ppu->oam, a16) : 0xFF;
 }
 
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
-  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
-  case PPU_HBLANK:
-  case PPU_VBLANK:
+  if (ppu_is_oam_accessible(ppu))
     oam_write_u8(&ppu->oam, a16, u8);
-    break;
-  case PPU_OAM_SCAN:
-  case PPU_DRAWING:
-    break;
-  }
 }

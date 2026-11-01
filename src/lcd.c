@@ -20,19 +20,19 @@ void lcd_write_stat(struct lcd *lcd, uint8_t u8) {
 }
 
 enum ppu_mode lcd_stat_ppu_mode(const struct lcd *lcd) {
-  return lcd->lcdc & LCDC_LCD_ENABLED ? lcd->stat & STAT_PPU_MODE : 0;
+  return lcd->lcdc & LCDC_LCD_ENABLED ? lcd->stat & STAT_PPU_MODE : PPU_HBLANK;
 }
 
 // color_idx = (hi >> col & 1) << 1 | (lo >> col & 1)
-SDL_Color lcd_get_bg_pixel(const struct lcd *lcd, uint8_t color_idx) {
+SDL_Color lcd_get_color_bg_win(const struct lcd *lcd, uint8_t color_idx) {
   assert(color_idx <= 3);
   return LCD_COLOR_PALETTE[lcd->bgp >> (color_idx * 2) & 0x3];
 }
 
-SDL_Color lcd_get_obj_pixel(const struct lcd *lcd, uint8_t color_idx,
+SDL_Color lcd_get_color_obj(const struct lcd *lcd, uint8_t color_idx,
                             uint8_t obp) {
-  assert(color_idx <= 3 && (obp == lcd->obp0 || obp == lcd->obp1));
-  // note: color index 0 is transparent
-  return color_idx != 0 ? LCD_COLOR_PALETTE[obp >> (color_idx * 2) & 0x3]
+  assert(color_idx <= 3);
+  // note: color index 0 is transparent for objects
+  return color_idx != 0 ? LCD_COLOR_PALETTE[lcd->obp0 >> (color_idx * 2) & 0x3]
                         : (SDL_Color){};
 }

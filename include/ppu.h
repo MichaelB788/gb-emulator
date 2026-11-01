@@ -4,6 +4,9 @@
 #include <SDL3/SDL_pixels.h>
 #include <stdint.h>
 
+#define SCREEN_PIXL_W 160ul
+#define SCREEN_PIXL_H 144ul
+
 struct bus;
 
 struct ppu {
@@ -20,7 +23,7 @@ void ppu_init(struct ppu *ppu);
 void ppu_tick(struct ppu *ppu, struct bus *bus);
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16);
-uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
-
 void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8);
+
+uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8);

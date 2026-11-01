@@ -3,9 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define SCREEN_PIXL_W 160ul
-#define SCREEN_PIXL_H 144ul
-
 static const SDL_Color LCD_COLOR_PALETTE[4] = {
     [0] = {.r = 0xb9, .g = 0xe0, .b = 0x8d, .a = 0xff}, // Light green
     [1] = {.r = 0x8b, .g = 0xa8, .b = 0x6a, .a = 0xff}, // Green
@@ -51,19 +48,39 @@ enum lcdc_fields {
 };
 
 enum stat_fields {
-  // clang-format off
-  STAT_PPU_MODE          = 0x3,    // read only
-  STAT_LYC_EQUALS_LY     = 1 << 2, // read only
+  // indictates the PPU's current status (see enum ppu_mode)
+  STAT_PPU_MODE = 0x3,
 
-  STAT_MODE_0_INT_SELECT = 1 << 3, // read/write
-  STAT_MODE_1_INT_SELECT = 1 << 4, // read/write
-  STAT_MODE_2_INT_SELECT = 1 << 5, // read/write
-  STAT_LYC_INT_SELECT    = 1 << 6  // read/write
-  // clang-format on
+  // contains the result of LY == LYC. updated constantly
+  STAT_LYC_EQUALS_LY = 1 << 2,
+
+  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_HBLANK
+  STAT_HBLANK_SELECT = 1 << 3,
+
+  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_VBLANK
+  STAT_VBLANK_SELECT = 1 << 4,
+
+  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_OAM_SCAN
+  STAT_OAM_SCAN_SELECT = 1 << 5,
+
+  // if set, triggers a STAT interrupt if STAT_LYC_EQUALS_LY
+  STAT_LYC_LY_SELECT = 1 << 6
 };
 
 // reported by STAT.ppu_mode (defaults to 0 if ppu disabled)
-enum ppu_mode { PPU_HBLANK = 0, PPU_VBLANK, PPU_OAM_SCAN, PPU_DRAWING };
+enum ppu_mode {
+  // waiting until the end of the scanline, 80 dots
+  PPU_HBLANK = 0,
+
+  // waiting until the next frame, between 172 & 289 dots
+  PPU_VBLANK = 1,
+
+  // searching for OBJs which overlap this line, 376 - (vblank duration) dots
+  PPU_OAM_SCAN = 2,
+
+  // sending pixels to the LCD 4560 dots (10 scanlines)
+  PPU_DRAWING = 3
+};
 
 struct lcd {
   uint8_t lcdc; // 0xFF40: LCD control
@@ -83,6 +100,6 @@ uint16_t lcd_lcdc_bg_win_addressing_mode(const struct lcd *lcd);
 void lcd_write_stat(struct lcd *lcd, uint8_t u8);
 enum ppu_mode lcd_stat_ppu_mode(const struct lcd *lcd);
 
-SDL_Color lcd_get_bg_pixel(const struct lcd *lcd, uint8_t color_idx);
-SDL_Color lcd_get_obj_pixel(const struct lcd *lcd, uint8_t color_idx,
+SDL_Color lcd_get_color_bg_win(const struct lcd *lcd, uint8_t color_idx);
+SDL_Color lcd_get_color_obj(const struct lcd *lcd, uint8_t color_idx,
                             uint8_t obp);
