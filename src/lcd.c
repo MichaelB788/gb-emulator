@@ -13,7 +13,7 @@ uint16_t lcd_lcdc_bg_tilemap_area(const struct lcd *lcd) {
 uint16_t lcd_lcdc_bg_win_addressing_mode(const struct lcd *lcd) {
   // note: going from 0x9000 to 0x8000 is a matter of flipping the 12th bit
   const bool lcdc_bit4 = (lcd->lcdc & LCDC_BG_WIN_ADDRESSING_MODE) != 0;
-  return 0x9000 ^ lcdc_bit4 << 8;
+  return 0x9000 ^ lcdc_bit4 << 12;
 }
 
 uint16_t lcd_lcdc_win_tilemap_area(const struct lcd *lcd) {
