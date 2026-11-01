@@ -3,10 +3,7 @@
 #include <stdlib.h>
 
 void u8_array_create(struct u8_array *arr, size_t size) {
-  if (size > 0)
-    arr->data = malloc(sizeof(uint8_t) * (arr->size = size));
-  else
-    arr->data = NULL;
+  arr->data = (arr->size = size) > 0 ? malloc(sizeof(uint8_t) * size) : NULL;
 }
 
 void u8_array_destroy(struct u8_array *arr) {
