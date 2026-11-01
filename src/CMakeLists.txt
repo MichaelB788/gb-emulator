@@ -23,6 +23,7 @@ add_library(${LIBRARY_NAME}
   ppu.c
   serial_transfer.c
   timer.c
+  u8_array.c
 )
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE

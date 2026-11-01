@@ -1,13 +1,16 @@
 #pragma once
 #include "mbc1.h"
+#include "u8_array.h"
 #include <stddef.h>
 #include <stdint.h>
 
 enum cartridge_type {
-  ROM_ONLY_CART = 0x00,
-  MBC1_CART = 0x01,
-  MBC1_RAM_CART = 0x02,
-  MBC1_RAM_BATTERY_CART = 0x03,
+  // clang-format off
+  ROM_ONLY_CART         = 0x00,
+  MBC1_CART             = 0x01,
+  MBC1_RAM_CART         = 0x02,
+  MBC1_RAM_BATTERY_CART = 0x03
+  // clang-format off
 };
 
 struct cartridge {
@@ -16,21 +19,15 @@ struct cartridge {
     struct mbc1 mbc1;
   } mapper;
 
-  size_t rom_size;
-  size_t ram_size;
-
-  uint8_t *rom;
-  uint8_t *ram;
+  struct u8_array rom;
+  struct u8_array ram;
 };
 
 int cartridge_create(struct cartridge *cart, const char *rom_path);
-
 void cartridge_destroy(struct cartridge *cart);
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr);
-
-uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr);
+void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val);
 
 void cartridge_write_ram(struct cartridge *cart, uint16_t addr, uint8_t val);
-
-void cartridge_write_rom(struct cartridge *cart, uint16_t addr, uint8_t val);
+uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t addr);

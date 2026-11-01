@@ -16,8 +16,8 @@ struct bus {
   uint8_t wram[0x2000]; // work ram, [0xC000, 0xDFFF]
   uint8_t hram[127];    // high ram, [0xFF80, 0xFFFE]
 
-  struct cartridge cartridge;
   struct ppu ppu;
+  struct cartridge cartridge;
 };
 
 int bus_create(struct bus *bus, const char *rom_path);

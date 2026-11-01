@@ -1,29 +1,30 @@
 #include "cartridge.h"
 #include "mbc1.h"
+#include "u8_array.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-enum header_fields {
-  HEADER_CARTRIDGE_TYPE = 0x147,
-  HEADER_ROM_SIZE = 0x148,
-  HEADER_RAM_SIZE = 0x149
-};
-
 int cartridge_create(struct cartridge *cart, const char *rom_path) {
   FILE *rom_f = fopen(rom_path, "rb");
   if (rom_f == NULL) {
     perror("cartridge_create fopen");
-    goto cart_fail;
+    goto cartridge_cleanup;
   }
+
+  enum header_fields {
+    HEADER_CARTRIDGE_TYPE = 0x147,
+    HEADER_ROM_SIZE = 0x148,
+    HEADER_RAM_SIZE = 0x149
+  };
 
   // read header into buffer
   uint8_t header[0x150];
   fread(header, sizeof(uint8_t), 0x150, rom_f);
   if (ferror(rom_f)) {
     perror("cartridge_create fread header");
-    goto cart_fail;
+    goto cartridge_cleanup;
   }
 
   // init cartridge type
@@ -38,7 +39,7 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
   default:
     fprintf(stderr, "cartridge_create unimplemented mapper: 0x%02X\n",
             cart->type);
-    goto cart_fail;
+    goto cartridge_cleanup;
   }
 
   // init RAM
@@ -50,55 +51,38 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
       [0x4] = 0x20000, // 128 KiB
       [0x5] = 0x10000  // 64 KiB
   };
-  cart->ram = malloc(cart->ram_size = RAM_CAPS[header[HEADER_RAM_SIZE]]);
+  u8_array_create(&cart->ram, RAM_CAPS[header[HEADER_RAM_SIZE]]);
 
   // init ROM
   rewind(rom_f);
-  cart->rom = malloc(cart->rom_size = 0x8000 * (1 << header[HEADER_ROM_SIZE]));
-  fread(cart->rom, sizeof(uint8_t), cart->rom_size, rom_f);
+  u8_array_create(&cart->rom, 0x8000 * (1 << header[HEADER_ROM_SIZE]));
+  fread(cart->rom.data, sizeof(uint8_t), cart->rom.size, rom_f);
   if (ferror(rom_f)) {
     perror("cartridge_create fread rom");
-    goto cart_fail;
+    goto cartridge_cleanup;
   }
 
   return 0;
 
-cart_fail:
+cartridge_cleanup:
   fclose(rom_f);
   cartridge_destroy(cart);
   return -1;
 }
 
 void cartridge_destroy(struct cartridge *cart) {
-  cart->rom_size = cart->ram_size = 0;
-  if (cart->rom) {
-    free(cart->rom);
-    cart->rom = NULL;
-  }
-  if (cart->ram) {
-    free(cart->ram);
-    cart->ram = NULL;
-  }
+  u8_array_destroy(&cart->rom);
+  u8_array_destroy(&cart->ram);
 }
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t a16) {
   switch (cart->type) {
   case ROM_ONLY_CART:
-    return cart->rom[a16];
+    return cart->rom.data[a16];
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    return cartridge_mbc1_read_rom(cart, a16);
-  }
-}
-
-uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t a16) {
-  switch (cart->type) {
-  case MBC1_RAM_CART:
-  case MBC1_RAM_BATTERY_CART:
-    return cartridge_mbc1_read_ram(cart, a16);
-  default:
-    return 0xFF;
+    return mbc1_rom_read(&cart->mapper.mbc1, &cart->rom, a16);
   }
 }
 
@@ -109,8 +93,18 @@ void cartridge_write_rom(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    cartridge_mbc1_write_rom(cart, a16, u8);
+    mbc1_rom_write(&cart->mapper.mbc1, &cart->rom, a16, u8);
     break;
+  }
+}
+
+uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t a16) {
+  switch (cart->type) {
+  case MBC1_RAM_CART:
+  case MBC1_RAM_BATTERY_CART:
+    return mbc1_read_ram(&cart->mapper.mbc1, &cart->ram, a16);
+  default:
+    return 0xFF;
   }
 }
 
@@ -118,7 +112,7 @@ void cartridge_write_ram(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   switch (cart->type) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    cartridge_mbc1_write_ram(cart, a16, u8);
+    mbc1_write_ram(&cart->mapper.mbc1, &cart->ram, a16, u8);
     break;
   default:
     break;

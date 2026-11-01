@@ -1,17 +1,21 @@
 #pragma once
+#include "u8_array.h"
+#include <stdbool.h>
 #include <stdint.h>
 
-struct cartridge;
-
 struct mbc1 {
-  uint8_t banking_mode_select;
+  bool is_advanced_banking_enabled;
+  bool is_ram_enabled;
   uint8_t rom_bank;
   uint8_t ram_bank;
-  uint8_t ram_enable;
 };
 
-uint8_t cartridge_mbc1_read_rom(const struct cartridge *cart, uint16_t a16);
-uint8_t cartridge_mbc1_read_ram(const struct cartridge *cart, uint16_t a16);
+uint8_t mbc1_rom_read(const struct mbc1 *mbc1, const struct u8_array *rom,
+                      uint16_t a16);
+void mbc1_rom_write(struct mbc1 *mbc1, const struct u8_array *rom, uint16_t a16,
+                    uint8_t u8);
 
-void cartridge_mbc1_write_rom(struct cartridge *cart, uint16_t a16, uint8_t u8);
-void cartridge_mbc1_write_ram(struct cartridge *cart, uint16_t a16, uint8_t u8);
+uint8_t mbc1_read_ram(const struct mbc1 *mbc1, const struct u8_array *ram,
+                      uint16_t a16);
+void mbc1_write_ram(const struct mbc1 *mbc1, struct u8_array *ram, uint16_t a16,
+                    uint8_t u8);
