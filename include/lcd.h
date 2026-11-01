@@ -14,16 +14,40 @@ static const SDL_Color LCD_COLOR_PALETTE[4] = {
 };
 
 enum lcdc_fields {
-  // clang-format off
-  LCDC_BG_AND_WINDOW_ENABLE = 1 << 0,
-  LCDC_OBJ_ENABLE           = 1 << 1,
-  LCDC_OBJ_SIZE             = 1 << 2,
-  LCDC_BG_TILE_MAP          = 1 << 3,
-  LCDC_BG_AND_WINDOW_TILES  = 1 << 4,
-  LCDC_WINDOW_ENABLE        = 1 << 5,
-  LCDC_WINDOW_TILE_MAP      = 1 << 6,
-  LCDC_LCD_AND_PPU_ENABLE   = 1 << 7
-  // clang-format on
+  /**
+   * if this bit is set to 0:
+   * - background and window become blank. window display
+   * - only objects are displayed if LCDC_OBJ_ENABLED is set
+   * - LCDC_WIN_ENABLE is ignored
+   */
+  LCDC_BG_WIN_ENABLED = 1 << 0,
+
+  // toggles whether objects are displayed
+  LCDC_OBJ_ENABLED = 1 << 1,
+
+  // changes tile size (1 tile or 2 stacked vertically)
+  LCDC_OBJ_SIZE = 1 << 2,
+
+  // if clear, BG uses tilemap 0x9800, otherwise 0x9C00
+  LCDC_BG_TILE_MAP_AREA = 1 << 3,
+
+  /**
+   * addressing mode for BG & WIN to pick tiles from
+   * - tiles are always indexed by an 8-bit (un)signed integer
+   * - 1: 0x8000 is the base pointer & unsigned addressing is used
+   * - 0: 0x9000 is the base pointer & signed addressing is used
+   */
+  LCDC_BG_WIN_ADDRESSING_MODE = 1 << 4,
+
+  // controls whether the window is displayed or not. overridden by
+  // LCDC_BG_WIN_ENABLED if that is cleared
+  LCDC_WIN_ENABLED = 1 << 5,
+
+  // if clear, WIN uses tilemap 0x9800, otherwise 0x9C00
+  LCDC_WIN_TILE_MAP_AREA = 1 << 6,
+
+  // if clear, turn off the LCD & PPU, grant immediate access to VRAM & OAM.
+  LCDC_LCD_ENABLED = 1 << 7
 };
 
 enum stat_fields {
@@ -53,9 +77,11 @@ struct lcd {
   uint8_t obp1; // 0xFF49: OBJ palette data 1
 };
 
-void lcd_write_stat(struct lcd *lcd, uint8_t u8);
+uint16_t lcd_lcdc_win_tilemap_area(const struct lcd *lcd);
+uint16_t lcd_lcdc_bg_win_addressing_mode(const struct lcd *lcd);
 
-enum ppu_mode lcd_get_ppu_mode(const struct lcd *lcd);
+void lcd_write_stat(struct lcd *lcd, uint8_t u8);
+enum ppu_mode lcd_stat_ppu_mode(const struct lcd *lcd);
 
 SDL_Color lcd_get_bg_pixel(const struct lcd *lcd, uint8_t color_idx);
 SDL_Color lcd_get_obj_pixel(const struct lcd *lcd, uint8_t color_idx,

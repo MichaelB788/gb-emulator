@@ -18,7 +18,7 @@ void ppu_tick(struct ppu *ppu, struct bus *bus) {
 }
 
 uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
-  switch (lcd_get_ppu_mode(&ppu->lcd)) {
+  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
   case PPU_OAM_SCAN:
@@ -29,7 +29,7 @@ uint8_t ppu_read_vram(const struct ppu *ppu, uint16_t a16) {
 }
 
 uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
-  switch (lcd_get_ppu_mode(&ppu->lcd)) {
+  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
     return oam_read_u8(&ppu->oam, a16);
@@ -40,7 +40,7 @@ uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16) {
 }
 
 void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8) {
-  switch (lcd_get_ppu_mode(&ppu->lcd)) {
+  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
   case PPU_OAM_SCAN:
@@ -52,7 +52,7 @@ void ppu_write_vram(struct ppu *ppu, uint16_t a16, uint8_t u8) {
 }
 
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
-  switch (lcd_get_ppu_mode(&ppu->lcd)) {
+  switch (lcd_stat_ppu_mode(&ppu->lcd)) {
   case PPU_HBLANK:
   case PPU_VBLANK:
     oam_write_u8(&ppu->oam, a16, u8);
