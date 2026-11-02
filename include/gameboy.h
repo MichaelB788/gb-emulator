@@ -3,6 +3,7 @@
 #include "bus.h"
 #include "cpu.h"
 #include "cpu_dbg.h"
+#include <stdbool.h>
 
 enum gb_dbg_opt {
   GB_OPT_NONE,
@@ -19,8 +20,8 @@ struct gameboy {
   struct bus bus;
 };
 
-int gameboy_create(struct gameboy *gb, const char *rom_path,
-                   enum gb_dbg_opt dbg_opt);
+bool gameboy_create(struct gameboy *gb, const char *rom_path,
+                    enum gb_dbg_opt dbg_opt);
 void gameboy_destroy(struct gameboy *gb);
 
 enum app_result gameboy_step(struct gameboy *gb);

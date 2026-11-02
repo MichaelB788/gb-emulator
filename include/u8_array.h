@@ -1,4 +1,5 @@
 #pragma once
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -7,5 +8,5 @@ struct u8_array {
   uint8_t *data;
 };
 
-void u8_array_create(struct u8_array *arr, size_t size);
+bool u8_array_create(struct u8_array *arr, size_t size);
 void u8_array_destroy(struct u8_array *arr);

@@ -1,6 +1,7 @@
 #pragma once
 #include "mbc1.h"
 #include "u8_array.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -23,7 +24,7 @@ struct cartridge {
   struct u8_array ram;
 };
 
-int cartridge_create(struct cartridge *cart, const char *rom_path);
+bool cartridge_create(struct cartridge *cart, const char *rom_path);
 void cartridge_destroy(struct cartridge *cart);
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t addr);

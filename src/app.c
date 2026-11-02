@@ -7,9 +7,10 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_timer.h>
+#include <stdbool.h>
 #include <stdio.h>
 
-int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
+bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS)) {
     fprintf(stderr, "app sdl_init: %s\n", SDL_GetError());
     goto app_cleanup;
@@ -17,15 +18,15 @@ int app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
 
   if (!sdl_pixel_display_create(&app->main_display, "GameBoy", SCREEN_PIXL_W,
                                 SCREEN_PIXL_H) ||
-      gameboy_create(&app->gameboy, rom, opts) == -1) {
+      !gameboy_create(&app->gameboy, rom, opts)) {
     goto app_cleanup;
   }
 
-  return 0;
+  return true;
 
 app_cleanup:
   app_destroy(app);
-  return -1;
+  return false;
 }
 
 void app_loop(struct app *app) {
@@ -39,11 +40,8 @@ void app_loop(struct app *app) {
     case APP_CONTINUE:
       break;
     case APP_SUCCESS:
-      puts("Program exiting");
-      return;
     case APP_FAILURE:
-      fprintf(stderr, "An error occurred\n");
-      break;
+      return;
     }
 
     sdl_pixel_display_render_frame(&app->main_display);

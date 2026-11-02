@@ -1,14 +1,15 @@
 #include "cartridge.h"
 #include "mbc1.h"
 #include "u8_array.h"
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-int cartridge_create(struct cartridge *cart, const char *rom_path) {
-  FILE *rom_f = fopen(rom_path, "rb");
-  if (rom_f == NULL) {
+bool cartridge_create(struct cartridge *cart, const char *rom_path) {
+  FILE *rom_file = fopen(rom_path, "rb");
+  if (rom_file == NULL) {
     perror("cartridge_create fopen");
     goto cartridge_cleanup;
   }
@@ -21,8 +22,8 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
 
   // read header into buffer
   uint8_t header[0x150];
-  fread(header, sizeof(uint8_t), 0x150, rom_f);
-  if (ferror(rom_f)) {
+  fread(header, sizeof(uint8_t), 0x150, rom_file);
+  if (ferror(rom_file)) {
     perror("cartridge_create fread header");
     goto cartridge_cleanup;
   }
@@ -51,23 +52,27 @@ int cartridge_create(struct cartridge *cart, const char *rom_path) {
       [0x4] = 0x20000, // 128 KiB
       [0x5] = 0x10000  // 64 KiB
   };
-  u8_array_create(&cart->ram, RAM_CAPS[header[HEADER_RAM_SIZE]]);
+  if (!u8_array_create(&cart->ram, RAM_CAPS[header[HEADER_RAM_SIZE]]))
+    goto cartridge_cleanup;
 
   // init ROM
-  rewind(rom_f);
-  u8_array_create(&cart->rom, 0x8000 * (1 << header[HEADER_ROM_SIZE]));
-  fread(cart->rom.data, sizeof(uint8_t), cart->rom.size, rom_f);
-  if (ferror(rom_f)) {
+  if (!u8_array_create(&cart->rom, 0x8000 * (1 << header[HEADER_ROM_SIZE])))
+    goto cartridge_cleanup;
+
+  rewind(rom_file);
+  fread(cart->rom.data, sizeof(uint8_t), cart->rom.size, rom_file);
+  if (ferror(rom_file)) {
     perror("cartridge_create fread rom");
     goto cartridge_cleanup;
   }
 
-  return 0;
+  fclose(rom_file);
+  return true;
 
 cartridge_cleanup:
-  fclose(rom_f);
+  fclose(rom_file);
   cartridge_destroy(cart);
-  return -1;
+  return false;
 }
 
 void cartridge_destroy(struct cartridge *cart) {

@@ -6,9 +6,10 @@
 #include "ppu.h"
 #include "serial_transfer.h"
 #include "timer.h"
+#include <stdbool.h>
 #include <stdint.h>
 
-int bus_create(struct bus *bus, const char *rom_path) {
+bool bus_create(struct bus *bus, const char *rom_path) {
   bus->joypad.p1 = 0xFF;
   ppu_init(&bus->ppu);
 

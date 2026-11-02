@@ -1,9 +1,19 @@
 #include "u8_array.h"
+#include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-void u8_array_create(struct u8_array *arr, size_t size) {
-  arr->data = (arr->size = size) > 0 ? malloc(sizeof(uint8_t) * size) : NULL;
+bool u8_array_create(struct u8_array *arr, size_t size) {
+  arr->data = NULL;
+  arr->size = 0;
+  if (size > 0) {
+    if ((arr->data = malloc(arr->size = size)) == NULL) {
+      perror("u8_array malloc");
+      return false;
+    }
+  }
+  return true;
 }
 
 void u8_array_destroy(struct u8_array *arr) {

@@ -5,6 +5,7 @@
 #include "ppu.h"
 #include "serial_transfer.h"
 #include "timer.h"
+#include <stdbool.h>
 #include <stdint.h>
 
 struct bus {
@@ -20,7 +21,7 @@ struct bus {
   struct cartridge cartridge;
 };
 
-int bus_create(struct bus *bus, const char *rom_path);
+bool bus_create(struct bus *bus, const char *rom_path);
 void bus_destroy(struct bus *bus);
 
 void bus_tick(struct bus *bus); // Advances by 1 M-cycle / 4 T-cycles

@@ -3,9 +3,10 @@
 #include "bus.h"
 #include "cpu.h"
 #include "cpu_dbg.h"
+#include <stdbool.h>
 
-int gameboy_create(struct gameboy *gb, const char *rom_path,
-                   enum gb_dbg_opt dbg_opt) {
+bool gameboy_create(struct gameboy *gb, const char *rom_path,
+                    enum gb_dbg_opt dbg_opt) {
   gb->cpu = (struct cpu){.bus = &gb->bus, .PC = 0x100};
   gb->dbg = (struct cpu_dbg){0};
 
