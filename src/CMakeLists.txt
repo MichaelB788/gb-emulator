@@ -20,7 +20,7 @@ add_library(${LIBRARY_NAME}
   mbc1.c
   oam.c
   ppu.c
-  sdl_display.c
+  sdl_pixel_display.c
   serial_transfer.c
   timer.c
   u8_array.c
