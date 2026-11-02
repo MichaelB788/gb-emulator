@@ -19,7 +19,8 @@ bool sdl_pixel_display_create(struct sdl_pixel_display *display,
   if (!SDL_CreateWindowAndRenderer(name, px_width * PIXEL_SCALE,
                                    px_height * PIXEL_SCALE, 0, &display->window,
                                    &display->renderer)) {
-    fprintf(stderr, "display window & renderer: %s", SDL_GetError());
+    fprintf(stderr, "sdl_pixel_display window & renderer: %s\n",
+            SDL_GetError());
     goto sdl_pixel_display_cleanup;
   }
 
@@ -27,18 +28,19 @@ bool sdl_pixel_display_create(struct sdl_pixel_display *display,
            SDL_CreateTexture(display->renderer, SDL_PIXELFORMAT_RGBA32,
                              SDL_TEXTUREACCESS_STREAMING, SCREEN_PIXL_W,
                              SCREEN_PIXL_H)) == NULL) {
-    fprintf(stderr, "display screen texture: %s", SDL_GetError());
+    fprintf(stderr, "sdl_pixel_display screen texture: %s\n", SDL_GetError());
     goto sdl_pixel_display_cleanup;
   }
 
   if (!SDL_SetTextureScaleMode(display->screen, SDL_SCALEMODE_PIXELART)) {
-    fprintf(stderr, "display screen scale mode: %s", SDL_GetError());
+    fprintf(stderr, "sdl_pixel_display screen scale mode: %s\n",
+            SDL_GetError());
     goto sdl_pixel_display_cleanup;
   }
 
   if ((display->framebuffer = malloc(sizeof(SDL_Color) * display->screen->w *
                                      display->screen->h)) == NULL) {
-    perror("sdl_display framebuffer malloc");
+    perror("sdl_pixel_display framebuffer malloc");
     goto sdl_pixel_display_cleanup;
   }
 
