@@ -32,7 +32,6 @@ static bool cartridge_create_header(struct cartridge_header *header,
     perror("cartridge_create_header fread");
     return false;
   }
-  rewind(rom_file);
 
   if (!cartridge_is_valid_type(header->cartridge_type = u8_buffer[0x147])) {
     fprintf(stderr, "cartridge_create_header: unimplemented type\n");
@@ -84,7 +83,6 @@ static bool cartridge_create_rom(struct u8_array *rom, size_t rom_size,
     perror("cartridge_create_rom fread");
     return false;
   }
-  rewind(rom_file);
 
   return true;
 }
