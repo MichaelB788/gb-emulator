@@ -1,6 +1,4 @@
 #include "app.h"
-#include "gameboy.h"
-#include "sdl_pixel_display.h"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_timer.h>
 #include <stdio.h>
@@ -9,12 +7,7 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 
-// global app struct
-struct app app = {0};
-
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
-  (void)appstate;
-
   if (argc < 1) {
     fprintf(stderr, "No ROM found.\n");
     return SDL_APP_FAILURE;
@@ -28,24 +21,22 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   char rom_path[FILENAME_MAX + 1];
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
-  if (!app_create(&app, rom_path, 5))
+  if ((*appstate = app_create(rom_path, 5)) == NULL)
     return SDL_APP_FAILURE;
 
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate) {
-  (void)appstate;
+  app_update(appstate);
+  app_render(appstate);
 
-  gameboy_step(&app.gameboy);
-  sdl_pixel_display_render_frame(&app.main_display);
-
-  SDL_Delay(10);
+  SDL_Delay(10); // todo 59.7 fps
   return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
-  (void)appstate;
+  (void)appstate; // unused for now
 
   if (event->type == SDL_EVENT_QUIT)
     return SDL_APP_SUCCESS;
@@ -54,9 +45,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  (void)appstate;
-
-  app_destroy(&app);
+  app_destroy(appstate);
 
   switch (result) {
   case SDL_APP_CONTINUE:
