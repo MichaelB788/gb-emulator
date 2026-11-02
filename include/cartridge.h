@@ -2,7 +2,6 @@
 #include "mbc1.h"
 #include "u8_array.h"
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 
 enum cartridge_type {

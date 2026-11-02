@@ -6,10 +6,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-void ppu_init(struct ppu *ppu) {
-  // todo: link to an external framebuffer?
-}
-
 void ppu_tick(struct ppu *ppu, struct bus *bus) {
   // TODO: lcd tick
   oam_tick(&ppu->oam, bus);
