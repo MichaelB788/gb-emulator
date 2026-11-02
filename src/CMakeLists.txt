@@ -19,8 +19,8 @@ add_library(${LIBRARY_NAME}
   lcd.c
   mbc1.c
   oam.c
+  pixel_display.c
   ppu.c
-  sdl_pixel_display.c
   serial_transfer.c
   timer.c
   u8_array.c
