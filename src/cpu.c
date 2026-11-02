@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#define SUPPRESS_LOGS 0
+
 // clang-format off
 uint16_t cpu_get_af(const struct cpu *cpu) { return cpu->A << 8 | cpu->F; }
 uint16_t cpu_get_bc(const struct cpu *cpu) { return cpu->B << 8 | cpu->C; }
@@ -26,17 +28,7 @@ static uint16_t cpu_dec_de(struct cpu *cpu) { const uint16_t r16 = cpu_get_de(cp
 static uint16_t cpu_dec_hl(struct cpu *cpu) { const uint16_t r16 = cpu_get_hl(cpu); cpu_set_hl(cpu, r16 - 1); return r16; }
 // clang-format on
 
-void cpu_log_step_brief(const struct cpu *cpu) {
-  printf(
-      "AF:%04X BC:%04X DE:%04X HL:%04X SP:%04X PC:%04X [PC]:%02X,%02X,%02X,%02X\n",
-      cpu_get_af(cpu), cpu_get_bc(cpu), cpu_get_de(cpu), cpu_get_hl(cpu),
-      cpu->SP, cpu->PC, bus_read(cpu->bus, cpu->PC),
-      bus_read(cpu->bus, cpu->PC + 1), bus_read(cpu->bus, cpu->PC + 2),
-      bus_read(cpu->bus, cpu->PC + 3));
-}
-
-void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
-                          const char *mnemonic) {
+void cpu_log_step(const struct cpu *cpu, uint8_t opcode, const char *mnemonic) {
   const uint16_t AF = cpu_get_af(cpu), BC = cpu_get_bc(cpu),
                  DE = cpu_get_de(cpu), HL = cpu_get_hl(cpu);
   printf(
@@ -447,16 +439,9 @@ void cpu_execute(struct cpu *cpu, uint8_t opcode) {
     // clang-format on
   }
 
-  switch (cpu->log_level) {
-  case CPU_LOG_NONE:
-    break;
-  case CPU_LOG_BRIEF:
-    cpu_log_step_brief(cpu);
-    break;
-  case CPU_LOG_VERBOSE:
-    cpu_log_step_verbose(cpu, opcode, mnemonics[opcode]);
-    break;
-  }
+#if !defined(NDEBUG) && !SUPPRESS_LOGS
+  cpu_log_step(cpu, opcode, mnemonics[opcode]);
+#endif
 }
 
 void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
@@ -721,14 +706,7 @@ void cpu_execute_cb(struct cpu *cpu, uint8_t opcode) {
     // clang-format on
   }
 
-  switch (cpu->log_level) {
-  case CPU_LOG_NONE:
-    break;
-  case CPU_LOG_BRIEF:
-    cpu_log_step_brief(cpu);
-    break;
-  case CPU_LOG_VERBOSE:
-    cpu_log_step_verbose(cpu, opcode, mnemonics_cb[opcode]);
-    break;
-  }
+#if !defined(NDEBUG) && !SUPPRESS_LOGS
+  cpu_log_step(cpu, opcode, mnemonics[opcode]);
+#endif
 }

@@ -17,7 +17,6 @@ enum cpu_flags {
 
 // The GameBoy's CPU
 struct cpu {
-  enum cpu_log_level log_level;
   enum cpu_state state;
 
   bool IME;
@@ -49,8 +48,7 @@ void cpu_set_de(struct cpu *cpu, uint16_t u16);
 void cpu_set_hl(struct cpu *cpu, uint16_t u16);
 
 void cpu_log_step_brief(const struct cpu *cpu);
-void cpu_log_step_verbose(const struct cpu *cpu, uint8_t opcode,
-                          const char *mnemonic);
+void cpu_log_step(const struct cpu *cpu, uint8_t opcode, const char *mnemonic);
 
 void cpu_step(struct cpu *cpu);
 

@@ -1,5 +1,6 @@
 #include "bus.h"
 #include "cartridge.h"
+#include "interrupt.h"
 #include "joypad.h"
 #include "lcd.h"
 #include "oam.h"
@@ -11,8 +12,6 @@
 
 bool bus_create(struct bus *bus, const char *rom_path) {
   bus->joypad.p1 = 0xFF;
-  ppu_init(&bus->ppu);
-
   return cartridge_create(&bus->cartridge, rom_path);
 }
 

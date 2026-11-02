@@ -7,10 +7,7 @@
 struct app {
   struct gameboy gameboy;
   struct sdl_pixel_display main_display;
-  SDL_Event event;
 };
 
-bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts);
+bool app_create(struct app *app, const char *rom, int px_scale);
 void app_destroy(struct app *state);
-
-void app_loop(struct app *app);

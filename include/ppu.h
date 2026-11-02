@@ -10,13 +10,10 @@
 struct bus;
 
 struct ppu {
-  uint8_t vram[0x2000]; // video RAM, [0x8000, 0x9FFF]
-
-  struct oam oam;
   struct lcd lcd;
+  struct oam oam;
+  uint8_t vram[0x2000]; // video RAM, [0x8000, 0x9FFF]
 };
-
-void ppu_init(struct ppu *ppu);
 
 void ppu_tick(struct ppu *ppu, struct bus *bus);
 
