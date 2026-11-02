@@ -17,7 +17,7 @@ bool app_create(struct app *app, const char *rom, enum gb_dbg_opt opts) {
   }
 
   if (!sdl_pixel_display_create(&app->main_display, "GameBoy", SCREEN_PIXL_W,
-                                SCREEN_PIXL_H) ||
+                                SCREEN_PIXL_H, 4, 0) ||
       !gameboy_create(&app->gameboy, rom, opts)) {
     goto app_cleanup;
   }

@@ -10,15 +10,16 @@
 #include <stdlib.h>
 
 bool sdl_pixel_display_create(struct sdl_pixel_display *display,
-                              const char *name, int px_width, int px_height) {
+                              const char *name, int px_width, int px_height,
+                              int px_scale, SDL_WindowFlags flags) {
   display->window = NULL;
   display->renderer = NULL;
   display->screen = NULL;
   display->framebuffer = NULL;
 
-  if (!SDL_CreateWindowAndRenderer(name, px_width * PIXEL_SCALE,
-                                   px_height * PIXEL_SCALE, 0, &display->window,
-                                   &display->renderer)) {
+  if (!SDL_CreateWindowAndRenderer(name, px_width * px_scale,
+                                   px_height * px_scale, flags,
+                                   &display->window, &display->renderer)) {
     fprintf(stderr, "sdl_pixel_display window & renderer: %s\n",
             SDL_GetError());
     goto sdl_pixel_display_cleanup;
