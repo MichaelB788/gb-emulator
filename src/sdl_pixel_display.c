@@ -1,6 +1,5 @@
 #include "sdl_pixel_display.h"
 #include "SDL3/SDL_render.h"
-#include "ppu.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_pixels.h>
 #include <SDL3/SDL_video.h>
@@ -25,10 +24,9 @@ bool sdl_pixel_display_create(struct sdl_pixel_display *display,
     goto sdl_pixel_display_cleanup;
   }
 
-  if ((display->screen =
-           SDL_CreateTexture(display->renderer, SDL_PIXELFORMAT_RGBA32,
-                             SDL_TEXTUREACCESS_STREAMING, SCREEN_PIXL_W,
-                             SCREEN_PIXL_H)) == NULL) {
+  if ((display->screen = SDL_CreateTexture(
+           display->renderer, SDL_PIXELFORMAT_RGBA32,
+           SDL_TEXTUREACCESS_STREAMING, px_width, px_height)) == NULL) {
     fprintf(stderr, "sdl_pixel_display screen texture: %s\n", SDL_GetError());
     goto sdl_pixel_display_cleanup;
   }
@@ -39,8 +37,8 @@ bool sdl_pixel_display_create(struct sdl_pixel_display *display,
     goto sdl_pixel_display_cleanup;
   }
 
-  if ((display->framebuffer = malloc(sizeof(SDL_Color) * display->screen->w *
-                                     display->screen->h)) == NULL) {
+  if ((display->framebuffer =
+           malloc(sizeof(SDL_Color) * px_width * px_height)) == NULL) {
     perror("sdl_pixel_display framebuffer malloc");
     goto sdl_pixel_display_cleanup;
   }
