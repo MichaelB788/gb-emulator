@@ -78,8 +78,6 @@ static void display_garbage_test(struct pixel_display *display) {
 void pixel_display_render_frame(struct pixel_display *display) {
   SDL_RenderClear(display->renderer);
 
-  display_garbage_test(display);
-
   SDL_UpdateTexture(display->screen, NULL, display->framebuffer,
                     display->screen->w);
 

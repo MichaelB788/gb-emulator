@@ -26,7 +26,8 @@ struct app *app_create(const char *rom, int px_scale) {
   }
 
 #ifndef NDEBUG
-  if (!pixel_display_create(&app->vram_display, "GameBoy VRAM", 128, 192,
+  if (!pixel_display_create(&app->vram_display, "GameBoy VRAM tile data",
+                            VRAM_TILE_DATA_PIXEL_W, VRAM_TILE_DATA_PIXEL_H,
                             px_scale, 0)) {
     fprintf(stderr, "app_create: error creating vram display\n");
     goto app_cleanup;
@@ -59,7 +60,9 @@ void app_update(struct app *app) { gameboy_step(&app->gameboy); }
 
 void app_render(struct app *app) {
 #ifndef NDEBUG
+  ppu_draw_vram_tile_data(&app->gameboy.bus.ppu, app->vram_display.framebuffer);
   pixel_display_render_frame(&app->vram_display);
 #endif
+
   pixel_display_render_frame(&app->main_display);
 }
