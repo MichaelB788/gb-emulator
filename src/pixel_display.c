@@ -67,7 +67,7 @@ void pixel_display_destroy(struct pixel_display *display) {
   }
 }
 
-static void display_garbage_test(struct pixel_display *display) {
+void pixel_display_draw_static_test(struct pixel_display *display) {
   for (int y = 0; y < display->screen->h; ++y) {
     for (int x = 0; x < display->screen->w; ++x)
       display->framebuffer[x + y * display->screen->w] =
@@ -77,12 +77,8 @@ static void display_garbage_test(struct pixel_display *display) {
 
 void pixel_display_render_frame(struct pixel_display *display) {
   SDL_RenderClear(display->renderer);
-
-  display_garbage_test(display);
-
   SDL_UpdateTexture(display->screen, NULL, display->framebuffer,
                     display->screen->w);
-
   SDL_RenderTexture(display->renderer, display->screen, NULL, NULL);
   SDL_RenderPresent(display->renderer);
 }

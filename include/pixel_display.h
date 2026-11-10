@@ -17,4 +17,5 @@ bool pixel_display_create(struct pixel_display *display, const char *name,
                           SDL_WindowFlags flags);
 void pixel_display_destroy(struct pixel_display *display);
 
+void pixel_display_draw_static_test(struct pixel_display *display);
 void pixel_display_render_frame(struct pixel_display *display);
