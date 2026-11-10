@@ -13,7 +13,7 @@
 #define TARGET_FPS_NS ((uint64_t)(SDL_NS_PER_SECOND / 59.7))
 
 struct app {
-  uint64_t prev_time, curr_time, delta_time;
+  uint64_t prev_time, curr_time;
   struct gameboy gameboy;
   struct pixel_display main_display;
   struct pixel_display vram_display;
@@ -81,7 +81,7 @@ static void print_fps(uint64_t delta_time) {
 void app_update(struct app *app) {
   app->prev_time = app->curr_time;
   app->curr_time = SDL_GetTicksNS();
-  app->delta_time = app->curr_time - app->prev_time;
+  const uint16_t delta_time = app->curr_time - app->prev_time;
 
   gameboy_step(&app->gameboy);
 }
