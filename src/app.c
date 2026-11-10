@@ -47,12 +47,14 @@ app_cleanup:
 }
 
 void app_destroy(struct app *app) {
-  pixel_display_destroy(&app->main_display);
+  if (app) {
+    pixel_display_destroy(&app->main_display);
 #ifndef NDEBUG
-  pixel_display_destroy(&app->vram_display);
+    pixel_display_destroy(&app->vram_display);
 #endif
 
-  gameboy_destroy(&app->gameboy);
+    gameboy_destroy(&app->gameboy);
+  }
 }
 
 void app_update(struct app *app) { gameboy_step(&app->gameboy); }
