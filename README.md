@@ -3,7 +3,14 @@
 A GameBoy emulator written in C, using the SDL3 library for rendering and input
 handling.
 
-## Build Instructions
+# Requirements
+
+- vcpkg
+- GCC (Linux), MSVC (Windows), or Clang (MacOS)
+- cmake
+- Ninja
+
+# Build Instructions
 
 To try out the project, build it in `Release` mode:
 
