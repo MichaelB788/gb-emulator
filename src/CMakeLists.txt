@@ -23,8 +23,8 @@ add_library(${SOURCE_LIB}
 )
 
 target_include_directories(${SOURCE_LIB} PUBLIC
-  ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}/include
+  ${CMAKE_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_BINARY_DIR}/include
 )
 
 target_link_libraries(${SOURCE_LIB} PUBLIC
