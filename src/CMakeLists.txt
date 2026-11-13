@@ -1,14 +1,10 @@
-set(TARGET_EXE ${CMAKE_PROJECT_NAME})
-set(LIBRARY_NAME ${CMAKE_PROJECT_NAME}Source)
+# ensure dependencies are installed
+find_package(SDL3 CONFIG REQUIRED)
 
-add_executable(${TARGET_EXE} main.c)
+# lib
+set(SOURCE_LIB ${CMAKE_PROJECT_NAME}Source)
 
-target_compile_options(${TARGET_EXE} PRIVATE
-  $<$<C_COMPILER_ID:MSVC>:/W4 /WX>
-  $<$<NOT:$<C_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
-)
-
-add_library(${LIBRARY_NAME}
+add_library(${SOURCE_LIB}
   app.c
   bus.c
   cartridge.c
@@ -26,7 +22,25 @@ add_library(${LIBRARY_NAME}
   u8_array.c
 )
 
-target_link_libraries(${TARGET_EXE} PRIVATE
-  ${LIBRARY_NAME}
+target_include_directories(${SOURCE_LIB} PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}/include
+)
+
+target_link_libraries(${SOURCE_LIB} PUBLIC
   SDL3::SDL3
+)
+
+# exe
+set(EXE ${CMAKE_PROJECT_NAME})
+
+add_executable(${EXE} main.c)
+
+target_compile_options(${EXE} PRIVATE
+  $<$<C_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<C_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic -Werror>
+)
+
+target_link_libraries(${EXE} PRIVATE
+  ${SOURCE_LIB}
 )

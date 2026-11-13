@@ -12,11 +12,4 @@ project(
   LANGUAGES C
 )
 
-include_directories(BEFORE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include {CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}/include
-)
-
-find_package(SDL3 CONFIG REQUIRED)
-
 add_subdirectory(src)
