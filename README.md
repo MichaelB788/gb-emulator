@@ -1,22 +1,27 @@
 # GameBoy Emulator
 
-A GameBoy emulator written in C, purely for the fun of it.
+A GameBoy emulator written in C, using the SDL3 library for rendering and input
+handling.
 
-## Building on Linux
+## Build Instructions
 
-`cd` into the project root and compile the program using the following:
+To try out the project, build it in `Release` mode:
 
 ```bash
-cmake -B build -S .\
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=YES\
-    -DCMAKE_BUILD_TYPE=Debug\
-    -G Ninja
+cmake --preset Release
 ```
 
-The program can then be built by running
+To for develop/test the project, build it in `Debug` mode:
+
+```bash
+cmake --preset Debug
+```
+
+The project can then be (re)built by running
 
 ```bash
 cmake --build build
 ```
 
-The binary can be found under `build/Debug/`.
+The binary can be found under `build/Debug/` or `build/Release`, depending on
+the build type selected.
