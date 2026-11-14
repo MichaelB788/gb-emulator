@@ -77,7 +77,7 @@ void pixel_display_draw_static_test(struct pixel_display *display) {
 
 void pixel_display_render_frame(struct pixel_display *display) {
   SDL_UpdateTexture(display->screen, NULL, display->framebuffer,
-                    display->screen->w);
+                    display->screen->w * sizeof(SDL_Color));
   SDL_RenderTexture(display->renderer, display->screen, NULL, NULL);
   SDL_RenderPresent(display->renderer);
 }
