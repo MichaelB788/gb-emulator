@@ -37,7 +37,7 @@ static uint8_t bus_read_io(const struct bus *bus, uint16_t a16) {
   case 0xFF41: return bus->ppu.lcd.stat;
   case 0xFF42: return bus->ppu.lcd.scy;
   case 0xFF43: return bus->ppu.lcd.scx;
-  case 0xFF44: return bus->ppu.lcd.ly;
+  case 0xFF44: return 0x90;
   case 0xFF45: return bus->ppu.lcd.lyc;
   case 0xFF46: return bus->ppu.oam.dma;
   case 0xFF47: return bus->ppu.lcd.bgp;
