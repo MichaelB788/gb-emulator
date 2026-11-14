@@ -32,9 +32,9 @@ struct app *app_create(const char *rom, int px_scale) {
   }
 
 #ifndef NDEBUG
-  if (!pixel_display_create(&app->vram_tile_data_display, "GameBoy VRAM",
-                            VRAM_DATA_SCREEN_PIXEL_W, VRAM_DATA_SCREEN_PIXEL_H,
-                            px_scale, 0)) {
+  if (!pixel_display_create(&app->vram_tile_data_display,
+                            "GameBoy VRAM Tile Data", VRAM_DATA_SCREEN_PIXEL_W,
+                            VRAM_DATA_SCREEN_PIXEL_H, px_scale, 0)) {
     fprintf(stderr, "app_create: error creating vram display\n");
     goto app_cleanup;
   }
