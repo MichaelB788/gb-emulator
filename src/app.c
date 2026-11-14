@@ -16,7 +16,7 @@ struct app {
   uint64_t prev_time, curr_time;
   struct gameboy gameboy;
   struct pixel_display main_display;
-  struct pixel_display vram_display;
+  struct pixel_display vram_tile_data_display;
 };
 
 struct app *app_create(const char *rom, int px_scale) {
@@ -32,14 +32,15 @@ struct app *app_create(const char *rom, int px_scale) {
   }
 
 #ifndef NDEBUG
-  if (!pixel_display_create(&app->vram_display, "GameBoy VRAM", 128, 192,
+  if (!pixel_display_create(&app->vram_tile_data_display, "GameBoy VRAM",
+                            VRAM_DATA_SCREEN_PIXEL_W, VRAM_DATA_SCREEN_PIXEL_H,
                             px_scale, 0)) {
     fprintf(stderr, "app_create: error creating vram display\n");
     goto app_cleanup;
   }
 #endif
-  if (!pixel_display_create(&app->main_display, "GameBoy", SCREEN_PIXL_W,
-                            SCREEN_PIXL_H, px_scale, 0)) {
+  if (!pixel_display_create(&app->main_display, "GameBoy", SCREEN_PIXEL_W,
+                            SCREEN_PIXEL_H, px_scale, 0)) {
     fprintf(stderr, "app_create: error creating main display\n");
     goto app_cleanup;
   }
@@ -55,7 +56,7 @@ void app_destroy(struct app *app) {
   if (app) {
     pixel_display_destroy(&app->main_display);
 #ifndef NDEBUG
-    pixel_display_destroy(&app->vram_display);
+    pixel_display_destroy(&app->vram_tile_data_display);
 #endif
 
     gameboy_destroy(&app->gameboy);
@@ -81,21 +82,21 @@ static void print_fps(uint64_t delta_time) {
 void app_update(struct app *app) {
   app->prev_time = app->curr_time;
   app->curr_time = SDL_GetTicksNS();
-  const uint16_t delta_time = app->curr_time - app->prev_time;
+  // const uint16_t delta_time = app->curr_time - app->prev_time;
 
   gameboy_step(&app->gameboy);
 }
 
 void app_render(struct app *app) {
 #ifndef NDEBUG
-  pixel_display_draw_static_test(&app->vram_display);
-  pixel_display_render_frame(&app->vram_display);
+  ppu_draw_vram_tile_data(&app->gameboy.bus.ppu,
+                          app->vram_tile_data_display.framebuffer);
+  pixel_display_render_frame(&app->vram_tile_data_display);
 #endif
-  pixel_display_draw_static_test(&app->main_display);
   pixel_display_render_frame(&app->main_display);
 }
 
-void app_sleep(struct app *app) {
+void app_sleep(const struct app *app) {
   const uint64_t elapsed = SDL_GetTicksNS() - app->curr_time;
   if (elapsed < TARGET_FPS_NS)
     SDL_DelayNS(TARGET_FPS_NS - elapsed);
