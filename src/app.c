@@ -89,8 +89,7 @@ void app_update(struct app *app) {
 
 void app_render(struct app *app) {
 #ifndef NDEBUG
-  ppu_draw_vram_tile_data(&app->gameboy.bus.ppu,
-                          app->vram_tile_data_display.framebuffer);
+  ppu_draw_vram_tile_data(&app->gameboy.bus.ppu, &app->vram_tile_data_display);
   pixel_display_render_frame(&app->vram_tile_data_display);
 #endif
   pixel_display_render_frame(&app->main_display);

@@ -1,6 +1,8 @@
 #include "ppu.h"
 #include "lcd.h"
 #include "oam.h"
+#include "pixel_display.h"
+#include <SDL3/SDL_render.h>
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -40,29 +42,49 @@ void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
     oam_write_u8(&ppu->oam, a16, u8);
 }
 
-static void ppu_draw_tile(const struct ppu *ppu, SDL_Color *framebuffer,
-                          int tile_x, int tile_y, int bytes_read) {
-  for (int pixel_y = 0; pixel_y < 8; ++pixel_y) {
-    const size_t vram_idx = bytes_read + (pixel_y * 2);
-    for (int pixel_x = 0; pixel_x < 8; ++pixel_x) {
+void ppu_draw_tile(const struct ppu *ppu, uint16_t tile_data_a16,
+                   uint8_t palette, int x, int y,
+                   struct pixel_display *display) {
+  // coord must be within bounds
+  assert(x >= 0 && y >= 0 && x <= (display->screen->w - 8) &&
+         y <= (display->screen->h - 8));
+
+  // a16 must be a multiple of 16
+  assert((tile_data_a16 & 0xF) == 0);
+
+  // NOTE: 384 tile entries can live in the VRAM tile data section
+  // 1000000000000000 0x8000
+  // 1000100000000000 0x8800
+  // 1001000000000000 0x9000
+  // 1001011111111111 0x97FF
+  // 0001111111110000 0x1FF0
+  // 000101111111 383
+  const size_t vram_offset = tile_data_a16 & 0x1FF0;
+
+  for (uint8_t pixel_y = 0; pixel_y < 8; ++pixel_y) {
+    const size_t vram_idx = vram_offset + (pixel_y * 2);
+    for (uint8_t pixel_x = 0; pixel_x < 8; ++pixel_x) {
       const uint8_t shft = 7 - pixel_x;
       const bool lsb = ppu->vram[vram_idx + 0] >> shft & 1;
       const bool msb = ppu->vram[vram_idx + 1] >> shft & 1;
+      const size_t palette_idx = palette >> ((msb << 1 | lsb) * 2) & 0x3;
 
-      const size_t fb_y = pixel_y + tile_y * 8;
-      const size_t fb_x = pixel_x + tile_x * 8;
-      framebuffer[fb_y * VRAM_DATA_SCREEN_PIXEL_W + fb_x] =
-          LCD_COLOR_PALETTE[msb << 1 | lsb];
+      const size_t fb_x = x + pixel_x;
+      const size_t fb_y = y + pixel_y;
+      display->framebuffer[fb_y * display->screen->w + fb_x] =
+          LCD_COLOR_PALETTE[palette_idx];
     }
   }
 }
 
-void ppu_draw_vram_tile_data(const struct ppu *ppu, SDL_Color *framebuffer) {
-  size_t bytes_read = 0;
-  for (int tile_y = 0; tile_y < VRAM_DATA_SCREEN_PIXEL_H / 8; ++tile_y) {
-    for (int tile_x = 0; tile_x < VRAM_DATA_SCREEN_PIXEL_W / 8; ++tile_x) {
-      ppu_draw_tile(ppu, framebuffer, tile_x, tile_y, bytes_read);
-      bytes_read += BYTES_PER_TILE;
-    }
+void ppu_draw_vram_tile_data(const struct ppu *ppu,
+                             struct pixel_display *display) {
+  static const uint8_t DEFAULT_PALETTE = 0xE4; // 0b11100100
+  for (uint16_t a16 = 0x8000; a16 < 0x9800; a16 += BYTES_PER_TILE) {
+    const uint8_t tile_id = a16 >> 4 & 0xFF;
+    const int tile_x = (tile_id & 0xF);
+    const int tile_y = ((tile_id >> 4 & 0xF) + (a16 >= 0x9000 ? 16 : 0));
+
+    ppu_draw_tile(ppu, a16, DEFAULT_PALETTE, tile_x * 8, tile_y * 8, display);
   }
 }
