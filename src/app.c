@@ -90,9 +90,13 @@ void app_update(struct app *app) {
 void app_render(struct app *app) {
 #ifndef NDEBUG
   ppu_draw_vram_tile_data(&app->gameboy.bus.ppu, &app->vram_tile_data_display);
-  pixel_display_render_frame(&app->vram_tile_data_display);
 #endif
-  pixel_display_render_frame(&app->main_display);
+  pixel_display_draw_static_test(&app->main_display);
+
+#ifndef NDEBUG
+  pixel_display_present_frame(&app->vram_tile_data_display);
+#endif
+  pixel_display_present_frame(&app->main_display);
 }
 
 void app_sleep(const struct app *app) {

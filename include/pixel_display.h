@@ -1,4 +1,6 @@
 #pragma once
+#include "SDL3/SDL_pixels.h"
+#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_video.h>
 #include <stdbool.h>
 
@@ -17,5 +19,8 @@ bool pixel_display_create(struct pixel_display *display, const char *name,
                           SDL_WindowFlags flags);
 void pixel_display_destroy(struct pixel_display *display);
 
+void pixel_display_draw_pixel(struct pixel_display *display, SDL_Point point,
+                              SDL_Color color);
 void pixel_display_draw_static_test(struct pixel_display *display);
-void pixel_display_render_frame(struct pixel_display *display);
+
+void pixel_display_present_frame(struct pixel_display *display);

@@ -2,7 +2,9 @@
 #include "SDL3/SDL_render.h"
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_rect.h>
 #include <SDL3/SDL_video.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -67,15 +69,23 @@ void pixel_display_destroy(struct pixel_display *display) {
   }
 }
 
+void pixel_display_draw_pixel(struct pixel_display *display, SDL_Point point,
+                              SDL_Color color) {
+  assert(SDL_PointInRect(
+      &point, &(SDL_Rect){.w = display->screen->w, .h = display->screen->h}));
+  display->framebuffer[point.y * display->screen->w + point.x] = color;
+}
+
 void pixel_display_draw_static_test(struct pixel_display *display) {
   for (int y = 0; y < display->screen->h; ++y) {
-    for (int x = 0; x < display->screen->w; ++x)
-      display->framebuffer[x + y * display->screen->w] =
-          (SDL_Color){.r = rand(), .g = rand(), .b = rand(), .a = 0xFF};
+    for (int x = 0; x < display->screen->w; ++x) {
+      pixel_display_draw_pixel(display, (SDL_Point){x, y},
+                               (SDL_Color){rand(), rand(), rand(), 0xFF});
+    }
   }
 }
 
-void pixel_display_render_frame(struct pixel_display *display) {
+void pixel_display_present_frame(struct pixel_display *display) {
   SDL_UpdateTexture(display->screen, NULL, display->framebuffer,
                     display->screen->w * sizeof(SDL_Color));
   SDL_RenderTexture(display->renderer, display->screen, NULL, NULL);

@@ -1,4 +1,5 @@
 #pragma once
+#include "SDL3/SDL_rect.h"
 #include "lcd.h"
 #include "oam.h"
 #include <stdint.h>
@@ -29,7 +30,7 @@ uint8_t ppu_read_oam(const struct ppu *ppu, uint16_t a16);
 void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8);
 
 void ppu_draw_tile(const struct ppu *ppu, uint16_t tile_data_a16,
-                   uint8_t palette, int x, int y,
+                   uint8_t palette, SDL_Point point,
                    struct pixel_display *display);
 void ppu_draw_vram_tile_data(const struct ppu *ppu,
                              struct pixel_display *display);

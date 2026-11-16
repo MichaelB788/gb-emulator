@@ -1,4 +1,5 @@
 #include "ppu.h"
+#include "SDL3/SDL_rect.h"
 #include "lcd.h"
 #include "oam.h"
 #include "pixel_display.h"
@@ -43,11 +44,11 @@ void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
 }
 
 void ppu_draw_tile(const struct ppu *ppu, uint16_t tile_data_a16,
-                   uint8_t palette, int x, int y,
+                   uint8_t palette, SDL_Point point,
                    struct pixel_display *display) {
   // coord must be within bounds
-  assert(x >= 0 && y >= 0 && x <= (display->screen->w - 8) &&
-         y <= (display->screen->h - 8));
+  assert(SDL_PointInRect(
+      &point, &(SDL_Rect){.w = display->screen->w, .h = display->screen->h}));
 
   // a16 must be a multiple of 16
   assert((tile_data_a16 & 0xF) == 0);
@@ -69,10 +70,9 @@ void ppu_draw_tile(const struct ppu *ppu, uint16_t tile_data_a16,
       const bool msb = ppu->vram[vram_idx + 1] >> shft & 1;
       const size_t palette_idx = palette >> ((msb << 1 | lsb) * 2) & 0x3;
 
-      const size_t fb_x = x + pixel_x;
-      const size_t fb_y = y + pixel_y;
-      display->framebuffer[fb_y * display->screen->w + fb_x] =
-          LCD_COLOR_PALETTE[palette_idx];
+      pixel_display_draw_pixel(
+          display, (SDL_Point){point.x + pixel_x, point.y + pixel_y},
+          LCD_COLOR_PALETTE[palette_idx]);
     }
   }
 }
@@ -82,9 +82,9 @@ void ppu_draw_vram_tile_data(const struct ppu *ppu,
   static const uint8_t DEFAULT_PALETTE = 0xE4; // 0b11100100
   for (uint16_t a16 = 0x8000; a16 < 0x9800; a16 += BYTES_PER_TILE) {
     const uint8_t tile_id = a16 >> 4 & 0xFF;
-    const int tile_x = (tile_id & 0xF);
-    const int tile_y = ((tile_id >> 4 & 0xF) + (a16 >= 0x9000 ? 16 : 0));
-
-    ppu_draw_tile(ppu, a16, DEFAULT_PALETTE, tile_x * 8, tile_y * 8, display);
+    const int tx = tile_id & 0xF;
+    const int ty = (tile_id >> 4 & 0xF) + (a16 >= 0x9000 ? 16 : 0);
+    ppu_draw_tile(ppu, a16, DEFAULT_PALETTE, (SDL_Point){tx * 8, ty * 8},
+                  display);
   }
 }
