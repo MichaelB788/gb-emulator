@@ -46,45 +46,50 @@ void ppu_write_oam(struct ppu *ppu, uint16_t a16, uint8_t u8) {
 void ppu_draw_tile(const struct ppu *ppu, uint16_t tile_data_a16,
                    uint8_t palette, SDL_Point point,
                    struct pixel_display *display) {
-  // coord must be within bounds
-  assert(SDL_PointInRect(
-      &point, &(SDL_Rect){.w = display->screen->w, .h = display->screen->h}));
+  // a16 must be within the tile data section
+  assert(0x8000 <= tile_data_a16 && tile_data_a16 <= 0x97FF);
 
   // a16 must be a multiple of 16
   assert((tile_data_a16 & 0xF) == 0);
 
-  // NOTE: 384 tile entries can live in the VRAM tile data section
-  // 1000000000000000 0x8000
-  // 1000100000000000 0x8800
-  // 1001000000000000 0x9000
-  // 1001011111111111 0x97FF
-  // 0001111111110000 0x1FF0
-  // 000101111111 383
-  const size_t vram_offset = tile_data_a16 & 0x1FF0;
+  static const SDL_Color GB_PALETTE[4] = {
+      [0] = {.r = 0xb9, .g = 0xe0, .b = 0x8d, .a = 0xff}, // Light green
+      [1] = {.r = 0x8b, .g = 0xa8, .b = 0x6a, .a = 0xff}, // Green
+      [2] = {.r = 0x69, .g = 0x7f, .b = 0x50, .a = 0xff}, // Dark green
+      [3] = {.r = 0x3d, .g = 0x49, .b = 0x2e, .a = 0xff}  // Darker green
+  };
 
-  for (uint8_t pixel_y = 0; pixel_y < 8; ++pixel_y) {
-    const size_t vram_idx = vram_offset + (pixel_y * 2);
-    for (uint8_t pixel_x = 0; pixel_x < 8; ++pixel_x) {
-      const uint8_t shft = 7 - pixel_x;
-      const bool lsb = ppu->vram[vram_idx + 0] >> shft & 1;
-      const bool msb = ppu->vram[vram_idx + 1] >> shft & 1;
-      const size_t palette_idx = palette >> ((msb << 1 | lsb) * 2) & 0x3;
+  const size_t tile_data_entry_idx = tile_data_a16 & 0x1FF0;
+  const SDL_Rect screen_dimensions = {.w = display->screen->w,
+                                      .h = display->screen->h};
 
-      pixel_display_draw_pixel(
-          display, (SDL_Point){point.x + pixel_x, point.y + pixel_y},
-          LCD_COLOR_PALETTE[palette_idx]);
+  for (uint8_t row = 0; row < 8; ++row) {
+    const size_t vram_idx = tile_data_entry_idx + (row * 2);
+    for (uint8_t col = 0; col < 8; ++col) {
+      const SDL_Point pixel_point = {point.x + col, point.y + row};
+      if (SDL_PointInRect(&pixel_point, &screen_dimensions)) {
+        const uint8_t shft = 7 - col;
+        const bool lsb = ppu->vram[vram_idx + 0] >> shft & 1;
+        const bool msb = ppu->vram[vram_idx + 1] >> shft & 1;
+        const size_t color_idx = (palette >> ((msb << 1 | lsb) * 2)) & 0x3;
+
+        pixel_display_draw_pixel(display, pixel_point, GB_PALETTE[color_idx]);
+      }
     }
   }
 }
 
 void ppu_draw_vram_tile_data(const struct ppu *ppu,
                              struct pixel_display *display) {
+  static const uint16_t BYTES_PER_TILE = 16u;
   static const uint8_t DEFAULT_PALETTE = 0xE4; // 0b11100100
+
   for (uint16_t a16 = 0x8000; a16 < 0x9800; a16 += BYTES_PER_TILE) {
     const uint8_t tile_id = a16 >> 4 & 0xFF;
-    const int tx = tile_id & 0xF;
-    const int ty = (tile_id >> 4 & 0xF) + (a16 >= 0x9000 ? 16 : 0);
-    ppu_draw_tile(ppu, a16, DEFAULT_PALETTE, (SDL_Point){tx * 8, ty * 8},
-                  display);
+    const SDL_Point tile_point = {
+        .x = (tile_id & 0xF) * 8,
+        .y = ((tile_id >> 4 & 0xF) + (a16 >= 0x9000 ? 16 : 0)) * 8};
+
+    ppu_draw_tile(ppu, a16, DEFAULT_PALETTE, tile_point, display);
   }
 }

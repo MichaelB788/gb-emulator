@@ -3,13 +3,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-static const SDL_Color LCD_COLOR_PALETTE[4] = {
-    [0] = {.r = 0xb9, .g = 0xe0, .b = 0x8d, .a = 0xff}, // Light green
-    [1] = {.r = 0x8b, .g = 0xa8, .b = 0x6a, .a = 0xff}, // Green
-    [2] = {.r = 0x69, .g = 0x7f, .b = 0x50, .a = 0xff}, // Dark green
-    [3] = {.r = 0x3d, .g = 0x49, .b = 0x2e, .a = 0xff}  // Darker green
-};
-
 enum lcdc_fields {
   /**
    * if this bit is set to 0:
@@ -102,7 +95,3 @@ void lcd_stat_write(struct lcd *lcd, uint8_t u8);
 void lcd_stat_update_ppu_mode(struct lcd *lcd, enum ppu_mode mode);
 void lcd_stat_update_lyc_equals_ly(struct lcd *lcd);
 enum ppu_mode lcd_stat_ppu_mode(const struct lcd *lcd);
-
-SDL_Color lcd_get_color_bg_win(const struct lcd *lcd, uint8_t color_idx);
-SDL_Color lcd_get_color_obj(const struct lcd *lcd, uint8_t color_idx,
-                            uint8_t obp);
