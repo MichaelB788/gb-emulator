@@ -3,76 +3,74 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum lcdc_fields {
-  /**
-   * if this bit is set to 0:
-   * - background and window become blank. window display
-   * - only objects are displayed if LCDC_OBJ_ENABLED is set
-   * - LCDC_WIN_ENABLE is ignored
-   */
-  LCDC_BG_WIN_ENABLED = 1 << 0,
+/**
+ * if this bit is set to 0:
+ * - background and window become blank. window display
+ * - only objects are displayed if LCDC_OBJ_ENABLED is set
+ * - LCDC_WIN_ENABLE is ignored
+ */
+#define LCDC_BG_WIN_ENABLED 0x01u
 
-  // toggles whether objects are displayed
-  LCDC_OBJ_ENABLED = 1 << 1,
+// toggles whether objects are displayed
+#define LCDC_OBJ_ENABLED 0x02u
 
-  // changes tile size (1 tile or 2 stacked vertically)
-  LCDC_OBJ_SIZE = 1 << 2,
+// changes tile size (1 tile or 2 stacked vertically)
+#define LCDC_OBJ_SIZE 0x04u
 
-  // if clear, BG uses tilemap 0x9800, otherwise 0x9C00
-  LCDC_BG_TILE_MAP_AREA = 1 << 3,
+// if clear, BG uses tilemap 0x9800, otherwise 0x9C00
+#define LCDC_BG_TILE_MAP_AREA 0x08u
 
-  /**
-   * addressing mode for BG & WIN to pick tiles from
-   * - tiles are always indexed by an 8-bit (un)signed integer
-   * - 1: 0x8000 is the base pointer & unsigned addressing is used
-   * - 0: 0x9000 is the base pointer & signed addressing is used
-   */
-  LCDC_BG_WIN_ADDRESSING_MODE = 1 << 4,
+/**
+ * addressing mode for BG & WIN to pick tiles from
+ * - tiles are always indexed by an 8-bit (un)signed integer
+ * - 1: 0x8000 is the base pointer & unsigned addressing is used
+ * - 0: 0x9000 is the base pointer & signed addressing is used
+ */
+#define LCDC_BG_WIN_ADDRESSING_MODE 0x10u
 
-  // controls whether the window is displayed or not. overridden by
-  // LCDC_BG_WIN_ENABLED if that is cleared
-  LCDC_WIN_ENABLED = 1 << 5,
+/**
+ * controls whether the window is displayed or not. overridden by
+ * LCDC_BG_WIN_ENABLED if that is cleared
+ */
+#define LCDC_WIN_ENABLED 0x20u
 
-  // if clear, WIN uses tilemap 0x9800, otherwise 0x9C00
-  LCDC_WIN_TILE_MAP_AREA = 1 << 6,
+// if clear, WIN uses tilemap 0x9800, otherwise 0x9C00
+#define LCDC_WIN_TILE_MAP_AREA 0x40u
 
-  // if clear, turn off the LCD & PPU, grant immediate access to VRAM & OAM.
-  LCDC_LCD_ENABLED = 1 << 7
-};
+// if clear, turn off the LCD & PPU, grant immediate access to VRAM & OAM.
+#define LCDC_LCD_ENABLED 0x80u
 
-enum stat_fields {
-  // indictates the PPU's current status (see enum ppu_mode)
-  STAT_PPU_MODE = 0x3,
+// indictates the PPU's current status (see enum ppu_mode)
+#define STAT_PPU_MODE 0x03u
 
-  // contains the result of LY == LYC. updated constantly
-  STAT_LYC_EQUALS_LY = 1 << 2,
+// contains the result of LY == LYC. updated constantly
+#define STAT_LYC_EQUALS_LY 0x04u
 
-  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_HBLANK
-  STAT_HBLANK_SELECT = 1 << 3,
+// if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_HBLANK
+#define STAT_HBLANK_SELECT 0x08u
 
-  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_VBLANK
-  STAT_VBLANK_SELECT = 1 << 4,
+// if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_VBLANK
+#define STAT_VBLANK_SELECT 0x10u
 
-  // if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_OAM_SCAN
-  STAT_OAM_SCAN_SELECT = 1 << 5,
+// if set, triggers a STAT interrupt if STAT_PPU_MODE == PPU_OAM_SCAN
+#define STAT_OAM_SCAN_SELECT 0x20u
 
-  // if set, triggers a STAT interrupt if STAT_LYC_EQUALS_LY
-  STAT_LYC_LY_SELECT = 1 << 6
-};
+// if set, triggers a STAT interrupt if STAT_LYC_EQUALS_LY
+#define STAT_LYC_LY_SELECT 0x40u
 
 // reported by STAT.ppu_mode (defaults to 0 if ppu disabled)
 enum ppu_mode {
   // waiting until the end of the scanline, 80 dots
-  PPU_HBLANK = 0,
+  PPU_HBLANK = 0x0,
 
   // waiting until the next frame, between 172 & 289 dots
-  PPU_VBLANK = 1,
+  PPU_VBLANK = 0x1,
 
   // searching for OBJs which overlap this line, 376 - (vblank duration) dots
-  PPU_OAM_SCAN = 2,
+  PPU_OAM_SCAN = 0x2,
 
   // sending pixels to the LCD 4560 dots (10 scanlines)
-  PPU_DRAWING = 3
+  PPU_DRAWING = 0x3
 };
 
 struct lcd {

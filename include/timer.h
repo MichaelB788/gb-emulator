@@ -4,7 +4,8 @@
 
 struct interrupt;
 
-enum tac_fields { TAC_CLOCK_SELECT = 0x3, TAC_ENABLE = 1 << 2 };
+#define TAC_CLOCK_SELECT 0x3u
+#define TAC_ENABLE 0x4u
 
 struct timer {
   bool interrupt_pending; // timer interrupt is delayed by one m-cycle

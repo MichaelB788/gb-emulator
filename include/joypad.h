@@ -1,24 +1,18 @@
 #pragma once
 #include <stdint.h>
 
-enum joypad_fields {
-  // clang-format off
-  JOYP_BUTTON_A      = 1 << 0,
-  JOYP_BUTTON_B      = 1 << 1,
-  JOYP_BUTTON_SELECT = 1 << 2,
-  JOYP_BUTTON_START  = 1 << 3,
+#define JOYP_BUTTON_A 0x01u
+#define JOYP_BUTTON_B 0x02u
+#define JOYP_BUTTON_SELECT 0x04u
+#define JOYP_BUTTON_START 0x08u
 
-  JOYP_DPAD_RIGHT = 1 << 0,
-  JOYP_DPAD_LEFT  = 1 << 1,
-  JOYP_DPAD_UP    = 1 << 2,
-  JOYP_DPAD_DOWN  = 1 << 3,
+#define JOYP_DPAD_RIGHT 0x01u
+#define JOYP_DPAD_LEFT 0x02u
+#define JOYP_DPAD_UP 0x04u
+#define JOYP_DPAD_DOWN 0x08u
 
-  JOYP_ENABLE_DPAD    = 1 << 4,
-  JOYP_ENABLE_BUTTONS = 1 << 5,
-
-  JOYP_MODES = JOYP_ENABLE_DPAD | JOYP_ENABLE_BUTTONS
-  // clang-format on
-};
+#define JOYP_ENABLE_DPAD 0x10u
+#define JOYP_ENABLE_BUTTONS 0x20u
 
 struct joypad {
   uint8_t p1; // 0xFF00: JOYP / P1

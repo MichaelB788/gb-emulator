@@ -1,6 +1,8 @@
 #include "joypad.h"
 #include <stdint.h>
 
+#define JOYP_MODES JOYP_ENABLE_BUTTONS | JOYP_ENABLE_DPAD
+
 uint8_t joypad_read(const struct joypad *joypad) {
   // If no mode is enabled, then all button inputs are considered released
   // (in the case of the GameBoy, a released input is 1 due to pull-up

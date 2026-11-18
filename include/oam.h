@@ -5,14 +5,10 @@
 
 struct bus;
 
-enum oam_entry_flags {
-  // clang-format off
-  OBJ_DMG_PALETTE = 1 << 4,
-  OBJ_X_FLIP      = 1 << 5,
-  OBJ_Y_FLIP      = 1 << 6,
-  OBJ_PRIORITY    = 1 << 7
-  // clang-format on
-};
+#define OBJ_DMG_PALETTE 0x10u
+#define OBJ_X_FLIP 0x20u
+#define OBJ_Y_FLIP 0x40u
+#define OBJ_PRIORITY 0x80u
 
 struct oam_entry {
   uint8_t y;          // byte 0
