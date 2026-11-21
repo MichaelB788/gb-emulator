@@ -10,8 +10,8 @@
 #include <stdint.h>
 
 void ppu_tick(struct ppu *ppu, struct bus *bus) {
-  // TODO: lcd tick
-  oam_tick(&ppu->oam, bus);
+  // todo
+  // oam_tick(&ppu->oam, bus);
 }
 
 static bool ppu_is_vram_accessible(const struct ppu *ppu) {

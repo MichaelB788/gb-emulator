@@ -1,14 +1,13 @@
 #include "timer.h"
-#include "interrupt.h"
 #include <stdint.h>
 
-void timer_tick(struct timer *timer, struct interrupt *interrupt) {
+void timer_tick(struct timer *timer, uint8_t *IF) {
   if (timer->interrupt_pending) {
     timer->interrupt_pending = false;
 
     if (timer->tima == 0) {
       timer->tima = timer->tma;
-      interrupt->flag |= INTERRUPT_TIMER;
+      *IF |= INTERRUPT_TIMER;
     }
     // if TIMA was already overriden, nothing happens
   }

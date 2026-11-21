@@ -7,6 +7,8 @@ struct interrupt;
 #define TAC_CLOCK_SELECT 0x3u
 #define TAC_ENABLE 0x4u
 
+#define INTERRUPT_TIMER 0x04u
+
 struct timer {
   bool interrupt_pending; // timer interrupt is delayed by one m-cycle
 
@@ -19,4 +21,4 @@ struct timer {
   uint8_t tac;  // 0xFF07: timer control
 };
 
-void timer_tick(struct timer *timer, struct interrupt *interrupt);
+void timer_tick(struct timer *timer, uint8_t *IF);

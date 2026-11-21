@@ -1,10 +1,11 @@
 #include "oam.h"
-#include "bus.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+/*
+// TODO: refactor this
 void oam_tick(struct oam *oam, const struct bus *bus) {
   if (oam->dma_transfer_in_progress) {
     for (int n = 0; n < 4; ++n) {
@@ -16,6 +17,7 @@ void oam_tick(struct oam *oam, const struct bus *bus) {
     oam->dma_transfer_in_progress = oam->dma_dest_a16 < 0xFE9F;
   }
 }
+*/
 
 void oam_write_dma_u8(struct oam *oam, uint8_t u8) {
   oam->dma = u8;
