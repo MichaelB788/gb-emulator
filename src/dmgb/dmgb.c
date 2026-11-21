@@ -9,6 +9,9 @@
 
 #define SUPPRESS_LOGS 0
 
+static void dmgb_tick(struct dmgb *dmgb);
+static void dmgb_execute(struct dmgb *dmgb, uint8_t opcode);
+static void dmgb_execute_cb(struct dmgb *dmgb, uint8_t opcode);
 static void dmgb_log_state(const struct dmgb *dmgb, uint8_t opcode,
                            const char *mnemonic);
 
