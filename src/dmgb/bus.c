@@ -116,11 +116,10 @@ void dmgb_return(struct dmgb *dmgb, bool cond) {
 
 uint8_t dmgb_dmgb_bus_read_io(const struct dmgb *dmgb, uint16_t a16) {
   switch (a16) {
-    // clang-format off
   case 0xFF00: return joypad_read(&dmgb->joypad);
   case 0xFF01: return dmgb->serial.sb;
   case 0xFF02: return dmgb->serial.sc;
-  case 0xFF04: return dmgb->timer.sys >> 8 & 0xFF; // DIV is the upper byte of SYS
+  case 0xFF04: return dmgb->timer.sys >> 8 & 0xFF; // DIV
   case 0xFF05: return dmgb->timer.tima;
   case 0xFF06: return dmgb->timer.tma;
   case 0xFF07: return dmgb->timer.tac;
@@ -136,17 +135,15 @@ uint8_t dmgb_dmgb_bus_read_io(const struct dmgb *dmgb, uint16_t a16) {
   case 0xFF48: return dmgb->ppu.lcd.obp0;
   case 0xFF49: return dmgb->ppu.lcd.obp1;
   default: return 0xFF;
-    // clang-format on
   }
 }
 
 void dmgb_bus_write_io(struct dmgb *dmgb, uint16_t a16, uint8_t u8) {
   switch (a16) {
-    // clang-format off
   case 0xFF00: joypad_write(&dmgb->joypad, u8); break;
   case 0xFF01: dmgb->serial.sb = u8; break;
   case 0xFF02: serial_transfer_write_control(&dmgb->serial, u8); break;
-  case 0xFF04: dmgb->timer.sys = 0; break; // writing to DIV resets SYS to 0
+  case 0xFF04: dmgb->timer.sys = 0; break; // DIV write resets SYS to 0
   case 0xFF05: dmgb->timer.tima = u8; break;
   case 0xFF06: dmgb->timer.tma = u8; break;
   case 0xFF07: dmgb->timer.tac = u8 & 0x7; break;
@@ -162,6 +159,5 @@ void dmgb_bus_write_io(struct dmgb *dmgb, uint16_t a16, uint8_t u8) {
   case 0xFF48: dmgb->ppu.lcd.obp0 = u8; break;
   case 0xFF49: dmgb->ppu.lcd.obp1 = u8; break;
   default: break;
-    // clang-format on
   }
 }

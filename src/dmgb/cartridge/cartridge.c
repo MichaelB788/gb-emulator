@@ -48,13 +48,11 @@ static bool cartridge_create_header(struct cartridge_header *header,
 
   const uint8_t ram_size_byte = u8_buffer[0x149];
   switch (ram_size_byte) {
-    // clang-format off
   case 0: header->ram_size = 0; break;
   case 2: header->ram_size = 8 * 1024; break;
   case 3: header->ram_size = 32 * 1024; break;
   case 4: header->ram_size = 128 * 1024; break;
   case 5: header->ram_size = 64 * 1024; break;
-  // clang-format on
   default:
     fprintf(stderr, "cartridge_create_header: unknown RAM size byte 0x%02X\n",
             ram_size_byte);
@@ -90,8 +88,7 @@ static bool cartridge_create_rom(struct u8_array *rom, size_t rom_size,
 static void cartridge_init_mapper(struct cartridge *cart,
                                   enum cartridge_type type) {
   switch (cart->type = type) {
-  case ROM_ONLY_CART:
-    break;
+  case ROM_ONLY_CART: break;
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
@@ -139,8 +136,7 @@ void cartridge_destroy(struct cartridge *cart) {
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t a16) {
   switch (cart->type) {
-  case ROM_ONLY_CART:
-    return cart->rom.data[a16];
+  case ROM_ONLY_CART: return cart->rom.data[a16];
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
@@ -150,8 +146,7 @@ uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t a16) {
 
 void cartridge_write_rom(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   switch (cart->type) {
-  case ROM_ONLY_CART:
-    break;
+  case ROM_ONLY_CART: break;
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
@@ -165,8 +160,7 @@ uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t a16) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
     return mbc1_read_ram(&cart->mapper.mbc1, &cart->ram, a16);
-  default:
-    return 0xFF;
+  default: return 0xFF;
   }
 }
 
@@ -176,7 +170,6 @@ void cartridge_write_ram(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   case MBC1_RAM_BATTERY_CART:
     mbc1_write_ram(&cart->mapper.mbc1, &cart->ram, a16, u8);
     break;
-  default:
-    break;
+  default: break;
   }
 }

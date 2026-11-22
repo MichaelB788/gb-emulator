@@ -46,13 +46,8 @@ void SDL_AppQuit(void *appstate, SDL_AppResult result) {
   app_destroy(appstate);
 
   switch (result) {
-  case SDL_APP_CONTINUE:
-    break;
-  case SDL_APP_SUCCESS:
-    puts("Program success");
-    break;
-  case SDL_APP_FAILURE:
-    puts("Program failure");
-    break;
+  case SDL_APP_CONTINUE: break;
+  case SDL_APP_SUCCESS: puts("Program success"); break;
+  case SDL_APP_FAILURE: puts("Program failure"); break;
   }
 }

@@ -28,7 +28,6 @@ void oam_write_dma_u8(struct oam *oam, uint8_t u8) {
 
 uint8_t oam_read_u8(const struct oam *oam, uint16_t a16) {
   const size_t i = a16 >> 2 & 0x3F;
-  // clang-format off
   switch (a16 & 0x3) {
   case 0: return oam->entries[i].y;
   case 1: return oam->entries[i].x;
@@ -36,12 +35,10 @@ uint8_t oam_read_u8(const struct oam *oam, uint16_t a16) {
   case 3: return oam->entries[i].flags;
   default: assert(false);
   }
-  // clang-format on
 }
 
 void oam_write_u8(struct oam *oam, uint16_t a16, uint8_t u8) {
   const size_t i = a16 >> 2 & 0x3F;
-  // clang-format off
   switch (a16 & 0x3) {
   case 0: oam->entries[i].y = u8; break;
   case 1: oam->entries[i].x = u8; break;
@@ -49,5 +46,4 @@ void oam_write_u8(struct oam *oam, uint16_t a16, uint8_t u8) {
   case 3: oam->entries[i].flags = u8; break;
   default: assert(false);
   }
-  // clang-format on
 }
