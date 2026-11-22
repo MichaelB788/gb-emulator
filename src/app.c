@@ -7,26 +7,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 // the GameBoy runs at 59.7 FPS (slightly slower than 60 FPS)
 #define TARGET_FPS_NS ((uint64_t)(SDL_NS_PER_SECOND / 59.7))
 
 static void app_print_fps(uint64_t delta_time);
 
-struct app {
-  uint64_t prev_time, curr_time;
-  struct dmgb dmgb;
-  struct pixel_display main_display;
-  struct pixel_display vram_tile_data_display;
-};
-
-struct app *app_create(const char *rom, int px_scale) {
-  struct app *app = NULL;
-  if ((app = calloc(1, sizeof(struct app))) == NULL) {
-    perror("app_create calloc");
-    goto app_cleanup;
-  }
+bool app_create(struct app *app, const char *rom, int px_scale) {
+  app_destroy(app);
+  *app = (struct app){0};
 
   if (!dmgb_create(&app->dmgb, rom)) {
     fprintf(stderr, "app_create: error creating gameboy\n");
@@ -41,28 +30,26 @@ struct app *app_create(const char *rom, int px_scale) {
     goto app_cleanup;
   }
 #endif
+
   if (!pixel_display_create(&app->main_display, "GameBoy", SCREEN_PIXEL_W,
                             SCREEN_PIXEL_H, px_scale, 0)) {
     fprintf(stderr, "app_create: error creating main display\n");
     goto app_cleanup;
   }
 
-  return app;
+  return true;
 
 app_cleanup:
   app_destroy(app);
-  return NULL;
+  return false;
 }
 
 void app_destroy(struct app *app) {
-  if (app) {
-    pixel_display_destroy(&app->main_display);
+  pixel_display_destroy(&app->main_display);
 #ifndef NDEBUG
-    pixel_display_destroy(&app->vram_tile_data_display);
+  pixel_display_destroy(&app->vram_tile_data_display);
 #endif
-
-    dmgb_destroy(&app->dmgb);
-  }
+  dmgb_destroy(&app->dmgb);
 }
 
 void app_update(struct app *app) {

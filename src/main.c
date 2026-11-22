@@ -20,8 +20,10 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv) {
   char rom_path[FILENAME_MAX + 1];
   strncpy(rom_path, argv[1], FILENAME_MAX);
 
-  if ((*appstate = app_create(rom_path, 5)) == NULL)
+  static struct app app;
+  if (!app_create(&app, rom_path, 5))
     return SDL_APP_FAILURE;
+  *appstate = &app;
 
   return SDL_APP_CONTINUE;
 }
@@ -43,11 +45,9 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event) {
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result) {
-  app_destroy(appstate);
+  if (appstate)
+    app_destroy(appstate);
 
-  switch (result) {
-  case SDL_APP_CONTINUE: break;
-  case SDL_APP_SUCCESS: puts("Program success"); break;
-  case SDL_APP_FAILURE: puts("Program failure"); break;
-  }
+  printf("Program exited: %s",
+         result == SDL_APP_SUCCESS ? "Success" : "Failure");
 }
