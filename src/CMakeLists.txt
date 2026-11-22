@@ -21,7 +21,6 @@ add_library(${SOURCE_LIB}
 
   app.c
   pixel_display.c
-  u8_array.c
 )
 target_link_libraries(${SOURCE_LIB} PUBLIC SDL3::SDL3)
 target_include_directories(${SOURCE_LIB} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

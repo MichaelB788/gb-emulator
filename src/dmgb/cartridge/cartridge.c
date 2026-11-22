@@ -1,7 +1,6 @@
 #include "cartridge.h"
 #include "byte_sizes.h"
 #include "mbc1.h"
-#include "u8_array.h"
 #include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -40,13 +39,10 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
   cart->mapper = cartridge_init_mapper(cart->type = header[HEADER_CART_TYPE]);
 
   // rom
-  if (!u8_array_create(&cart->rom, KIB(32) * (1u << header[HEADER_ROM_SIZE]))) {
-    fprintf(stderr, "Could not create ROM\n");
-    goto cartridge_cleanup;
-  }
-
+  cart->rom =
+      calloc(1, cart->rom_size = KIB(32) * (1u << header[HEADER_ROM_SIZE]));
   rewind(rom_file);
-  if (fread(cart->rom.data, 1, cart->rom.size, rom_file) < cart->rom.size) {
+  if (fread(cart->rom, 1, cart->rom_size, rom_file) < cart->rom_size) {
     perror("Could not fread ROM file into ROM data");
     goto cartridge_cleanup;
   }
@@ -54,11 +50,8 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
 
   // ram
   const size_t ram_sizes[] = {0, 0, KIB(8), KIB(32), KIB(128), KIB(64)};
-  if (header[HEADER_RAM_SIZE] > 0 &&
-      !u8_array_create(&cart->ram, ram_sizes[header[HEADER_RAM_SIZE]])) {
-    fprintf(stderr, "Could not create RAM\n");
-    goto cartridge_cleanup;
-  }
+  if (header[HEADER_RAM_SIZE] > 1)
+    cart->ram = calloc(1, cart->ram_size = ram_sizes[header[HEADER_RAM_SIZE]]);
 
   return true;
 
@@ -71,17 +64,24 @@ cartridge_cleanup:
 }
 
 void cartridge_destroy(struct cartridge *cart) {
-  u8_array_destroy(&cart->rom);
-  u8_array_destroy(&cart->ram);
+  cart->rom_size = cart->ram_size = 0;
+  if (cart->rom) {
+    free(cart->rom);
+    cart->rom = NULL;
+  }
+  if (cart->ram) {
+    free(cart->ram);
+    cart->ram = NULL;
+  }
 }
 
 uint8_t cartridge_read_rom(const struct cartridge *cart, uint16_t a16) {
   switch (cart->type) {
-  case ROM_ONLY_CART: return cart->rom.data[a16];
+  case ROM_ONLY_CART: return cart->rom[a16];
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    return mbc1_rom_read(&cart->mapper.mbc1, &cart->rom, a16);
+    return mbc1_rom_read(&cart->mapper.mbc1, cart->rom, cart->rom_size, a16);
   default: assert(false);
   }
 }
@@ -92,7 +92,7 @@ void cartridge_write_rom(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   case MBC1_CART:
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_rom_write(&cart->mapper.mbc1, &cart->rom, a16, u8);
+    mbc1_rom_write(&cart->mapper.mbc1, cart->rom_size, a16, u8);
     break;
   default: assert(false);
   }
@@ -102,7 +102,7 @@ uint8_t cartridge_read_ram(const struct cartridge *cart, uint16_t a16) {
   switch (cart->type) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    return mbc1_read_ram(&cart->mapper.mbc1, &cart->ram, a16);
+    return mbc1_read_ram(&cart->mapper.mbc1, cart->ram, cart->ram_size, a16);
   default: return 0xFF;
   }
 }
@@ -111,7 +111,7 @@ void cartridge_write_ram(struct cartridge *cart, uint16_t a16, uint8_t u8) {
   switch (cart->type) {
   case MBC1_RAM_CART:
   case MBC1_RAM_BATTERY_CART:
-    mbc1_write_ram(&cart->mapper.mbc1, &cart->ram, a16, u8);
+    mbc1_write_ram(&cart->mapper.mbc1, cart->ram, cart->ram_size, a16, u8);
     break;
   default: break;
   }

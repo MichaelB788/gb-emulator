@@ -1,7 +1,7 @@
 #pragma once
 #include "mbc1.h"
-#include "u8_array.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #define ROM_ONLY_CART 0x00u
@@ -18,8 +18,8 @@ struct cartridge {
   uint8_t type;
   union cartridge_mapper mapper;
 
-  struct u8_array rom;
-  struct u8_array ram;
+  size_t rom_size, ram_size;
+  uint8_t *rom, *ram;
 };
 
 bool cartridge_create(struct cartridge *cart, const char *rom_path);
