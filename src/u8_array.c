@@ -5,13 +5,16 @@
 #include <stdlib.h>
 
 bool u8_array_create(struct u8_array *arr, size_t size) {
+  if (size == 0) {
+    fprintf(stderr, "Could not create array of size 0\n");
+    return false;
+  }
+
   arr->data = NULL;
   arr->size = 0;
-  if (size > 0) {
-    if ((arr->data = malloc(arr->size = size)) == NULL) {
-      perror("u8_array malloc");
-      return false;
-    }
+  if ((arr->data = calloc(1, arr->size = size)) == NULL) {
+    perror("Array data calloc failed");
+    return false;
   }
   return true;
 }

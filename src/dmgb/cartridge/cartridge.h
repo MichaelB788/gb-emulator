@@ -4,20 +4,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum cartridge_type {
-  // clang-format off
-  ROM_ONLY_CART         = 0x00,
-  MBC1_CART             = 0x01,
-  MBC1_RAM_CART         = 0x02,
-  MBC1_RAM_BATTERY_CART = 0x03
-  // clang-format off
+#define ROM_ONLY_CART 0x00u
+#define MBC1_CART 0x01u
+#define MBC1_RAM_CART 0x02u
+#define MBC1_RAM_BATTERY_CART 0x03u
+
+// todo
+union cartridge_mapper {
+  struct mbc1 mbc1;
 };
 
 struct cartridge {
-  enum cartridge_type type;
-  union {
-    struct mbc1 mbc1;
-  } mapper;
+  uint8_t type;
+  union cartridge_mapper mapper;
 
   struct u8_array rom;
   struct u8_array ram;

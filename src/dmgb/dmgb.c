@@ -6,7 +6,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 
 #define SUPPRESS_LOGS 0
 
@@ -20,7 +19,8 @@ static void dmgb_log_state(const struct dmgb *dmgb, uint8_t opcode,
                            const char *mnemonic);
 
 bool dmgb_create(struct dmgb *dmgb, const char *rom_path) {
-  memset(dmgb, 0, sizeof(struct dmgb));
+  dmgb_destroy(dmgb);
+  *dmgb = (struct dmgb){0};
 
   dmgb->reg.PC = 0x0100; // skip the bootrom
   dmgb->joypad.p1 = 0xFF;

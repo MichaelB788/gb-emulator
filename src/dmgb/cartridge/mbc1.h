@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 struct mbc1 {
-  bool is_advanced_banking_enabled;
-  bool is_ram_enabled;
+  bool advanced_banking_enabled;
+  bool ram_enabled;
   uint8_t rom_bank;
   uint8_t ram_bank;
 };
