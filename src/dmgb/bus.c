@@ -1,5 +1,6 @@
 #include "bus.h"
 #include "dmgb.h"
+#include "register_file.h"
 #include <stdint.h>
 
 static uint8_t dmgb_dmgb_bus_read_io(const struct dmgb *dmgb, uint16_t a16);
@@ -45,15 +46,15 @@ uint16_t dmgb_read_u16(struct dmgb *dmgb, uint16_t a16) {
   return dmgb_read_u8(dmgb, a16 + 1) << 8u | dmgb_read_u8(dmgb, a16);
 }
 
-uint8_t dmgb_read_imm8(struct dmgb *dmgb) {
+uint8_t dmgb_fetch_u8(struct dmgb *dmgb) {
   return dmgb_read_u8(dmgb, dmgb->reg.PC++);
 }
 
-uint8_t dmgb_read_hl_u8(struct dmgb *dmgb) {
-  return dmgb_read_u8(dmgb, rf_get_hl(&dmgb->reg));
+int8_t dmgb_fetch_s8(struct dmgb *dmgb) {
+  return (int8_t)dmgb_read_u8(dmgb, dmgb->reg.PC++);
 }
 
-uint16_t dmgb_read_imm16(struct dmgb *dmgb) {
+uint16_t dmgb_fetch_u16(struct dmgb *dmgb) {
   const uint16_t u16 = dmgb_read_u16(dmgb, dmgb->reg.PC);
   dmgb->reg.PC += 2;
   return u16;
@@ -64,19 +65,13 @@ void dmgb_write_u8(struct dmgb *dmgb, uint16_t a16, uint8_t u8) {
   dmgb_tick(dmgb);
 }
 
-void dmgb_write_hl_u8(struct dmgb *dmgb, uint8_t u8) {
-  dmgb_bus_write(dmgb, rf_get_hl(&dmgb->reg), u8);
-  dmgb_tick(dmgb);
-}
-
 void dmgb_write_u16(struct dmgb *dmgb, uint16_t a16, uint16_t u16) {
   dmgb_write_u8(dmgb, a16, u16 & 0xFF);
   dmgb_write_u8(dmgb, a16 + 1, u16 >> 8);
 }
 
 void dmgb_push_u16(struct dmgb *dmgb, uint16_t u16) {
-  dmgb->reg.SP -= 2;
-  dmgb_write_u16(dmgb, dmgb->reg.SP, u16);
+  dmgb_write_u16(dmgb, dmgb->reg.SP -= 2, u16);
 }
 
 uint16_t dmgb_pop_u16(struct dmgb *dmgb) {
@@ -92,9 +87,9 @@ void dmgb_jump(struct dmgb *dmgb, uint16_t a16, bool cond) {
   }
 }
 
-void dmgb_jump_rotation(struct dmgb *dmgb, int8_t i8, bool cond) {
+void dmgb_jump_rotation(struct dmgb *dmgb, int8_t s8, bool cond) {
   if (cond) {
-    dmgb->reg.PC += i8;
+    dmgb->reg.PC += s8;
     dmgb_tick(dmgb);
   }
 }
