@@ -35,3 +35,4 @@ bool dmgb_create(struct dmgb *dmgb, const char *rom_path);
 void dmgb_destroy(struct dmgb *dmgb);
 
 void dmgb_step(struct dmgb *dmgb);
+void dmgb_tick(struct dmgb *dmgb);
