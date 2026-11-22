@@ -40,7 +40,7 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
 
   // rom
   cart->rom =
-      calloc(1, cart->rom_size = KIB(32) * (1u << header[HEADER_ROM_SIZE]));
+      calloc(cart->rom_size = KIB(32) * (1u << header[HEADER_ROM_SIZE]), 1);
   rewind(rom_file);
   if (fread(cart->rom, 1, cart->rom_size, rom_file) < cart->rom_size) {
     perror("Could not fread ROM file into ROM data");
@@ -51,7 +51,7 @@ bool cartridge_create(struct cartridge *cart, const char *rom_path) {
   // ram
   const size_t ram_sizes[] = {0, 0, KIB(8), KIB(32), KIB(128), KIB(64)};
   if (header[HEADER_RAM_SIZE] > 1)
-    cart->ram = calloc(1, cart->ram_size = ram_sizes[header[HEADER_RAM_SIZE]]);
+    cart->ram = calloc(cart->ram_size = ram_sizes[header[HEADER_RAM_SIZE]], 1);
 
   return true;
 
