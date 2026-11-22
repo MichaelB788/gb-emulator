@@ -15,7 +15,7 @@ with open(os.path.join(file_dir, "dmgops.json"), "r") as dmgops_json:
     with open(os.path.join(file_dir, "mnemonics.h"), "w") as mnemonics_h:
         mnemonics_h.write(
             "\n".join(
-                [
+                (
                     "#pragma once",
                     "",
                     "static const char *mnemonics[256] = {",
@@ -25,6 +25,6 @@ with open(os.path.join(file_dir, "dmgops.json"), "r") as dmgops_json:
                     "static const char *mnemonics_cb[256] = {",
                     names_of("CBPrefixed"),
                     "};",
-                ]
+                )
             )
         )
