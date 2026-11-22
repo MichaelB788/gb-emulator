@@ -223,11 +223,6 @@ void dmgb_daa(struct dmgb *dmgb) {
   dmgb->reg.A = result;
 }
 
-void dmgb_halt(struct dmgb *dmgb) {
-  dmgb->state = !dmgb->reg.IME && (dmgb->IE & dmgb->IF) != 0 ? DMGB_HALT_BUG
-                                                             : DMGB_HALTED;
-}
-
 void dmgb_illegal(struct dmgb *dmgb, uint8_t opcode) {
   fprintf(stderr, "Illegal instruction: 0x%02X\n", opcode);
 }

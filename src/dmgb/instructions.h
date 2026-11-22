@@ -36,5 +36,4 @@ uint8_t dmgb_srl_u8(struct dmgb *dmgb, uint8_t u8);
 uint8_t dmgb_swap_u8(struct dmgb *dmgb, uint8_t u8);
 
 void dmgb_daa(struct dmgb *dmgb);
-void dmgb_halt(struct dmgb *dmgb);
 void dmgb_illegal(struct dmgb *dmgb, uint8_t opcode);
